@@ -1,0 +1,191 @@
+using JasperFx.Core;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Hosting;
+using Wolverine;
+using Wolverine.AzureServiceBus;
+using Wolverine.EntityFrameworkCore;
+using Wolverine.ErrorHandling;
+using Wolverine.Persistence.Durability;
+using Wolverine.RabbitMQ;
+using Wolverine.SqlServer;
+using Flowza.Contracts;
+
+namespace Flowza.Messaging;
+
+/// <summary>
+/// Sets up Wolverine for a Flowza service (plan 001 Â§8; ADR-0004, ADR-0005; tech discussion T4):
+/// in-process mediator, transactional outbox and durable inbox in the service's <b>own</b> database, retry and
+/// dead-letter policy, and one of three transports chosen by <c>Messaging:Transport</c> (default SqlServer).
+/// </summary>
+public static class FlowzaMessagingExtensions
+{
+    /// <summary>Schema of Wolverine's outbox/inbox tables inside each service database.</summary>
+    public const string EnvelopeSchema = "wolverine";
+
+    public const string TransportKey = "Messaging:Transport";
+    public const string SqlServerTransportConnectionName = "messaging-db";
+    public const string RabbitMqConnectionName = "rabbitmq";
+    public const string AzureServiceBusConnectionName = "azure-servicebus";
+
+    public static MessageTransport ReadTransport(IConfiguration configuration)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+        var value = configuration[TransportKey];
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return MessageTransport.SqlServer;
+        }
+
+        return Enum.TryParse<MessageTransport>(value, ignoreCase: true, out var transport)
+            ? transport
+            : throw new InvalidOperationException(
+                $"'{TransportKey}' is '{value}'. Use SqlServer, RabbitMq or AzureServiceBus (ADR-0005).");
+    }
+
+    /// <param name="serviceName">The service's name, also its queue name (e.g. "runtime").</param>
+    /// <param name="serviceDatabaseConnectionString">The service's own database: holds the outbox and inbox.</param>
+    /// <param name="routes">Which services receive which events.</param>
+    /// <param name="configure">Extra Wolverine settings (e.g. handler discovery in tests).</param>
+    /// <param name="envelopeSchema">Schema of the outbox/inbox tables; only tests change it.</param>
+    public static TBuilder AddFlowzaMessaging<TBuilder>(
+        this TBuilder builder,
+        string serviceName,
+        string serviceDatabaseConnectionString,
+        MessageRoutes routes,
+        Action<WolverineOptions>? configure = null,
+        string envelopeSchema = EnvelopeSchema)
+        where TBuilder : IHostApplicationBuilder
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+        ArgumentException.ThrowIfNullOrWhiteSpace(serviceName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(serviceDatabaseConnectionString);
+        ArgumentNullException.ThrowIfNull(routes);
+
+        var transport = ReadTransport(builder.Configuration);
+        var queue = MessageRoutes.QueueName(serviceName);
+
+        builder.Services.AddWolverine(options =>
+        {
+            options.ServiceName = queue;
+
+            // Outbox and inbox live in the service's own database, so a business change and its events are
+            // saved in one transaction (constitution 3.3).
+            options.PersistMessagesWithSqlServer(serviceDatabaseConnectionString, envelopeSchema, MessageStoreRole.Main);
+            options.UseEntityFrameworkCoreTransactions();
+            options.Policies.AutoApplyTransactions();
+            options.Policies.UseDurableOutboxOnAllSendingEndpoints();
+            options.Policies.UseDurableInboxOnAllListeners();
+            options.Policies.UseDurableLocalQueues();
+
+            // MS3: an integration event is handled once per EventId, even if it is delivered or published twice
+            // (constitution 3.4). Receiving handlers opt in with [Deduplicated]; an architecture test checks it.
+            options.Durability.MessageDeduplicationMode = MessageDeduplicationMode.CompareByHash;
+            options.Durability.DeduplicationWindow = 7.Days();
+            options.Policies.ForMessagesOfType<IntegrationEvent>().DeduplicateBy(e => e.EventId.ToString("N"));
+
+            // MS4: 3 quick retries, then 5 s, 30 s, 5 min, then the dead-letter queue.
+            options.OnException<Exception>()
+                .RetryTimes(3)
+                .Then.ScheduleRetry(5.Seconds(), 30.Seconds(), 5.Minutes())
+                .Then.MoveToErrorQueue();
+
+            switch (transport)
+            {
+                case MessageTransport.SqlServer:
+                    ConfigureSqlServer(options, builder.Configuration, queue, routes);
+                    break;
+                case MessageTransport.RabbitMq:
+                    ConfigureRabbitMq(options, builder.Configuration, queue, routes);
+                    break;
+                case MessageTransport.AzureServiceBus:
+                    ConfigureAzureServiceBus(options, builder.Configuration, queue, routes);
+                    break;
+            }
+
+            configure?.Invoke(options);
+        });
+
+        // Readiness reports the transport (so mixed settings across services are visible, ADR-0005) and
+        // whether its broker can be reached (PLT-05).
+        var health = builder.Services.AddHealthChecks().AddCheck(
+            "messaging",
+            () => HealthCheckResult.Healthy(data: new Dictionary<string, object> { ["transport"] = transport.ToString() }));
+        switch (transport)
+        {
+            case MessageTransport.SqlServer:
+                health.AddSqlServer(Required(builder.Configuration, SqlServerTransportConnectionName), name: "message-transport");
+                break;
+            case MessageTransport.RabbitMq:
+                health.AddCheck("message-transport", new RabbitMqHealthCheck(new Uri(Required(builder.Configuration, RabbitMqConnectionName))));
+                break;
+        }
+
+        return builder;
+    }
+
+    private static string Required(IConfiguration configuration, string connectionName) =>
+        configuration.GetConnectionString(connectionName) is { Length: > 0 } value
+            ? value
+            : throw new InvalidOperationException(
+                $"Connection string '{connectionName}' is missing for the configured message transport (ADR-0005).");
+
+    private static void ConfigureSqlServer(WolverineOptions options, IConfiguration configuration, string queue, MessageRoutes routes)
+    {
+        // Queues are tables in the shared flowza_messaging database; it holds no business data (ADR-0004).
+        options.UseSqlServerPersistenceAndTransport(
+                Required(configuration, SqlServerTransportConnectionName),
+                $"wolverine_{queue}",
+                "queues",
+                MessageStoreRole.Ancillary)
+            .AutoProvision();
+
+        options.ListenToSqlServerQueue(queue);
+        foreach (var (type, subscribers) in routes.Subscribers)
+        {
+            foreach (var subscriber in subscribers)
+            {
+                options.PublishMessage(type).ToSqlServerQueue(subscriber);
+            }
+        }
+    }
+
+    private static void ConfigureRabbitMq(WolverineOptions options, IConfiguration configuration, string queue, MessageRoutes routes)
+    {
+        var rabbit = options.UseRabbitMq(new Uri(Required(configuration, RabbitMqConnectionName))).AutoProvision();
+
+        // One fan-out exchange per event type, bound to one queue per subscribing service (MS5).
+        foreach (var (type, subscribers) in routes.Subscribers)
+        {
+            var exchange = MessageRoutes.TopicName(type);
+            rabbit.DeclareExchange(exchange, e =>
+            {
+                e.ExchangeType = ExchangeType.Fanout;
+                foreach (var subscriber in subscribers)
+                {
+                    e.BindQueue(subscriber, $"{exchange}.{subscriber}");
+                }
+            });
+            options.PublishMessage(type).ToRabbitExchange(exchange);
+        }
+
+        options.ListenToRabbitQueue(queue);
+    }
+
+    private static void ConfigureAzureServiceBus(WolverineOptions options, IConfiguration configuration, string queue, MessageRoutes routes)
+    {
+        // Coded now, tested once Azure access exists (ADR-0005). One topic per event type, one subscription per service.
+        options.UseAzureServiceBus(Required(configuration, AzureServiceBusConnectionName)).AutoProvision();
+
+        foreach (var type in routes.Subscribers.Keys)
+        {
+            options.PublishMessage(type).ToAzureServiceBusTopic(MessageRoutes.TopicName(type));
+        }
+
+        foreach (var type in routes.TypesFor(queue))
+        {
+            options.ListenToAzureServiceBusSubscription(queue).FromTopic(MessageRoutes.TopicName(type));
+        }
+    }
+}

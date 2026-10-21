@@ -8,7 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddFlowzaServiceDefaults();
 builder.AddFlowzaApiSecurity();
-builder.AddDesignPersistence();
+builder.AddDesignInfrastructure();
 
 var app = builder.Build();
 

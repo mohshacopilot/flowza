@@ -1,0 +1,78 @@
+using Flowza.Contracts;
+using Flowza.Messaging;
+using Microsoft.Extensions.Configuration;
+
+namespace Flowza.BuildingBlocks.UnitTests.Messaging;
+
+public sealed class MessagingConfigurationTests
+{
+    private sealed record SampleCreated : IntegrationEvent;
+
+    private sealed record SampleClosed : IntegrationEvent;
+
+    [Theory]
+    [InlineData(null, MessageTransport.SqlServer)]
+    [InlineData("", MessageTransport.SqlServer)]
+    [InlineData("SqlServer", MessageTransport.SqlServer)]
+    [InlineData("rabbitmq", MessageTransport.RabbitMq)]
+    [InlineData("RabbitMq", MessageTransport.RabbitMq)]
+    [InlineData("AzureServiceBus", MessageTransport.AzureServiceBus)]
+    public void ADR_0005_transport_comes_from_configuration_and_defaults_to_SqlServer(string? value, MessageTransport expected)
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { [FlowzaMessagingExtensions.TransportKey] = value })
+            .Build();
+
+        FlowzaMessagingExtensions.ReadTransport(configuration).ShouldBe(expected);
+    }
+
+    [Fact]
+    public void ADR_0005_an_unknown_transport_is_refused_with_a_clear_message()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { [FlowzaMessagingExtensions.TransportKey] = "Kafka" })
+            .Build();
+
+        Should.Throw<InvalidOperationException>(() => FlowzaMessagingExtensions.ReadTransport(configuration))
+            .Message.ShouldContain("SqlServer, RabbitMq or AzureServiceBus");
+    }
+
+    [Fact]
+    public void T4_MS5_each_subscriber_gets_its_own_queue()
+    {
+        var routes = new MessageRoutes()
+            .Route<SampleCreated>("Runtime", "worker")
+            .Route<SampleClosed>("runtime");
+
+        routes.Subscribers[typeof(SampleCreated)].ShouldBe(["runtime", "worker"], ignoreOrder: true);
+        routes.TypesFor("Runtime").ShouldBe([typeof(SampleCreated), typeof(SampleClosed)], ignoreOrder: true);
+        routes.TypesFor("worker").ShouldBe([typeof(SampleCreated)]);
+        routes.TypesFor("design").ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void T4_MS5_routing_the_same_subscriber_twice_keeps_one_route()
+    {
+        var routes = new MessageRoutes().Route<SampleCreated>("worker").Route<SampleCreated>("Worker");
+
+        routes.Subscribers[typeof(SampleCreated)].Count.ShouldBe(1);
+    }
+
+    [Fact]
+    public void T4_MS5_topic_names_are_the_full_type_name_in_lower_case()
+    {
+        MessageRoutes.TopicName(typeof(SampleCreated)).ShouldBe(typeof(SampleCreated).FullName!.ToLowerInvariant());
+        MessageRoutes.QueueName(" Runtime ").ShouldBe("runtime");
+    }
+
+    [Fact]
+    public void T4_MS2_integration_events_carry_the_standard_fields()
+    {
+        var first = new SampleCreated { OccurredAt = DateTimeOffset.UnixEpoch, ActorId = Guid.Empty, CorrelationId = "4bf92f35" };
+        var second = new SampleCreated();
+
+        first.EventId.ShouldNotBe(Guid.Empty);
+        first.EventId.ShouldNotBe(second.EventId);
+        first.CorrelationId.ShouldBe("4bf92f35");
+    }
+}

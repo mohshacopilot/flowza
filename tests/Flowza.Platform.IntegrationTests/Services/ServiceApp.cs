@@ -37,6 +37,8 @@ public sealed class ServiceApp<TMarker, TContext>(string name, string connection
         // Program reads its connection string while the host is being built, so it must arrive as an
         // environment variable (WebApplicationFactory settings are applied too late for that).
         Environment.SetEnvironmentVariable($"ConnectionStrings__{connectionStringName}", TestSqlServer.ConnectionString(testDatabase));
+        Environment.SetEnvironmentVariable("ConnectionStrings__messaging-db", TestSqlServer.ConnectionString("flowza_test_messaging"));
+        Environment.SetEnvironmentVariable("ConnectionStrings__rabbitmq", TestRabbitMq.ConnectionString());
         builder.UseEnvironment("Development");
     }
 

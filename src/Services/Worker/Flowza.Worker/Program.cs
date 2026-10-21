@@ -1,4 +1,4 @@
-﻿using Flowza.Worker;
+using Flowza.Worker;
 using Flowza.Worker.Persistence;
 using Flowza.Persistence;
 using Flowza.ServiceDefaults;
@@ -8,7 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddFlowzaServiceDefaults();
 builder.AddFlowzaApiSecurity();
-builder.AddWorkerPersistence();
+builder.AddWorkerInfrastructure();
 
 var app = builder.Build();
 

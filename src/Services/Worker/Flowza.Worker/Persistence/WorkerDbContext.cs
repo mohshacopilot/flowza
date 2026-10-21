@@ -1,5 +1,7 @@
 using Flowza.Persistence;
+using Flowza.Messaging;
 using Microsoft.EntityFrameworkCore;
+using Wolverine.EntityFrameworkCore;
 
 namespace Flowza.Worker.Persistence;
 
@@ -8,5 +10,7 @@ public sealed class WorkerDbContext(DbContextOptions<WorkerDbContext> options) :
 {
     protected override void ConfigureModel(ModelBuilder modelBuilder)
     {
+        // Wolverine's outbox/inbox tables, so business changes and outgoing events share one transaction.
+        modelBuilder.MapWolverineEnvelopeStorage(FlowzaMessagingExtensions.EnvelopeSchema);
     }
 }
