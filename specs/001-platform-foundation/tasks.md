@@ -34,7 +34,8 @@
 | T012 Password and lockout rules | ✅ | 305977d |
 | T013 OpenIddict server | ✅ | df9e6b7 |
 | T014 Login pages | ✅ | 0a0bb5d |
-| T015 Users API (+ T035) | ✅ | (next commit) |
+| T015 Users API (+ T035) | ✅ | bf22e83 |
+| T016 Me API | ✅ | (next commit) |
 
 **Notes from Phase 0 (decisions taken while building, within the approved plan):**
 - Tests run on **Microsoft.Testing.Platform** (xUnit v3 4.x); coverage via **coverlet.MTP** (the coverlet extension for that platform).
@@ -106,6 +107,8 @@ architecture test that was later replaced by the policy; the code is right, the 
 - T035: every log sink gets warnings, errors and events with an exception through `ExceptionMaskingSink`: exception
   texts and text properties have quoted SQL values and email addresses masked (EF Core also writes the exception text
   into its message as a property). The duplicate-email log-scan test failed before this fix.
+- T016: `GET /api/v1/me` and `POST /api/v1/me/password` for any logged-in user; a service token (client credentials)
+  gets 403 `me.not_a_user`. The API and the forced-change page share the `ChangeOwnPassword` use case.
 
 ## Phase 0: Foundation (M1)
 | ID | Task | Spec IDs | Done when |
@@ -198,7 +201,7 @@ architecture test that was later replaced by the policy; the code is right, the 
 | IAM-04-AC5 | T010, T015 | ✅ |
 | IAM-05-AC1 | T007, T022 | 🟡 services (T007); Gateway part in T022 |
 | IAM-06-AC1 | T012 | ✅ |
-| IAM-06-AC3 | T016, T027 | ⬜ |
+| IAM-06-AC3 | T016, T027 | 🟡 API (T016); screen in T027 |
 | IAM-07-AC1 | T012, T029 | 🟡 service + database (T012); end-to-end in T029 |
 | IAM-07-AC2 | T021 | ⬜ |
 | IAM-08-AC1 | T020, T022 | ⬜ |

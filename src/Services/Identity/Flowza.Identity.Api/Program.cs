@@ -1,5 +1,6 @@
 using Flowza.Identity.Api;
 using Flowza.Identity.Api.Connect;
+using Flowza.Identity.Api.Me;
 using Flowza.Identity.Api.Users;
 using Flowza.Identity.Infrastructure;
 using Flowza.Identity.Infrastructure.Persistence;
@@ -33,6 +34,7 @@ app.MapFlowzaDefaultEndpoints();
 app.MapConnectEndpoints();
 app.MapRazorPages();
 app.MapUserEndpoints();
+app.MapMeEndpoints();
 
 if (app.Environment.IsDevelopment())
 {
