@@ -1,32 +1,65 @@
+using System.Diagnostics;
 using Flowza.Common.Results;
+using Flowza.Common.Security;
+using Flowza.Contracts;
 using Flowza.Identity.Application.Abstractions;
+using Flowza.Identity.Application.Events;
 using Flowza.Identity.Domain.Users;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Wolverine.EntityFrameworkCore;
 
 namespace Flowza.Identity.Infrastructure.Persistence;
 
 /// <summary>
-/// Saves a use case's changes in one transaction and turns the database failures we expect into errors
-/// (constitution 8.5; task T035): a newer row version is a conflict, a duplicate username or email (a race the
-/// use case's own check could not see) is the same validation error as that check gives.
+/// Saves a use case's changes and its integration events in one transaction through Wolverine's EF Core outbox
+/// (constitution 3.3; IAM-L5), then sends the events. Database failures we expect become errors (constitution 8.5;
+/// task T035): a newer row version is a conflict, a duplicate username or email (a race the use case's own check
+/// could not see) is the same validation error as that check gives.
 /// </summary>
-internal sealed class UnitOfWork(IdentityServiceDbContext context) : IUnitOfWork
+internal sealed class UnitOfWork(
+    IDbContextOutbox<IdentityServiceDbContext> outbox,
+    TimeProvider timeProvider,
+    ICurrentUser currentUser) : IUnitOfWork
 {
     // SQL Server error numbers for a duplicate key in a unique index or constraint.
     private const int DuplicateKeyInUniqueIndex = 2601;
     private const int DuplicateKeyInUniqueConstraint = 2627;
 
+    private readonly List<IntegrationEvent> _events = [];
+
     public static Error ConcurrencyConflict { get; } = Error.Conflict(
         "common.changed_by_someone_else",
         "Someone else changed this record in the meantime. Reload it and try again.");
 
+    public void AddEvent(IntegrationEvent integrationEvent)
+    {
+        ArgumentNullException.ThrowIfNull(integrationEvent);
+        _events.Add(integrationEvent);
+    }
+
     public async Task<Result> SaveChangesAsync(CancellationToken cancellationToken)
     {
+        var context = outbox.DbContext;
+        var changedUsers = context.ChangeTracker.Entries<User>().Select(e => e.Entity).ToList();
+        var events = changedUsers.SelectMany(u => u.DomainEvents).Select(IdentityEventMapper.Map).Concat(_events).ToList();
+
+        var now = timeProvider.GetUtcNow();
+        var correlationId = Activity.Current?.TraceId.ToHexString();
+        foreach (var integrationEvent in events)
+        {
+            // The event itself names the user; the actor is who did it (the user at login, an admin otherwise).
+            await outbox.PublishAsync(integrationEvent with
+            {
+                OccurredAt = now,
+                ActorId = currentUser.UserId ?? ActorOf(integrationEvent),
+                CorrelationId = correlationId,
+            });
+        }
+
         try
         {
-            await context.SaveChangesAsync(cancellationToken);
-            return Result.Success();
+            await outbox.SaveChangesAndFlushMessagesAsync(cancellationToken);
         }
         catch (DbUpdateConcurrencyException)
         {
@@ -42,13 +75,27 @@ internal sealed class UnitOfWork(IdentityServiceDbContext context) : IUnitOfWork
                 : sql.Message.Contains("NormalizedUserName", StringComparison.Ordinal) ? Failed(UserErrors.UsernameTaken)
                 : throw new InvalidOperationException("A unique index was violated.", exception);
         }
+
+        _events.Clear();
+        changedUsers.ForEach(u => u.ClearDomainEvents());
+        return Result.Success();
     }
 
-    // The failed changes are dropped, so no later save of this scope (e.g. Wolverine's transaction middleware) can
-    // try them again: the use case has failed as a whole.
+    // Login events happen before anyone is logged in; the user themselves is the actor.
+    private static Guid? ActorOf(IntegrationEvent integrationEvent) => integrationEvent switch
+    {
+        Contracts.Identity.Events.V1.UserLoggedIn e => e.UserId,
+        Contracts.Identity.Events.V1.UserLoginFailed e => e.UserId,
+        Contracts.Identity.Events.V1.UserLockedOut e => e.UserId,
+        _ => null,
+    };
+
+    // The failed changes (and the events with them) are dropped, so no later save of this scope can try them again:
+    // the use case has failed as a whole.
     private Result Failed(Error error)
     {
-        context.ChangeTracker.Clear();
+        outbox.DbContext.ChangeTracker.Clear();
+        _events.Clear();
         return error;
     }
 }

@@ -1,4 +1,5 @@
 using Flowza.Common.Results;
+using Flowza.Contracts;
 using Flowza.Identity.Domain.Users;
 
 namespace Flowza.Identity.Application.Abstractions;
@@ -47,6 +48,12 @@ public interface IUserCredentials
 /// <summary>Saves all changes of one use case in one transaction, together with its outgoing events (constitution 3.3).</summary>
 public interface IUnitOfWork
 {
+    /// <summary>
+    /// An event that is not a domain event of a changed aggregate (e.g. a login); it is saved with the next
+    /// <see cref="SaveChangesAsync"/>. The domain events of changed users are added automatically.
+    /// </summary>
+    void AddEvent(IntegrationEvent integrationEvent);
+
     /// <summary>
     /// Expected database failures come back as errors, never as exceptions: a concurrent change is a conflict
     /// (constitution 8.5) and a duplicate username or email a validation error (C3, C4).

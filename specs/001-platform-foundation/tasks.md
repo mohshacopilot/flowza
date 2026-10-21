@@ -35,7 +35,8 @@
 | T013 OpenIddict server | ✅ | df9e6b7 |
 | T014 Login pages | ✅ | 0a0bb5d |
 | T015 Users API (+ T035) | ✅ | bf22e83 |
-| T016 Me API | ✅ | (next commit) |
+| T016 Me API | ✅ | 4a4c89d |
+| T017 Integration events | ✅ | (next commit) |
 
 **Notes from Phase 0 (decisions taken while building, within the approved plan):**
 - Tests run on **Microsoft.Testing.Platform** (xUnit v3 4.x); coverage via **coverlet.MTP** (the coverlet extension for that platform).
@@ -109,6 +110,12 @@ architecture test that was later replaced by the policy; the code is right, the 
   into its message as a property). The duplicate-email log-scan test failed before this fix.
 - T016: `GET /api/v1/me` and `POST /api/v1/me/password` for any logged-in user; a service token (client credentials)
   gets 403 `me.not_a_user`. The API and the forced-change page share the `ChangeOwnPassword` use case.
+- T017: **10** events in `Flowza.Contracts.Identity.Events.V1` — exactly the rows of plan §7 (PA2 says "11 events";
+  the table lists 10; to confirm with the owner). The unit of work turns the User aggregate's domain events into
+  integration events, adds explicit ones (logins) and saves them with the change through Wolverine's EF Core outbox
+  (`IDbContextOutbox`). Standard fields are stamped at save time; the actor of login events is the user. Unknown
+  usernames only count in the `flowza.identity.login.unknown_username` metric (meter `Flowza.Identity`). No event has a
+  subscriber yet except the deny-list events (T018); the others wait for the Audit service (v0.4).
 
 ## Phase 0: Foundation (M1)
 | ID | Task | Spec IDs | Done when |
@@ -205,7 +212,7 @@ architecture test that was later replaced by the policy; the code is right, the 
 | IAM-07-AC1 | T012, T029 | 🟡 service + database (T012); end-to-end in T029 |
 | IAM-07-AC2 | T021 | ⬜ |
 | IAM-08-AC1 | T020, T022 | ⬜ |
-| IAM-L5-AC1 | T017 | ⬜ |
+| IAM-L5-AC1 | T017 | ✅ |
 | PLT-02-AC1 | T006, T029 | 🟡 AppHost start verified by hand; end-to-end test in T029 |
 | PLT-03-AC1 | T007 | ✅ |
 | PLT-03-AC2 | T009 | ✅ |

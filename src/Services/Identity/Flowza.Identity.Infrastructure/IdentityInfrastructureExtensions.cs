@@ -70,6 +70,7 @@ public static class IdentityInfrastructureExtensions
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IUserCredentials, UserCredentials>();
         services.AddScoped<PasswordLogin>();
+        services.AddSingleton<LoginMetrics>();
         services.AddScoped<LoginSessionRenewer>();
         services.TryAddScoped<ISessionRevoker, NoSessionRevoker>();
         services.AddSingleton<ICommonPasswordList, EmbeddedCommonPasswordList>();
