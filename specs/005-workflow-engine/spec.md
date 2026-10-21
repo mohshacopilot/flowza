@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | **Draft**; clarifications C1–C12 answered by the owner on 2026-10-21; waiting for approval |
+| **Status** | **Approved by the owner, 2026-10-21** (clarifications C1–C12 answered) |
 | **Date** | 2026-10-21 |
 | **Modules** | WF (Workflow engine) |
 | **Scope IDs** | WF-01 to WF-09, WF-11 to WF-15 ([v0.1 scope](../v0.1-scope.md)); reference scenarios RS-1 and RS-2. WF-10 is in v0.2 |
@@ -302,4 +302,4 @@ From the [v0.1 scope](../v0.1-scope.md) section 6: NFR-01 (only the assignee or 
 - [x] Every acceptance criterion is testable; the manual checks are marked
 - [x] Out-of-scope items are listed so nobody builds them by mistake
 - [x] All clarifications answered (C1–C12, 2026-10-21)
-- [ ] Approved by the owner
+- [x] Approved by the owner (2026-10-21)
