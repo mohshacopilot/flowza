@@ -105,6 +105,10 @@ dotnet tool install -g Rnwood.Smtp4dev
 ## 5. Start Flowza
 Open `Flowza.slnx` in Visual Studio 2026, set **Flowza.AppHost** as the startup project and press **F5**. Development runs on plain HTTP (no certificate needed): the Aspire dashboard opens at http://localhost:15100 and the mailbox (smtp4dev) is at http://localhost:5000.
 
+The web app needs **Node.js 24 LTS** (with npm) on the PC. The AppHost runs `npm install` and then the web
+app's Vite dev server as a program (resource `web`, http://localhost:5105); no Docker. Details and the npm
+scripts: [src/Web/README.md](../../src/Web/README.md).
+
 ## 6. What to tell Claude
 Only these, never passwords:
 - SQL: login name (e.g. `flowza_app`), server `localhost`

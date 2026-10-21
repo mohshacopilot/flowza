@@ -60,6 +60,36 @@ Also: name properties (UserName, DisplayName, …) are masked in logs; log folde
 folder; topic names are safe for nested/generic types. (The T008 commit message mentions a `[Deduplicated]`
 architecture test that was later replaced by the policy; the code is right, the message is outdated.)
 
+**Web app stream (Phase 3, parallel worktree, 2026-10-21):**
+| Task | Status | Commit |
+|---|---|---|
+| T023 Web scaffold (+ AppHost `web` resource) | ✅ | 0e1526d |
+| T024 Shell | ✅ | 0e87e65 |
+| T025 API client set-up | ✅ (generation from Identity's real document waits for its OpenAPI endpoint) | dfe38a6 |
+
+Decisions taken while building (within the approved plan; see [src/Web/README.md](../../src/Web/README.md)):
+- **Versions** (exact, `save-exact`): React 19.3, Vite 8.3, antd 6.6, React Router 8.5, TanStack Query 5.104,
+  i18next 26 / react-i18next 17, orval 8.43, Vitest 5, MSW 3, Prettier 3.9. **TypeScript 6.0** (not 7.0:
+  typescript-eslint supports < 6.1) and **ESLint 9.39** (not 10: eslint-plugin-jsx-a11y supports ≤ 9; npm marks
+  ESLint 9 as no longer supported). **jsdom 29.1** (jsdom 30 needs Node 24.15; the PC has 24.14).
+- **Tooling packages that come with the approved tools** (dev only, MIT unless noted): `@vitejs/plugin-react`,
+  `typescript-eslint`, `@eslint/js`, `eslint-plugin-react-hooks`, `eslint-plugin-react-refresh`,
+  `eslint-config-prettier`, `globals`, `@testing-library/user-event`, `@testing-library/jest-dom`,
+  `@testing-library/dom`, `jsdom`, `@types/*`; runtime: `@ant-design/icons` (Ant Design's icon set, MIT).
+  NuGet: `Aspire.Hosting.JavaScript` 13.6.2 (MIT, an Aspire hosting package, PA6).
+- **No hard-coded text** is enforced with ESLint's built-in `no-restricted-syntax` (no extra plugin); tested in
+  `tooling/eslint-rules.test.ts`.
+- **Contract assumptions for the Gateway (T020/T021)**, all in one file each so they are easy to change:
+  `GET /bff/user` → `{ displayName, roles }` with role names `PlatformAdmin`, `AppDesigner`, `User`
+  (`shared/auth/systemRoles.ts`); login `GET /bff/login?returnUrl=…`, logout `GET /bff/logout` as full-page
+  navigations (`shared/auth/session.ts`); anti-forgery header **`X-CSRF: 1`** on POST/PUT/PATCH/DELETE
+  (`shared/api/apiFetch.ts`); web app dev server on **port 5105** (AppHost resource `web`, referenced by the Gateway).
+- **API documents:** `openapi/<service>.json` saved from `/openapi/v1.json` of each running service
+  (`npm run api:fetch`, development only) and committed together with the generated hooks; service paths
+  `/api/v1/…` become the Gateway's `/api/<service>/v1/…`. Services must expose the document anonymously in Development.
+- Arrow keys and Enter inside Ant Design menus need real browser layout, so jsdom tests cover opening, focus and
+  Escape; the arrow keys were checked by hand in a browser and belong in the T029 end-to-end tests.
+
 ## Phase 0: Foundation (M1)
 | ID | Task | Spec IDs | Done when |
 |---|---|---|---|
@@ -141,7 +171,7 @@ architecture test that was later replaced by the policy; the code is right, the 
 |---|---|---|
 | IAM-01-AC1 | T020, T022, T029 | ⬜ |
 | IAM-01-AC2 | T014 | ⬜ |
-| IAM-02-AC1 | T015, T024, T026 | ⬜ |
+| IAM-02-AC1 | T015, T024, T026 | 🟡 web: navigation by role and 403 page (T024, `IAM_02_AC1_*`); server checks in T015, screens in T026 |
 | IAM-02-AC2 | T010, T015 | ⬜ |
 | IAM-03-AC1 | T019, T014, T029 | ⬜ |
 | IAM-04-AC1 | T015, T026 | ⬜ |
@@ -162,7 +192,7 @@ architecture test that was later replaced by the policy; the code is right, the 
 | PLT-04-AC1 | T009 | ✅ SqlServer + RabbitMq |
 | PLT-04-AC2 | T009 | ✅ SqlServer + RabbitMq |
 | PLT-05-AC1 | T007 | ✅ |
-| PLT-05-AC2 | T009, T024 | 🟡 across services via messaging ✅; error screen in T024 |
+| PLT-05-AC2 | T009, T024 | ✅ across services via messaging (T009); error screens show the reference code (T024, `PLT_05_AC2_*`) |
 | PLT-05-AC3 | T009 | ✅ |
 | PLT-06-AC1 | T030 (manual) | ⬜ |
 | PLT-07-AC1 | T028 + features 002–005 (A1) | ⬜ |
