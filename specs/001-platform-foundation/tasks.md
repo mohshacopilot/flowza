@@ -9,9 +9,9 @@
 ## Before coding: owner's one-time setup
 | # | Step | Needed from |
 |---|---|---|
-| O1 | Create the SQL login (e.g. `flowza_app`) and run [docs/setup/create-databases.sql](../../docs/setup/create-databases.sql) | T007 |
+| O1 | Allow SQL logins, create the SQL login (e.g. `flowza_app`) and run [docs/setup/create-databases.sql](../../docs/setup/create-databases.sql) (steps: [local-setup.md](../../docs/setup/local-setup.md) §1) | T007 |
 | O2 | Store secrets on the PC (commands will be given in T006): SQL login password, RabbitMQ password | T006 |
-| O3 | Install Erlang + RabbitMQ, enable the management plugin, create a RabbitMQ user (until then the SQL Server transport is used) | T008 (RabbitMQ part) |
+| O3 | Install Erlang + RabbitMQ, enable the management plugin, create virtual hosts `flowza` and `flowza_test` and the user `flowza_app` ([local-setup.md](../../docs/setup/local-setup.md) §2). Until then the SQL Server transport is used | T008 (RabbitMQ part) |
 | O4 | Install smtp4dev: `dotnet tool install -g Rnwood.Smtp4dev` | T006 |
 
 ## Phase 0: Foundation (M1)
