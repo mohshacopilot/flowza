@@ -4,5 +4,6 @@
     <ProjectReference Include="..\..\src\BuildingBlocks\Flowza.Persistence\Flowza.Persistence.csproj" />
     <ProjectReference Include="..\..\src\BuildingBlocks\Flowza.Messaging\Flowza.Messaging.csproj" />
     <ProjectReference Include="..\..\src\ServiceDefaults\Flowza.ServiceDefaults\Flowza.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\Flowza.Testing\Flowza.Testing.csproj" />
   </ItemGroup>
 </Project>

@@ -1,21 +1,25 @@
 <Project>
   <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
 
-  <!-- Shared settings for all test projects (tech discussion T8). -->
+  <!-- Same secrets store as the AppHost (passwords set once per PC); CI uses environment variables instead. -->
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <IsTestProject>true</IsTestProject>
-    <!-- Same secrets store as the AppHost (passwords set once per PC); CI uses environment variables instead. -->
     <UserSecretsId>flowza-dev</UserSecretsId>
   </PropertyGroup>
 
-  <ItemGroup>
+  <!-- Shared settings for the test projects (names ending in "Tests"; tech discussion T8).
+       Helper libraries such as Flowza.Testing are plain class libraries. -->
+  <PropertyGroup Condition="$(MSBuildProjectName.EndsWith('Tests'))">
+    <OutputType>Exe</OutputType>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup Condition="$(MSBuildProjectName.EndsWith('Tests'))">
     <PackageReference Include="xunit.v3" />
     <PackageReference Include="Shouldly" />
     <PackageReference Include="coverlet.MTP" />
   </ItemGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="$(MSBuildProjectName.EndsWith('Tests'))">
     <Using Include="Xunit" />
     <Using Include="Shouldly" />
   </ItemGroup>
