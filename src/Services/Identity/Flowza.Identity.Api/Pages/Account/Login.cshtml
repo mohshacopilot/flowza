@@ -1,0 +1,26 @@
+@page "/account/login"
+@model Flowza.Identity.Api.Pages.Account.LoginModel
+@{
+    ViewData["Title"] = T[AccountTexts.LoginTitle];
+}
+
+<h1>@T[AccountTexts.LoginTitle]</h1>
+
+@if (Model.ErrorMessage is not null)
+{
+    <div class="errors" role="alert" id="login-error">@Model.ErrorMessage</div>
+}
+
+<form method="post" novalidate>
+    <input type="hidden" asp-for="ReturnUrl" />
+    <div class="field">
+        <label for="username">@T[AccountTexts.LoginUsername]</label>
+        <input id="username" name="Username" value="@Model.Username" type="text" autocomplete="username" autocapitalize="none"
+               spellcheck="false" required autofocus aria-describedby="@(Model.ErrorMessage is null ? null : "login-error")" />
+    </div>
+    <div class="field">
+        <label for="password">@T[AccountTexts.LoginPassword]</label>
+        <input id="password" name="Password" type="password" autocomplete="current-password" required />
+    </div>
+    <button type="submit">@T[AccountTexts.LoginSubmit]</button>
+</form>

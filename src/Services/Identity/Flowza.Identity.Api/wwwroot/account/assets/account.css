@@ -1,0 +1,80 @@
+/* Identity's own pages (login, change password) in Flowza's look; served under /account so the Gateway routes it here. */
+:root {
+  --flowza-primary: #1f5eff;
+  --flowza-text: #1f2329;
+  --flowza-muted: #5c6370;
+  --flowza-error: #b42318;
+  --flowza-border: #d0d5dd;
+  --flowza-background: #f4f6fa;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Segoe UI", Roboto, "Noto Sans", Arial, sans-serif;
+  color: var(--flowza-text);
+  background: var(--flowza-background);
+}
+
+.skip-link { position: absolute; left: -10000px; }
+.skip-link:focus { left: 1rem; top: 1rem; padding: 0.5rem; background: #fff; }
+
+.brand {
+  padding: 1.5rem;
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--flowza-primary);
+}
+
+.card {
+  max-width: 24rem;
+  margin: 0 auto 2rem;
+  padding: 2rem;
+  background: #fff;
+  border: 1px solid var(--flowza-border);
+  border-radius: 8px;
+}
+
+h1 { margin-top: 0; font-size: 1.25rem; }
+
+.field { margin-bottom: 1rem; }
+.field label { display: block; margin-bottom: 0.25rem; font-weight: 600; }
+.field input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font: inherit;
+  border: 1px solid var(--flowza-border);
+  border-radius: 4px;
+}
+
+.hint { color: var(--flowza-muted); font-size: 0.875rem; }
+
+input:focus-visible, button:focus-visible, a:focus-visible {
+  outline: 3px solid var(--flowza-primary);
+  outline-offset: 2px;
+}
+
+button {
+  width: 100%;
+  padding: 0.6rem;
+  font: inherit;
+  font-weight: 600;
+  color: #fff;
+  background: var(--flowza-primary);
+  border: 0;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.errors {
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  color: var(--flowza-error);
+  border: 1px solid var(--flowza-error);
+  border-radius: 4px;
+}
+
+.errors ul { margin: 0.25rem 0 0; padding-left: 1.25rem; }

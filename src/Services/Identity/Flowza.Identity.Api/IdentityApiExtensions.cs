@@ -32,6 +32,24 @@ public static class IdentityApiExtensions
 
         // Check the security stamp on every request, so deactivation and password resets end the login at once (K7).
         builder.Services.Configure<SecurityStampValidatorOptions>(options => options.ValidationInterval = TimeSpan.Zero);
+
+        // Login and change-password pages (SE2), texts from Resources/*.resx (constitution 12.1).
+        builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+        builder.Services.AddRazorPages();
         return builder;
+    }
+
+    /// <summary>English only in v0.1 (constitution 12.1); more cultures are added with their .resx files.</summary>
+    public static readonly string[] SupportedCultures = ["en"];
+
+    public static WebApplication UseIdentityLoginPages(this WebApplication app)
+    {
+        ArgumentNullException.ThrowIfNull(app);
+        app.UseRequestLocalization(options => options
+            .SetDefaultCulture(SupportedCultures[0])
+            .AddSupportedCultures(SupportedCultures)
+            .AddSupportedUICultures(SupportedCultures));
+        app.UseStaticFiles();
+        return app;
     }
 }

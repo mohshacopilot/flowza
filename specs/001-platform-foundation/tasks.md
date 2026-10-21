@@ -32,7 +32,8 @@
 | T010 Identity domain | ✅ | faa28b8 |
 | T011 Identity database | ✅ | dd1ddd0 |
 | T012 Password and lockout rules | ✅ | 305977d |
-| T013 OpenIddict server | ✅ | (next commit) |
+| T013 OpenIddict server | ✅ | df9e6b7 |
+| T014 Login pages | ✅ | (next commit) |
 
 **Notes from Phase 0 (decisions taken while building, within the approved plan):**
 - Tests run on **Microsoft.Testing.Platform** (xUnit v3 4.x); coverage via **coverlet.MTP** (the coverlet extension for that platform).
@@ -87,6 +88,12 @@ architecture test that was later replaced by the policy; the code is right, the 
   wiring of these secrets is left to the main session** (outside this stream). Access tokens 15 min, refresh tokens
   12 h absolute (no sliding). Development signing/encryption certificates; production certificates by thumbprint
   from the local machine store. The full login → code → token round trip is tested in T014 (needs the login page).
+- T014: Razor pages `/account/login` and `/account/change-password` (texts in `Resources/AccountTexts.resx`, CSS under
+  `/account/assets` so the Gateway's `/account/**` route serves it). The login cookie of Identity is `SameSite=Lax`
+  (it must survive the redirects from the Gateway) and its security stamp is checked on every request. A user who
+  must change the password cannot get a code until they do (IAM-03, IAM-04-AC2). Wolverine resolves the ports of a
+  use case by service location, so all of them share one DI scope and one DbContext (Wolverine's own default refuses
+  internal implementation classes).
 
 ## Phase 0: Foundation (M1)
 | ID | Task | Spec IDs | Done when |
@@ -168,10 +175,10 @@ architecture test that was later replaced by the policy; the code is right, the 
 | Criterion | Task(s) | Status |
 |---|---|---|
 | IAM-01-AC1 | T020, T022, T029 | ⬜ |
-| IAM-01-AC2 | T014 | ⬜ |
+| IAM-01-AC2 | T014 | ✅ |
 | IAM-02-AC1 | T015, T024, T026 | ⬜ |
 | IAM-02-AC2 | T010, T015 | 🟡 domain rules (T010); API in T015 |
-| IAM-03-AC1 | T019, T014, T029 | ⬜ |
+| IAM-03-AC1 | T019, T014, T029 | 🟡 forced change (T014); first admin in T019; end-to-end in T029 |
 | IAM-04-AC1 | T015, T026 | ⬜ |
 | IAM-04-AC2 | T015, T026 | ⬜ |
 | IAM-04-AC3 | T015, T018, T022 | ⬜ |

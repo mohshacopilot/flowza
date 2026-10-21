@@ -24,10 +24,12 @@ builder.AddIdentityLoginSession();
 var app = builder.Build();
 
 app.UseFlowzaErrorHandling();
+app.UseIdentityLoginPages();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapFlowzaDefaultEndpoints();
 app.MapConnectEndpoints();
+app.MapRazorPages();
 
 // Small, login-protected endpoint that tells which service answered (used by Gateway and tests).
 app.MapGet("/api/v1/info", () => new { service = "identity" });

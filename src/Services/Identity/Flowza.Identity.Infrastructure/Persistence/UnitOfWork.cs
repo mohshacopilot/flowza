@@ -30,7 +30,7 @@ internal sealed class UnitOfWork(IdentityServiceDbContext context) : IUnitOfWork
         }
         catch (DbUpdateConcurrencyException)
         {
-            return ConcurrencyConflict;
+            return Failed(ConcurrencyConflict);
         }
         catch (DbUpdateException exception) when (exception.InnerException is SqlException
         {
@@ -38,9 +38,17 @@ internal sealed class UnitOfWork(IdentityServiceDbContext context) : IUnitOfWork
         } sql)
         {
             // Only the index name is read; the message also quotes the duplicate value, which must not travel further.
-            return sql.Message.Contains("NormalizedEmail", StringComparison.Ordinal) ? UserErrors.EmailTaken
-                : sql.Message.Contains("NormalizedUserName", StringComparison.Ordinal) ? UserErrors.UsernameTaken
+            return sql.Message.Contains("NormalizedEmail", StringComparison.Ordinal) ? Failed(UserErrors.EmailTaken)
+                : sql.Message.Contains("NormalizedUserName", StringComparison.Ordinal) ? Failed(UserErrors.UsernameTaken)
                 : throw new InvalidOperationException("A unique index was violated.", exception);
         }
+    }
+
+    // The failed changes are dropped, so no later save of this scope (e.g. Wolverine's transaction middleware) can
+    // try them again: the use case has failed as a whole.
+    private Result Failed(Error error)
+    {
+        context.ChangeTracker.Clear();
+        return error;
     }
 }

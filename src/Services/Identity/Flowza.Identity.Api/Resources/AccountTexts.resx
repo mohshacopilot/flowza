@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Product.Name" xml:space="preserve">
+    <value>Flowza</value>
+  </data>
+  <data name="Layout.SkipToContent" xml:space="preserve">
+    <value>Skip to the form</value>
+  </data>
+  <data name="Login.Title" xml:space="preserve">
+    <value>Log in</value>
+  </data>
+  <data name="Login.Username" xml:space="preserve">
+    <value>Username</value>
+  </data>
+  <data name="Login.Password" xml:space="preserve">
+    <value>Password</value>
+  </data>
+  <data name="Login.Submit" xml:space="preserve">
+    <value>Log in</value>
+  </data>
+  <data name="Login.Invalid" xml:space="preserve">
+    <value>Username or password is incorrect.</value>
+  </data>
+  <data name="Login.LockedOut" xml:space="preserve">
+    <value>This account is locked after too many wrong passwords. Try again in 15 minutes, or ask an administrator to unlock it.</value>
+  </data>
+  <data name="ChangePassword.Title" xml:space="preserve">
+    <value>Choose a new password</value>
+  </data>
+  <data name="ChangePassword.Intro" xml:space="preserve">
+    <value>You must choose a new password before you continue.</value>
+  </data>
+  <data name="ChangePassword.Current" xml:space="preserve">
+    <value>Current (temporary) password</value>
+  </data>
+  <data name="ChangePassword.New" xml:space="preserve">
+    <value>New password</value>
+  </data>
+  <data name="ChangePassword.Confirm" xml:space="preserve">
+    <value>Repeat the new password</value>
+  </data>
+  <data name="ChangePassword.Rules" xml:space="preserve">
+    <value>At least 10 characters. Not a commonly used password, and not your username.</value>
+  </data>
+  <data name="ChangePassword.Submit" xml:space="preserve">
+    <value>Save the new password</value>
+  </data>
+  <data name="ChangePassword.Mismatch" xml:space="preserve">
+    <value>The two new passwords are not the same.</value>
+  </data>
+  <data name="Errors.SummaryTitle" xml:space="preserve">
+    <value>Please correct the following:</value>
+  </data>
+  <data name="passwords.too_short" xml:space="preserve">
+    <value>The new password must have at least 10 characters.</value>
+  </data>
+  <data name="passwords.common" xml:space="preserve">
+    <value>The new password is too common. Choose another one.</value>
+  </data>
+  <data name="passwords.same_as_username" xml:space="preserve">
+    <value>The new password must not be your username.</value>
+  </data>
+  <data name="passwords.current_wrong" xml:space="preserve">
+    <value>The current password is not correct.</value>
+  </data>
+  <data name="common.changed_by_someone_else" xml:space="preserve">
+    <value>Your account was changed in the meantime. Please try again.</value>
+  </data>
+</root>

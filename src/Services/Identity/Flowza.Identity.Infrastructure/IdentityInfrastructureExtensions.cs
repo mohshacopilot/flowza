@@ -7,6 +7,7 @@ using Flowza.Identity.Infrastructure.Passwords;
 using Flowza.Identity.Infrastructure.Persistence;
 using Flowza.Messaging;
 using Flowza.Persistence;
+using JasperFx.CodeGeneration.Model;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.AspNetCore.Identity;
@@ -15,6 +16,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using Wolverine;
 
 namespace Flowza.Identity.Infrastructure;
 
@@ -36,7 +38,18 @@ public static class IdentityInfrastructureExtensions
 
         builder.Services.AddFlowzaDbContext<IdentityServiceDbContext>(connectionString);
         builder.Services.AddHealthChecks().AddSqlServer(connectionString, name: "database");
-        builder.AddFlowzaMessaging("identity", connectionString, MessageRoutes.Default);
+        // Wolverine is also the in-process mediator (T2, S1): it finds the use-case handlers of the application layer.
+        // Their ports are resolved from one DI scope per use case (service location), so repository, credentials and
+        // unit of work share one DbContext and therefore one transaction.
+        builder.AddFlowzaMessaging(
+            "identity",
+            connectionString,
+            MessageRoutes.Default,
+            options =>
+            {
+                options.Discovery.IncludeAssembly(typeof(Application.AssemblyMarker).Assembly);
+                options.ServiceLocationPolicy = ServiceLocationPolicy.AlwaysAllowed;
+            });
 
         builder.Services.AddDataProtection().SetApplicationName(DataProtectionApplicationName);
         builder.Services.AddSingleton<IConfigureOptions<KeyManagementOptions>>(provider =>
@@ -54,6 +67,7 @@ public static class IdentityInfrastructureExtensions
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IUserCredentials, UserCredentials>();
         services.AddScoped<PasswordLogin>();
+        services.AddScoped<LoginSessionRenewer>();
         services.TryAddScoped<ISessionRevoker, NoSessionRevoker>();
         services.AddSingleton<ICommonPasswordList, EmbeddedCommonPasswordList>();
         services.AddSingleton<PasswordPolicy>();

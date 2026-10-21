@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="@System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] – @T[AccountTexts.ProductName]</title>
+    <link rel="stylesheet" href="/account/assets/account.css" />
+</head>
+<body>
+    <a class="skip-link" href="#main">@T[AccountTexts.SkipToContent]</a>
+    <header class="brand">@T[AccountTexts.ProductName]</header>
+    <main id="main" class="card">
+        @RenderBody()
+    </main>
+</body>
+</html>
