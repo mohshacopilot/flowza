@@ -56,6 +56,10 @@ same method by hand; the file layout matches Spec Kit's, so it can be adopted la
 - Subagents in `.claude/agents/`: **code-reviewer** (read-only review against spec, plan, constitution; after each
   phase and before merging a stream), **spec-writer** (writes `specs/<feature>/spec.md` from discussion files;
   only in `specs/`), **test-verifier** (build + tests + traceability check).
+- Skills in `.claude/skills/` (SK1, 2026-10-21): **implement-task** (the SDD loop for one task: read → code + ID-named
+  tests → 0 warnings → tests → one local commit → update tasks.md), **write-plan** (plan.md in the format of plan 001,
+  with patterns, DSA costs and the PA approval list), **run-and-verify** (start the AppHost, check every service's
+  readiness with `scripts/check-platform.ps1`, run all tests, report). Use them for those jobs in every session.
 - **Hybrid flow:** feature 001 tasks T002–T009 run **sequentially** in the main session (they share files). After
   T009, up to three **parallel streams**, each a separate session in its **own git worktree and branch**:
   (1) Identity backend T010–T019, (2) web app shell T023–T025, (3) specs 002–006 via spec-writer. A stream is
