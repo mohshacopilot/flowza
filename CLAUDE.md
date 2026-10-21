@@ -127,6 +127,55 @@ source-generated mediator) and manual mapping (or Mapster).
 - **Form data layers (ADR-0003):** a field key is a name inside the record's JSON, **never** a database column in Runtime. Each workflow step saves **only the fields it may edit** (merged onto the latest record); parallel branches never share an editable field (publish check). Real per-form tables exist only in the rebuildable reporting copy (Layer 3).
 - **v0.1 prepares for Audit:** every important action publishes an integration event that carries an event ID, actor, time (UTC) and correlation ID.
 
+## Engineering principles: SOLID, design patterns, DSA (mandatory, constitution Article 4)
+Every plan, task and line of code follows these. They are checked in every code review.
+
+**SOLID (constitution 4.3)**
+- **S**ingle responsibility: one class, one job (e.g. a vertical-slice handler does one use case; validators, mappers and
+  persistence are separate classes).
+- **O**pen/closed: new behaviour by adding a class, not by editing a `switch` that keeps growing (approver rules, field
+  types, node types, message transports, audit/read stores are all pluggable).
+- **L**iskov: every implementation of an interface passes the same tests (e.g. both message transports; both audit
+  stores, ADR-0001).
+- **I**nterface segregation: small, focused interfaces at boundaries (`IEmailSender`, `IFileStorage`, `ICurrentUser`),
+  not "god" services.
+- **D**ependency inversion: Domain and Application depend on abstractions; Infrastructure implements them; wiring only
+  in the composition root (Program / extension methods). No `new` of infrastructure inside business code.
+- Prefer composition over inheritance; keep classes small; no static mutable state.
+
+**Design patterns (constitution 4.4): use one only when it solves a real problem here, and name it in `plan.md`.**
+Patterns already chosen:
+| Pattern | Where |
+|---|---|
+| Strategy + registry | Approver rules (ORG-06), form field types (FRM), workflow node behaviours (WF), message transport (ADR-0005), audit and read stores (ADR-0001/0002) |
+| State | Request and task status (WF): illegal moves impossible |
+| Command | Workflow actions (Approve, Reject, SendBack, Claim, Release…) and CQRS-lite commands |
+| Mediator | Wolverine as in-process mediator (T2 S1) |
+| Interpreter + Visitor | Expression language: parser → syntax tree → type checker and evaluator as visitors (EXP) |
+| Specification | Publish checks of an app version (APP) |
+| Prototype | New draft copied from a published version (APP) |
+| Transactional outbox, process manager / saga | Messaging (ADR-0004); the workflow engine is the process manager; Wolverine sagas for technical jobs (AR1) |
+| Adapter | `IEmailSender` (MailKit), `IFileStorage` (disk / Azure Blob), message transports |
+| Result | Expected failures as `Result`/`Error`, exceptions only for the unexpected (T2 S4) |
+| Decorator / middleware | Cross-cutting behaviour (validation, transactions, logging) around handlers |
+Do not add a pattern "just in case" (constitution 9.1).
+
+**Data structures and algorithms (constitution 4.5): choose on purpose and state the time cost in `plan.md`.**
+| Problem | Choice | Cost |
+|---|---|---|
+| Org tree: units below / above a unit (ORG) | Adjacency list + materialized path, indexed | Descendants: index seek; ancestors: O(depth); move-loop check O(1) |
+| Manager chain loops (ORG-04) | Walk up the chain | O(chain length) |
+| Process graph checks (WF-04) | BFS reachability, reverse BFS, DFS three-colour cycle detection, stack-based split/join matching | O(V+E) each |
+| Calculated fields and show/hide order (FRM-06) | Dependency graph + topological sort (Kahn), cycle report | O(V+E) |
+| Expressions (EXP) | Hand-written lexer + Pratt parser + tree-walking evaluator; `^` by repeated squaring | O(n) per stage; O(log n) for powers |
+| Parallel branches sharing editable fields (ADR-0003) | Set intersection per branch | O(fields) |
+| Restart copy by key (APP-05) | Dictionary lookup | O(fields) |
+| Request numbers (INB-05) | One counter row per process and year, updated inside the transaction | O(1), no gaps |
+| Lists (INB) | Indexed queries with paging (page + size + total), keyset later where needed | Index seek per page |
+| Record IDs (T3 D3) | Time-ordered GUIDs in SQL Server sort order | Append-only index inserts |
+| Duplicate events (MS3) | Deduplication by EventId (hashed key) | O(1) lookup |
+Algorithms get unit tests including edge cases (empty, single item, cycles, large inputs where performance matters).
+
 ## Planned repository layout
 ```
 CLAUDE.md

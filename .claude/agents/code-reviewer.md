@@ -18,6 +18,11 @@ Read `CLAUDE.md`, `docs/constitution.md`, and for the feature under review its `
    not implementation details; integration tests use real SQL Server (`flowza_test_*`).
 3. **Architecture:** layers (Domain → Application → Infrastructure → Api), no cross-service references, no
    shared databases, events through the outbox, idempotent handlers, versioned contracts.
+3a. **SOLID, design patterns, DSA** (CLAUDE.md "Engineering principles"; constitution 4.3–4.5): classes with one job;
+   new behaviour added by new classes rather than growing switches; abstractions at boundaries and no `new` of
+   infrastructure in business code; patterns used only where they solve a real problem and named in `plan.md`;
+   data structures and algorithms chosen on purpose, with their time cost stated where it matters and covered by
+   edge-case tests. Flag over-engineering as well as missing structure.
 4. **Security and privacy:** server-side authorization on every action; validation on the server; no SQL built
    from input; **no personal data or form values in logs, errors or events**; no secrets in files.
 5. **Data:** UTC times, rowversion on aggregates, soft delete (no hard delete of business records).

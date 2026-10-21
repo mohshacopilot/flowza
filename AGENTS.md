@@ -12,6 +12,8 @@ This file is only a pointer, so there is **one source of truth**. Before doing a
 
 Key rules, in short (details in CLAUDE.md):
 - **No code without an approved spec**; tests carry spec IDs in their names (e.g. `IAM_07_AC1_...`).
+- Follow **SOLID**, use **design patterns** only where they solve a real problem, and choose **data structures and
+  algorithms** on purpose (CLAUDE.md "Engineering principles"; constitution Article 4).
 - No new library, API/event contract or database change without the owner's approval (constitution 1.6).
 - No personal data or form values in logs; no secrets in git.
 - Build with 0 warnings; all tests green; commit locally with Conventional Commits and spec IDs;
