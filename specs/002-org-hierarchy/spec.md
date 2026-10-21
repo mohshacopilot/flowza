@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | **Draft**; clarifications C1–C9 answered by the owner on 2026-10-21; waiting for approval |
+| **Status** | **Approved by the owner, 2026-10-21** (clarifications C1–C9 answered) |
 | **Date** | 2026-10-21 |
 | **Modules** | ORG (Organization hierarchy) |
 | **Scope IDs** | ORG-01 to ORG-06 ([v0.1 scope](../v0.1-scope.md)); ORG-07 moved to v0.2 (G1) |
@@ -288,4 +288,4 @@ CLAUDE.md that important actions are prepared for the future audit log (details 
 - [x] Rules owned by other features (001, 004, 005, 006) are referenced, not repeated
 - [x] Out-of-scope items are listed so nobody builds them by mistake
 - [x] All clarifications answered (C1–C9, 2026-10-21)
-- [ ] Approved by the owner
+- [x] Approved by the owner (2026-10-21)
