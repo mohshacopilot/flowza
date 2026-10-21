@@ -6,8 +6,13 @@ import { server } from './server';
 
 initI18n();
 
-// Ant Design reads this browser API, which jsdom does not provide. (Tooling tests run in Node, without a window.)
+// Ant Design reads these browser APIs, which jsdom does not provide. (Tooling tests run in Node, without a window.)
 if (typeof window !== 'undefined') {
+  window.ResizeObserver = class {
+    observe(): void {}
+    unobserve(): void {}
+    disconnect(): void {}
+  };
   Object.defineProperty(window, 'matchMedia', {
     writable: true,
     value: (query: string): Partial<MediaQueryList> => ({

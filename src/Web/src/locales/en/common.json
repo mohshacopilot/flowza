@@ -2,8 +2,48 @@
   "app": {
     "name": "Flowza"
   },
+  "shell": {
+    "installationName": "Flowza",
+    "homeLink": "{{name}} home page",
+    "skipToContent": "Skip to main content",
+    "mainNavigation": "Main navigation",
+    "userMenu": "User menu for {{name}}",
+    "myProfile": "My profile",
+    "logOut": "Log out",
+    "loading": "Loading…"
+  },
+  "nav": {
+    "home": "Home",
+    "users": "Users"
+  },
   "home": {
     "title": "Welcome",
     "intro": "Choose a task from the menu to get started."
+  },
+  "users": {
+    "title": "Users",
+    "intro": "Here Platform Admins will create and manage user accounts."
+  },
+  "profile": {
+    "title": "My profile",
+    "intro": "Here you will see your profile and change your password."
+  },
+  "errors": {
+    "page": {
+      "title": "Something went wrong",
+      "message": "The page could not be shown. Please try again. If it happens again, contact support.",
+      "reference": "Reference code: {{reference}}",
+      "referenceHelp": "Give this code to support, so they can find what happened.",
+      "retry": "Try again",
+      "home": "Go to the home page"
+    },
+    "forbidden": {
+      "title": "No access",
+      "message": "You do not have permission to open this page. Ask a Platform Admin if you need access."
+    },
+    "notFound": {
+      "title": "Page not found",
+      "message": "The page you asked for does not exist or has moved."
+    }
   }
 }

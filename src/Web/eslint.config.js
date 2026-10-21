@@ -81,6 +81,9 @@ export default defineConfig([
       '@typescript-eslint/consistent-type-imports': 'error',
       '@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true }],
       'no-console': ['error', { allow: ['warn', 'error'] }],
+      // autoFocus stays forbidden on page elements; components such as a menu button may move focus into
+      // the menu they open (the WAI-ARIA menu button pattern).
+      'jsx-a11y/no-autofocus': ['error', { ignoreNonDOM: true }],
     },
   },
   {

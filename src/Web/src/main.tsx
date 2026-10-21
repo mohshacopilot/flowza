@@ -4,6 +4,7 @@ import { createBrowserRouter } from 'react-router';
 import { RouterProvider } from 'react-router/dom';
 import { AppProviders } from './app/AppProviders';
 import { routes } from './app/routes';
+import { AppErrorBoundary } from './shared/components/AppErrorBoundary';
 import { initI18n } from './shared/i18n/i18n';
 
 const i18n = initI18n();
@@ -18,7 +19,9 @@ if (!root) {
 createRoot(root).render(
   <StrictMode>
     <AppProviders>
-      <RouterProvider router={router} />
+      <AppErrorBoundary>
+        <RouterProvider router={router} />
+      </AppErrorBoundary>
     </AppProviders>
   </StrictMode>,
 );

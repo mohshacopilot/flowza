@@ -5,7 +5,8 @@ import type { ThemeConfig } from 'antd';
  * themselves. From M3 the brand colour comes from the installation settings (PLT-08).
  */
 export const theme: ThemeConfig = {
-  cssVar: { key: 'flowza' },
+  // Tokens are also CSS variables (--flowza-color-primary, …), so layout CSS can use them too.
+  cssVar: { prefix: 'flowza' },
   token: {
     colorPrimary: '#1f5fbf',
     colorInfo: '#1f5fbf',
