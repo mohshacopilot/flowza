@@ -5,6 +5,8 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <IsTestProject>true</IsTestProject>
+    <!-- Same secrets store as the AppHost (passwords set once per PC); CI uses environment variables instead. -->
+    <UserSecretsId>flowza-dev</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

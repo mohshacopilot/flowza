@@ -80,7 +80,29 @@ The Windows service and your user account must share the same Erlang cookie file
 `C:\Windows\System32\config\systemprofile\.erlang.cookie` to your user folder (`C:\Users\<you>\.erlang.cookie`),
 replacing the existing one, then try again.
 
-## 3. What to tell Claude
+## 3. Store the passwords on this PC (owner step O2)
+Flowza keeps passwords in **.NET user secrets**: a file in your Windows profile, outside the project folder, so
+they never reach git. The app (AppHost) and the tests share one store called `flowza-dev`.
+
+Run these **yourself** in a terminal (PowerShell or Command Prompt), replacing the placeholders with the real
+passwords. Do not paste the passwords into chat.
+```bat
+dotnet user-secrets set "Sql:Password" "<flowza_app SQL password>" --id flowza-dev
+dotnet user-secrets set "RabbitMq:Password" "<flowza_app RabbitMQ password>" --id flowza-dev
+```
+Check (shows the keys and values on your screen only):
+```bat
+dotnet user-secrets list --id flowza-dev
+```
+The non-secret values (server `localhost`, user `flowza_app`, virtual hosts `flowza` / `flowza_test`) are in
+the project's configuration files.
+
+## 4. smtp4dev (owner step O4)
+```bat
+dotnet tool install -g Rnwood.Smtp4dev
+```
+
+## 5. What to tell Claude
 Only these, never passwords:
 - SQL: login name (e.g. `flowza_app`), server `localhost`
 - RabbitMQ: user name (e.g. `flowza_app`), virtual hosts `flowza` and `flowza_test`

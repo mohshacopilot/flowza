@@ -1,7 +1,8 @@
 <Project Sdk="Aspire.AppHost.Sdk/13.6.2">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <UserSecretsId>flowza-apphost-e10e6583bc5f</UserSecretsId>
+    <!-- One secrets store shared with the test projects, so passwords are set once per PC (docs/setup/local-setup.md §3). -->
+    <UserSecretsId>flowza-dev</UserSecretsId>
     <!-- The dashboard and orchestrator come from NuGet packages, so F5 in Visual Studio works without the
          optional Aspire CLI bundle (no extra install on developer PCs). -->
     <MSBuildWarningsAsMessages>$(MSBuildWarningsAsMessages);ASPIRE010</MSBuildWarningsAsMessages>
