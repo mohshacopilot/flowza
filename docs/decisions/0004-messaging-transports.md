@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Accepted |
+| **Status** | Accepted; **amended by [ADR-0005](0005-message-transport-selection.md)** (Azure Service Bus coded now; default `SqlServer`; explicit selection) |
 | **Date** | 2026-10-21 |
 | **Decided by** | Owner (MQ1, MQ2) |
 | **Related** | Constitution Article 3 (events, outbox, idempotency) and Article 6 (portability); [ADR-0001](0001-audit-service-pluggable-store.md) (same pluggable pattern) |

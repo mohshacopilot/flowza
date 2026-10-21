@@ -26,7 +26,7 @@ web app gets its shell (layout, routing, translations, error pages) plus the use
 | Runtime | .NET 10 (C#), ASP.NET Core Minimal APIs |
 | Orchestration (dev) | Aspire AppHost, no containers; local SQL Server 2025 Express (compatibility level 150) and local RabbitMQ |
 | Data | EF Core 10 per service; SQL Server; READ_COMMITTED_SNAPSHOT |
-| Messaging | Wolverine: in-process mediator + RabbitMQ / SQL Server transports + EF Core outbox and durable inbox |
+| Messaging | Wolverine: in-process mediator + **SQL Server (default) / RabbitMQ / Azure Service Bus** transports ([ADR-0005](../../docs/decisions/0005-message-transport-selection.md)) + EF Core outbox and durable inbox |
 | Auth | ASP.NET Core Identity + OpenIddict (Identity service); Gateway = BFF (cookie, code flow + PKCE) |
 | Gateway | YARP |
 | Logs/traces | Serilog + OpenTelemetry; Aspire dashboard in dev; daily files in production |
@@ -173,7 +173,9 @@ names, emails or passwords (constitution 11).
 Failed logins for **unknown** usernames publish nothing (no personal data); they are counted in a metric.
 
 ## 8. Shared building blocks
-- **Flowza.Messaging:** `AddFlowzaMessaging()` reads `Messaging:Transport` (`RabbitMq` | `SqlServer`), sets up
+- **Flowza.Messaging:** `AddFlowzaMessaging()` reads `Messaging:Transport` (`SqlServer` default | `RabbitMq` |
+  `AzureServiceBus`, ADR-0005; one strategy class per transport, chosen once at start-up, no automatic
+  fallback; an unreachable broker makes the service "not ready"), sets up
   Wolverine with the EF Core outbox, durable inbox, the MS4 retry policy and dead-letter queues, and RabbitMQ
   conventional routing (MS5).
 - **Flowza.Persistence:** a base `DbContext` convention set: audit columns (`CreatedAt/By`, `UpdatedAt/By`)
