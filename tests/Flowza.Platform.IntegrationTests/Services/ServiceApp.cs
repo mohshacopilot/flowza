@@ -63,9 +63,29 @@ public sealed class ServiceApp<TMarker, TContext>(string name, string connection
 /// one after another.
 /// </summary>
 [CollectionDefinition(Name, DisableParallelization = true)]
-public sealed class ServiceDatabasesTestGroup
+public sealed class ServiceDatabasesTestGroup : ICollectionFixture<IdentityDatabaseLockFixture>
 {
     public const string Name = "ServiceDatabases";
+}
+
+/// <summary>
+/// The Identity integration tests (another test process) also reset <c>flowza_test_identity</c>; this lock keeps the
+/// two from running against it at the same time.
+/// </summary>
+public sealed class IdentityDatabaseLockFixture : IAsyncLifetime
+{
+    private TestDatabaseLock? _lock;
+
+    public async ValueTask InitializeAsync() =>
+        _lock = await TestDatabaseLock.AcquireAsync("flowza_test_identity", TestContext.Current.CancellationToken);
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_lock is not null)
+        {
+            await _lock.DisposeAsync();
+        }
+    }
 }
 
 public static class ServiceApps

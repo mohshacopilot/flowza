@@ -29,7 +29,8 @@
 | T008 Messaging and Contracts | ✅ | e75101f |
 | T009 Platform integration tests | ✅ | 5f88701 |
 | Phase 0 code review fixes | ✅ | a269a44 |
-| T010 Identity domain | ✅ | (see git log) |
+| T010 Identity domain | ✅ | faa28b8 |
+| T011 Identity database | ✅ | (next commit) |
 
 **Notes from Phase 0 (decisions taken while building, within the approved plan):**
 - Tests run on **Microsoft.Testing.Platform** (xUnit v3 4.x); coverage via **coverlet.MTP** (the coverlet extension for that platform).
@@ -66,6 +67,11 @@ architecture test that was later replaced by the policy; the code is right, the 
   scripts cannot imitate another user's name (C4 reading; to confirm with the owner). Mobile: optional, at most 20
   characters of digits, spaces, `+ - ( )`. Display name: required, at most 100. `AggregateRoot` + `IDomainEvent`
   added to Flowza.Common (shared by later services).
+- T011: credentials (password hash, security stamp, lockout counters) are EF shadow columns of `Users`, so the
+  domain never sees a hash. Data Protection keys use a small own `IXmlRepository` over `DataProtectionKeys` (no extra
+  package). OpenIddict pulls a vulnerable `System.Security.Cryptography.Xml` 10.0.11: pinned to 10.0.13. Integration
+  tests that reset `flowza_test_identity` take a SQL application lock (`TestDatabaseLock`), because test projects run
+  in parallel processes; Respawn clears data between tests (roles, OpenIddict clients and keys kept).
 
 ## Phase 0: Foundation (M1)
 | ID | Task | Spec IDs | Done when |
