@@ -37,7 +37,7 @@ dotnet run --project src/AppHost
 ## 3. Owner's decisions
 | # | Question | Decision |
 |---|---|---|
-| PL1 | Installation settings | **Technical** settings (connection strings, SMTP, file storage path, secrets) in configuration files and environment variables. **Business** settings (installation name and logo, time zone, currency, locale, password policy, session timeouts) on an admin **Settings screen** |
+| PL1 | Installation settings | **Technical** settings (connection strings, file storage path, secrets) in configuration files and environment variables. **SMTP settings are the exception (owner's change, 2026-10-21):** they are stored in a database table in `flowza_worker` with the password encrypted, and set on an admin SMTP settings screen in M1 (NTF-07, N6, SM1–SM5 in [NTF](notifications.md)). **Business** settings (installation name and logo, time zone, currency, locale, password policy, session timeouts) on an admin **Settings screen** |
 | PL2 | Branding | Installation **name and logo** in v0.1, on the Settings screen; used in the app header and emails (NTF N1) |
 | PL3 | Demo data | A **command-line tool** that loads a sample org tree, demo users and the RS-1 and RS-2 apps; it **refuses to run on a database that already has data** |
 | PL4 | Database changes in production | Development: services update their own databases at startup. Production: **SQL scripts** for the customer's DBA to review and run |

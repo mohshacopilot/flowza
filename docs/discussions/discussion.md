@@ -8,9 +8,9 @@
 
 ## What to do next
 Spec Kit is postponed; we follow the same method by hand (see [CLAUDE.md](../../CLAUDE.md), "Feature specs: manual SDD").
-1. Implement feature 001 task by task from [tasks.md](../../specs/001-platform-foundation/tasks.md) (starting at T001), one local commit per task.
-2. Write the specs for 002 to 006 the same way, from the module discussion files (can happen alongside).
-3. Per feature: plan → tasks → analyze → implement, building **Milestone 1** first.
+1. Implement feature 001 task by task from [tasks.md](../../specs/001-platform-foundation/tasks.md), one local commit per task.
+2. ~~Write the specs for 002 to 006~~ **Done:** all five specs approved on 2026-10-21 (row 19).
+3. Per feature: plan → tasks → analyze → implement, building **Milestone 1** first. Next plan: **002** (`specs/002-org-hierarchy/plan.md`, skill `write-plan`). When 002 is planned, amend spec 001 for 002 C2 (a new user needs a primary unit; the first admin gets the root unit).
 
 In a new session, say:
 > Read `docs/discussions/discussion.md` and continue from "What to do next".
@@ -41,6 +41,7 @@ module. Sections marked "design notes" go into `plan.md`, never into `spec.md`.
 | 16 | Tasks 001 | ✅ Written and analyzed | [tasks.md](../../specs/001-platform-foundation/tasks.md) |
 | 17 | Build 001 Phase 0 (T001–T009) | ✅ Done 2026-10-21: solution, persistence, service defaults, AppHost, services, messaging on SQL Server + RabbitMQ; 143 tests pass; code review at phase end | [tasks.md](../../specs/001-platform-foundation/tasks.md) "Progress" |
 | 18 | Build 001 Phase 1 (Identity, T010–T019) | ⏳ Next | |
+| 19 | Specs 002–006 (ORG, EXP, APP + FRM, WF, INB + NTF) | ✅ Approved 2026-10-21; all clarifications answered "a" (002 C1–C9, 003 C1–C11, 004 C1–C13, 005 C1–C12, 006 C1–C18) | [002](../../specs/002-org-hierarchy/spec.md), [003](../../specs/003-expression-language/spec.md), [004](../../specs/004-apps-and-form-builder/spec.md), [005](../../specs/005-workflow-engine/spec.md), [006](../../specs/006-inbox-notifications/spec.md) |
 
 ## 2. Key decisions made today (summary)
 Details and reasons are in each module file and ADR.

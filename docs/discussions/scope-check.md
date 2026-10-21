@@ -59,7 +59,7 @@ Each milestone ends with a **working, tested, demoable** product.
   - send back inside a parallel section (W3)
   - "Any one" approval mode
 - **INB:** INB-01 to INB-05, plus the Unassigned queue and reassign (Z2)
-- **NTF:** NTF-01, NTF-02, NTF-04, NTF-05
+- **NTF:** NTF-01, NTF-02, NTF-04, NTF-05, **NTF-07** (SMTP settings table, screen and test email; moved here from M3 by the owner on 2026-10-21, SM4)
 - **Proof:** RS-1 and RS-2 built through the UI and covered by end-to-end tests
 
 ### Milestone 2 = v0.1.1 "Real-world forms and approvals"
@@ -68,14 +68,15 @@ Each milestone ends with a **working, tested, demoable** product.
 - **Step rules** and "required at this step" (CV2)
 - **WF-14 "All must approve"**
 - INB-07 home counters
-- NTF-06 automatic emails for sent back and restart
+- NTF-06 automatic emails for sent back (the restart email comes in M3 with APP-05, spec 006 C15)
 - **Proof:** an extended RS-2 (co-applicants grid, sanction committee with "All must approve")
 
 ### Milestone 3 = v0.1.2 "Administration and operations"
 - APP-05 restart on a new version (single and bulk), APP-07 disable an app
 - **PLT-08 Settings screen** and branding
 - IAM-06 full password policy settings (expiry, reuse), IAM-08 session settings
-- NTF-07 SMTP test email
+- NTF-06 restart email (with APP-05, spec 006 C15)
+- ~~NTF-07 SMTP test email~~ moved to Milestone 1 (owner, 2026-10-21)
 
 ## How this works with Spec Kit
 - The feature order stays the same (001 to 006, see CLAUDE.md).
