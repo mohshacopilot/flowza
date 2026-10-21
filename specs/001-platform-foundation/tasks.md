@@ -31,7 +31,8 @@
 | Phase 0 code review fixes | ✅ | a269a44 |
 | T010 Identity domain | ✅ | faa28b8 |
 | T011 Identity database | ✅ | dd1ddd0 |
-| T012 Password and lockout rules | ✅ | (next commit) |
+| T012 Password and lockout rules | ✅ | 305977d |
+| T013 OpenIddict server | ✅ | (next commit) |
 
 **Notes from Phase 0 (decisions taken while building, within the approved plan):**
 - Tests run on **Microsoft.Testing.Platform** (xUnit v3 4.x); coverage via **coverlet.MTP** (the coverlet extension for that platform).
@@ -78,6 +79,14 @@ architecture test that was later replaced by the policy; the code is right, the 
   domain). The common list is SecLists `10k-most-common.txt` (MIT), embedded unchanged, checked ignoring case.
   A custom user store over the domain `User` never saves by itself; each use case saves once (one transaction with
   its events). An inactive user's login gets the same general answer as a wrong password (IAM-01-AC2).
+- T013: ServiceDefaults now validates tokens in **every** service (OpenIddict validation, audience `flowza`, scope
+  `flowza_api`; role policies `PlatformAdmin`, `AppDesigner`); the Identity service validates against its local
+  server and also refuses revoked tokens. Services find Identity at `Flowza:Identity:Authority` (default in
+  Development: `http://localhost:5101/`). Clients come from `Identity:Clients` (Gateway: secret, redirect and
+  post-logout addresses; Design/Runtime/Worker: secret); a client without a secret is not registered. **AppHost
+  wiring of these secrets is left to the main session** (outside this stream). Access tokens 15 min, refresh tokens
+  12 h absolute (no sliding). Development signing/encryption certificates; production certificates by thumbprint
+  from the local machine store. The full login → code → token round trip is tested in T014 (needs the login page).
 
 ## Phase 0: Foundation (M1)
 | ID | Task | Spec IDs | Done when |

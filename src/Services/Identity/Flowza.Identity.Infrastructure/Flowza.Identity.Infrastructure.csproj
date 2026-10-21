@@ -3,6 +3,7 @@
     <ProjectReference Include="..\Flowza.Identity.Application\Flowza.Identity.Application.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\Flowza.Persistence\Flowza.Persistence.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\Flowza.Messaging\Flowza.Messaging.csproj" />
+    <ProjectReference Include="..\..\..\ServiceDefaults\Flowza.ServiceDefaults\Flowza.ServiceDefaults.csproj" />
   </ItemGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />

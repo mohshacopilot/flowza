@@ -61,7 +61,21 @@ public sealed class IdentityApp : WebApplicationFactory<ApiAssembly>, IAsyncLife
         Environment.SetEnvironmentVariable("ConnectionStrings__identity-db", TestSqlServer.ConnectionString(Database));
         Environment.SetEnvironmentVariable("ConnectionStrings__messaging-db", TestSqlServer.ConnectionString("flowza_test_messaging"));
         builder.UseEnvironment("Development");
+
+        // Test-only client secrets and addresses (real ones come from user secrets or the environment).
+        builder.UseSetting("Identity:Clients:Gateway:Secret", GatewaySecret);
+        builder.UseSetting("Identity:Clients:Gateway:RedirectUris:0", GatewayRedirectUri);
+        builder.UseSetting("Identity:Clients:Gateway:PostLogoutRedirectUris:0", GatewayPostLogoutRedirectUri);
+        builder.UseSetting("Identity:Clients:Runtime:Secret", RuntimeSecret);
     }
+
+    public const string GatewaySecret = "test-gateway-secret";
+    public const string GatewayRedirectUri = "https://gateway.test/signin-oidc";
+    public const string GatewayPostLogoutRedirectUri = "https://gateway.test/signout-callback-oidc";
+    public const string RuntimeSecret = "test-runtime-secret";
+
+    /// <summary>A client that does not follow redirects, so tests can look at each step of a login.</summary>
+    public HttpClient CreateBrowser() => CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false, HandleCookies = true });
 
     public override async ValueTask DisposeAsync()
     {
