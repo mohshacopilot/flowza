@@ -4,9 +4,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using Wolverine;
+using Wolverine.Attributes;
 using Wolverine.AzureServiceBus;
 using Wolverine.EntityFrameworkCore;
 using Wolverine.ErrorHandling;
+using Wolverine.Persistence;
 using Wolverine.Persistence.Durability;
 using Wolverine.RabbitMQ;
 using Wolverine.SqlServer;
@@ -23,6 +25,9 @@ public static class FlowzaMessagingExtensions
 {
     /// <summary>Schema of Wolverine's outbox/inbox tables inside each service database.</summary>
     public const string EnvelopeSchema = "wolverine";
+
+    /// <summary>Message header carrying an integration event's EventId, used for deduplication (MS3).</summary>
+    public const string EventIdHeader = "flowza-event-id";
 
     public const string TransportKey = "Messaging:Transport";
     public const string SqlServerTransportConnectionName = "messaging-db";
@@ -79,11 +84,16 @@ public static class FlowzaMessagingExtensions
             options.Policies.UseDurableInboxOnAllListeners();
             options.Policies.UseDurableLocalQueues();
 
-            // MS3: an integration event is handled once per EventId, even if it is delivered or published twice
-            // (constitution 3.4). Receiving handlers opt in with [Deduplicated]; an architecture test checks it.
+            // MS3: every handler of an integration event runs once per EventId, even if the event is delivered or
+            // published twice (constitution 3.4). Senders copy the EventId into a message header (headers travel
+            // on every transport) and receivers deduplicate on it, so no handler can forget it.
             options.Durability.MessageDeduplicationMode = MessageDeduplicationMode.CompareByHash;
             options.Durability.DeduplicationWindow = 7.Days();
-            options.Policies.ForMessagesOfType<IntegrationEvent>().DeduplicateBy(e => e.EventId.ToString("N"));
+            options.Policies.AllSenders(sender => sender.CustomizeOutgoingMessagesOfType<IntegrationEvent>(
+                (envelope, integrationEvent) => envelope.Headers[EventIdHeader] = integrationEvent.EventId.ToString("N")));
+            options.Policies.RequireDeduplicationId(
+                chain => typeof(IntegrationEvent).IsAssignableFrom(chain.MessageType),
+                new DeduplicationRequirement { Source = ValueSource.Header, Key = EventIdHeader });
 
             // MS4: 3 quick retries, then 5 s, 30 s, 5 min, then the dead-letter queue.
             options.OnException<Exception>()

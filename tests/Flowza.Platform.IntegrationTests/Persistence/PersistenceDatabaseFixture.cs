@@ -39,17 +39,11 @@ public sealed class PersistenceDatabaseFixture : IAsyncLifetime
         await using var context = CreateContext(TimeProvider.System, new FixedCurrentUser(null));
         await context.Database.ExecuteSqlRawAsync(DropTablesSql);
 
-        // The generated script separates batches with "GO", which only tools like SSMS understand.
-        foreach (var batch in SplitBatches(context.Database.GenerateCreateScript()))
+        foreach (var batch in SqlBatches.Split(context.Database.GenerateCreateScript()))
         {
             await context.Database.ExecuteSqlRawAsync(batch);
         }
     }
-
-    private static IEnumerable<string> SplitBatches(string script) =>
-        System.Text.RegularExpressions.Regex
-            .Split(script, @"^\s*GO\s*$", System.Text.RegularExpressions.RegexOptions.Multiline | System.Text.RegularExpressions.RegexOptions.IgnoreCase)
-            .Where(batch => !string.IsNullOrWhiteSpace(batch));
 
     public async Task ClearAsync(CancellationToken cancellationToken)
     {
