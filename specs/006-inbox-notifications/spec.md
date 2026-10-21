@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | **Draft**; clarifications C1–C18 answered by the owner on 2026-10-21; waiting for approval |
+| **Status** | **Approved by the owner, 2026-10-21** (clarifications C1–C18 answered) |
 | **Date** | 2026-10-21 |
 | **Modules** | INB (Inbox and requests), NTF (Notifications) |
 | **Scope IDs** | INB-01 to INB-05, INB-07, NTF-01, NTF-02, NTF-04 to NTF-07 ([v0.1 scope](../v0.1-scope.md)); INB-06 and NTF-03 stay in v0.2 |
@@ -284,4 +284,4 @@ From the [v0.1 scope](../v0.1-scope.md) section 6: NFR-01 (security: who may act
 - [x] Every acceptance criterion is testable; the one manual check is marked
 - [x] Out-of-scope items are listed so nobody builds them by mistake
 - [x] All clarifications answered (C1–C18, 2026-10-21)
-- [ ] Approved by the owner
+- [x] Approved by the owner (2026-10-21)
