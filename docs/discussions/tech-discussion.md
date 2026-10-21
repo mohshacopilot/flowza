@@ -119,6 +119,7 @@ never pushes without the owner's OK; the first commit holds all documents writte
 | MS7 | Large messages (`AppVersionPublished` carries whole definitions) | **a) Send in full; warn in logs above 5 MB; "claim check" (send a reference, fetch the body) only if real apps exceed it ⭐** · b) Claim check from day one |
 
 ## T5: Security (decided 2026-10-21: all "a"; confirms the Gateway as BFF)
+**SE7 amendment (owner, 2026-10-21): development uses HTTP only** (no development certificate). Test, staging and production keep HTTPS everywhere; any HTTPS requirement in code is relaxed only when the environment is Development.
 | # | Question | Options (⭐ = Claude's recommendation) |
 |---|---|---|
 | SE1 | Gateway as BFF (from IAM design notes) | **a) Yes: the browser holds only a secure, HTTP-only, SameSite cookie; the Gateway logs in with the standard code flow + PKCE and keeps the tokens inside its encrypted cookie (Gateway stays stateless, no database) ⭐** · b) The React app holds tokens itself |

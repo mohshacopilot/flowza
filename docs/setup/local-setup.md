@@ -102,7 +102,10 @@ the project's configuration files.
 dotnet tool install -g Rnwood.Smtp4dev
 ```
 
-## 5. What to tell Claude
+## 5. Start Flowza
+Open `Flowza.slnx` in Visual Studio 2026, set **Flowza.AppHost** as the startup project and press **F5**. Development runs on plain HTTP (no certificate needed): the Aspire dashboard opens at http://localhost:15100 and the mailbox (smtp4dev) is at http://localhost:5000.
+
+## 6. What to tell Claude
 Only these, never passwords:
 - SQL: login name (e.g. `flowza_app`), server `localhost`
 - RabbitMQ: user name (e.g. `flowza_app`), virtual hosts `flowza` and `flowza_test`
