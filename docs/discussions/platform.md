@@ -43,7 +43,7 @@ dotnet run --project src/AppHost
 | PL4 | Database changes in production | Development: services update their own databases at startup. Production: **SQL scripts** for the customer's DBA to review and run |
 | PL5 | API documentation viewer | **Scalar** (MIT licence), **approved** under constitution 1.6; shown **only in development** |
 | PL6 | Logs | Development: the Aspire dashboard. Production: **rolling log files**, plus optional export to the customer's monitoring tool (OpenTelemetry) |
-| PL7 | CI | A **private GitHub repository** with GitHub Actions (build, all tests, 80% coverage gate), set up on the first build day. The owner decides when anything is pushed |
+| PL7 | CI | A **GitHub repository** (**public**, the owner's choice on 2026-10-21; it was planned as private) with GitHub Actions (build, all tests, 80% coverage gate), set up on the first build day. The owner decides when anything is pushed |
 
 ## 4. Details accepted by the owner (Q-P1–Q-P6)
 | # | Detail |

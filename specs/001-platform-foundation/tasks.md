@@ -212,7 +212,7 @@ architecture test that was later replaced by the policy; the code is right, the 
 | A1 | **PLT-07-AC1** ("loads demo org, users and both reference apps") cannot be fully met in 001: org data, apps and processes come in features 002–005 | T028 builds the tool and demo users; each later feature adds its demo data; PLT-07-AC1 is verified at the end of M1 (feature 005/006) |
 | A2 | **PLT-08-AC2** (logo in emails) depends on emails (feature 006) | Verified in M3 after 006 |
 | A3 | **PLT-06-AC1** is manual | Checklist in T030, signed by the owner (constitution 1.4) |
-| A4 | **PLT-09-AC1** needs the private GitHub repository and the owner's OK to push | T031 prepares the workflow; it runs on the first allowed push |
+| A4 | **PLT-09-AC1** needs the public GitHub repository (exists since 2026-10-21) and the owner's OK to push | T031 prepares the workflow; it runs on the first allowed push |
 | A5 | All other M1 criteria of spec 001 map to tasks (table below) | — |
 
 ### Traceability (M1 acceptance criteria → tasks)

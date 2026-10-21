@@ -233,7 +233,7 @@ Failed logins for **unknown** usernames publish nothing (no personal data); they
 Linux runner; service containers **SQL Server 2019** and **RabbitMQ**; steps: restore → build (warnings as
 errors) → create test databases → unit + integration tests (both transports) → coverage gate (80% Domain +
 Application) → web lint + Vitest → Playwright end-to-end (headless) → licence check of NuGet and npm
-dependencies. Dependabot weekly. Runs only after the owner creates the private repository and allows the push.
+dependencies. Dependabot weekly. Runs only after the owner allows the push to the public repository (created 2026-10-21).
 
 ## 14. Items approved by the owner (constitution 1.6, approved 2026-10-21)
 | # | Item | Proposal |
