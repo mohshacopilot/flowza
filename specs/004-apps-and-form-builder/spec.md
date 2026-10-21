@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | **Draft**; clarifications C1–C13 answered by the owner on 2026-10-21; waiting for approval |
+| **Status** | **Approved by the owner, 2026-10-21** (clarifications C1–C13 answered) |
 | **Date** | 2026-10-21 |
 | **Modules** | APP (Apps and versions), FRM (Form builder) |
 | **Scope IDs** | APP-01 to APP-07, FRM-02 to FRM-14 ([v0.1 scope](../v0.1-scope.md)). The scope has no FRM-01; the gap is kept so that IDs never change (constitution 1.3) |
@@ -404,4 +404,4 @@ From the [v0.1 scope](../v0.1-scope.md) section 6: NFR-01 (designer screens need
 - [x] Every acceptance criterion is testable; none needs a manual check
 - [x] Out-of-scope items are listed so nobody builds them by mistake
 - [x] All clarifications answered (C1–C13, 2026-10-21)
-- [ ] Approved by the owner
+- [x] Approved by the owner (2026-10-21)
