@@ -10,8 +10,8 @@
 | # | Topic | Needed for | Status |
 |---|---|---|---|
 | T1 | Solution and repository structure, naming, IDs, way of working with git | 001 | ✅ Decided (code name **Flowza**) |
-| T2 | Inside a service: layers, request handling, validation, errors | 001 | ⬜ |
-| T3 | Data access: EF Core, migrations, concurrency, soft delete, JSON, time | 001 | ⬜ |
+| T2 | Inside a service: layers, request handling, validation, errors | 001 | ✅ Decided (S1–S7 a) |
+| T3 | Data access: EF Core, migrations, concurrency, soft delete, JSON, time | 001 | ✅ Decided (D1–D7 a) |
 | T4 | Messaging: Wolverine, outbox, idempotency, event contracts and versions | 001 | ⏳ Transports decided ([ADR-0004](../decisions/0004-messaging-transports.md)); CQRS/Saga decided (AR1) |
 | T5 | Security: login flow, Gateway as BFF, tokens, service-to-service calls, authorization | 001 | ⬜ |
 | T6 | Gateway: routing, rate limiting, serving the web app | 001 | ⬜ |
@@ -95,3 +95,25 @@ never pushes without the owner's OK; the first commit holds all documents writte
 | TS6 | Code-quality rules | **a) .NET built-in analyzers at "recommended" level + `.editorconfig`, warnings as errors; ESLint + Prettier for TypeScript ⭐** · b) Add StyleCop/SonarAnalyzer too |
 | TS7 | Git way of working | **a) Claude commits locally after each finished task (Conventional Commits with spec IDs); the owner reviews; **nothing is pushed without the owner's OK**. Short task branches merged to `main` ⭐** · b) Claude never commits; the owner commits |
 | TS8 | Web app | **a) One React app for all screens (designers, inbox, admin), split by feature folders and lazy-loaded routes ⭐** · b) Separate apps for designers and runtime |
+
+## T2: Inside a service (decided 2026-10-21: all "a")
+| # | Question | Options (⭐ = Claude's recommendation) |
+|---|---|---|
+| S1 | How a request reaches its handler | **a) Wolverine as the in-process mediator too (`InvokeAsync`); handlers are plain classes, no extra library ⭐** · b) Own small dispatcher |
+| S2 | HTTP endpoints | **a) ASP.NET Core Minimal APIs, grouped per feature ⭐** · b) MVC controllers |
+| S3 | Code organisation in Application | **a) Vertical slices: one folder per use case (command or query, handler, validator, DTOs) ⭐** · b) Technical folders (Commands/, Queries/, Validators/) |
+| S4 | Expected errors (validation, not found, conflict, forbidden) | **a) A small own `Result` type, mapped to ProblemDetails at the edge; exceptions only for unexpected failures ⭐** · b) Exceptions for everything |
+| S5 | Domain model | **a) DDD building blocks where rules live (aggregates, value objects, domain events); plain records for simple lookups ⭐** · b) Plain data classes with logic in handlers |
+| S6 | Domain events vs integration events | **a) Domain events stay inside a service (same transaction); integration events (in Contracts, versioned) leave through the outbox ⭐** · b) One kind of event for both |
+| S7 | List paging | **a) Page number + page size (25) + total count; keyset paging later only where needed ⭐** · b) Keyset (cursor) paging everywhere |
+
+## T3: Data access (decided 2026-10-21: all "a"; D7 approves READ_COMMITTED_SNAPSHOT in the database script)
+| # | Question | Options (⭐ = Claude's recommendation) |
+|---|---|---|
+| D1 | Soft delete and audit columns | **a) `IsDeleted`/`DeletedAt`/`DeletedBy` with an automatic EF filter; `CreatedAt/By`, `UpdatedAt/By` filled automatically on save ⭐** · b) By hand in each handler |
+| D2 | Time | **a) .NET `TimeProvider` everywhere (testable "now"); `datetime2` in UTC; `date` for date-only values ⭐** · b) `DateTime.UtcNow` directly |
+| D3 | GUID ordering (TS5 follow-up): SQL Server sorts GUIDs by different bytes than GUID v7 is ordered by, so plain v7 GUIDs still scatter in SQL Server indexes | **a) Time-ordered GUIDs generated in code **in SQL Server's sort order** (keeps TS5's intent: made in code, ordered in the index) ⭐** · b) Plain GUID v7 (accept some index fragmentation) |
+| D4 | Queries | **a) EF Core no-tracking projections first; Dapper only where EF is not enough (dynamic lists, reports) ⭐** · b) Dapper for all reads |
+| D5 | Text and collation | **a) `nvarchar` for all text (Indian languages); case-insensitive collation (matches C3/C4) ⭐** · b) Other |
+| D6 | Form data JSON | **a) Stored as raw JSON text and read/written with System.Text.Json by our own code (fields are dynamic); typed JSON (definitions) mapped by EF ⭐** · b) EF JSON mapping for everything |
+| D7 | Locking behaviour | **a) READ_COMMITTED_SNAPSHOT ON for every database (readers never block writers; set in the database script) ⭐** · b) SQL Server default locking |

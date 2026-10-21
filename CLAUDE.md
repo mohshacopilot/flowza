@@ -71,7 +71,7 @@ same method by hand; the file layout matches Spec Kit's, so it can be adopted la
 | Messaging | Wolverine + transactional outbox. Transport chosen by configuration: **RabbitMQ** (default in development) and **SQL Server**, both in v0.1; Azure Service Bus later. See [ADR-0004](docs/decisions/0004-messaging-transports.md) |
 | IDE | The solution opens, builds and debugs in **Visual Studio 2026** (`.slnx`; F5 on the AppHost) |
 | Patterns | **CQRS-lite** in every service (commands vs queries, same DB); full CQRS (read copy) later. The **workflow engine is the process manager** for requests (one DB, one transaction per step). **Wolverine sagas** only for technical multi-step jobs (bulk restart, later timers and connectors). No event sourcing, no distributed transactions (AR1) |
-| Solution layout | One `.slnx`; four layers for Identity, Design, Runtime; Gateway and Worker single projects; Central Package Management; GUID v7 IDs; built-in analyzers + `.editorconfig`, ESLint + Prettier; one React app (tech discussion T1) |
+| Solution layout | One `.slnx`; four layers for Identity, Design, Runtime; Gateway and Worker single projects; Central Package Management; time-ordered GUID IDs (SQL Server order, T3 D3); built-in analyzers + `.editorconfig`, ESLint + Prettier; one React app (tech discussion T1) |
 | Local orchestration | .NET Aspire AppHost; must run on Windows **without Docker** |
 | Deployment | Azure **and** on-premises. No Azure-only dependency without an abstraction |
 | Tenancy | Single tenant (one organization per installation) |
@@ -132,6 +132,8 @@ tests/
 ## Conventions
 - **C#:** nullable enabled, warnings as errors, file-scoped namespaces, async all the way, records for DTOs and events.
 - **Layers:** Domain → Application → Infrastructure → Api. Dependencies point inward. Domain has no EF Core or ASP.NET references.
+- **Inside a service (T2):** Wolverine is also the in-process mediator (plain handler classes); Minimal APIs grouped per feature; **vertical slices** (one folder per use case: command/query, handler, validator, DTOs); expected errors as an own `Result` type mapped to ProblemDetails, exceptions only for the unexpected; DDD aggregates/value objects/domain events where rules live; domain events stay inside, integration events leave via the outbox; paging = page + size (25) + total.
+- **Data (T3):** soft delete + audit columns set automatically (EF interceptor and query filter); `TimeProvider` for "now"; time-ordered GUIDs generated in code in **SQL Server's sort order**; EF no-tracking projections first, Dapper only for dynamic lists/reports; `nvarchar` + case-insensitive collation; form-data JSON handled with System.Text.Json by our code; READ_COMMITTED_SNAPSHOT on every database.
 - **APIs:** REST under `/api/v1/...`, errors as ProblemDetails, OpenAPI document per service.
 - **Events:** past-tense names (`ProcessPublished`), in `BuildingBlocks/Contracts`. A released event never changes; add a new version instead. Handlers must be idempotent.
 - **Data:** times in UTC; date-only values as `date`; optimistic concurrency (`rowversion`) on aggregates; published definitions are immutable.
