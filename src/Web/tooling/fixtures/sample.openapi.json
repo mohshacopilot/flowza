@@ -1,0 +1,136 @@
+{
+  "openapi": "3.1.1",
+  "info": { "title": "Flowza.Sample.Api | v1", "version": "1.0.0" },
+  "servers": [{ "url": "http://localhost:5199/" }],
+  "paths": {
+    "/api/v1/samples": {
+      "get": {
+        "tags": ["Samples"],
+        "operationId": "ListSamples",
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer", "format": "int32", "default": 1 } },
+          {
+            "name": "size",
+            "in": "query",
+            "schema": { "type": "integer", "format": "int32", "default": 25 }
+          },
+          { "name": "search", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SamplePage" } } }
+          },
+          "401": { "description": "Unauthorized" }
+        }
+      },
+      "post": {
+        "tags": ["Samples"],
+        "operationId": "CreateSample",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/CreateSampleRequest" } }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Sample" } } }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": { "$ref": "#/components/schemas/HttpValidationProblemDetails" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/samples/{id}": {
+      "get": {
+        "tags": ["Samples"],
+        "operationId": "GetSample",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Sample" } } }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": { "schema": { "$ref": "#/components/schemas/ProblemDetails" } }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Samples"],
+        "operationId": "DeactivateSample",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": { "204": { "description": "No Content" } }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Sample": {
+        "type": "object",
+        "required": ["id", "name", "isActive", "rowVersion"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "note": { "type": ["null", "string"] },
+          "isActive": { "type": "boolean" },
+          "rowVersion": { "type": "string", "format": "byte" }
+        }
+      },
+      "SamplePage": {
+        "type": "object",
+        "required": ["items", "page", "size", "total"],
+        "properties": {
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/Sample" } },
+          "page": { "type": "integer", "format": "int32" },
+          "size": { "type": "integer", "format": "int32" },
+          "total": { "type": "integer", "format": "int32" }
+        }
+      },
+      "CreateSampleRequest": {
+        "type": "object",
+        "required": ["name"],
+        "properties": { "name": { "type": "string" }, "note": { "type": ["null", "string"] } }
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": { "type": ["null", "string"] },
+          "title": { "type": ["null", "string"] },
+          "status": { "type": ["null", "integer"], "format": "int32" },
+          "detail": { "type": ["null", "string"] },
+          "instance": { "type": ["null", "string"] }
+        }
+      },
+      "HttpValidationProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": { "type": ["null", "string"] },
+          "title": { "type": ["null", "string"] },
+          "status": { "type": ["null", "integer"], "format": "int32" },
+          "detail": { "type": ["null", "string"] },
+          "instance": { "type": ["null", "string"] },
+          "errors": {
+            "type": "object",
+            "additionalProperties": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    }
+  }
+}

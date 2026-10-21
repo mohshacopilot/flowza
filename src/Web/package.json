@@ -15,7 +15,11 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "api:fetch": "node tooling/fetch-openapi.ts",
+    "api:generate": "orval",
+    "api:update": "npm run api:fetch && npm run api:generate",
+    "api:check": "orval --config orval.check.config.ts && tsc -p tsconfig.api-check.json"
   },
   "dependencies": {
     "@ant-design/icons": "6.3.4",
@@ -45,6 +49,7 @@
     "globals": "17.13.0",
     "jsdom": "29.1.1",
     "msw": "3.0.3",
+    "orval": "8.43.0",
     "prettier": "3.9.10",
     "typescript": "6.0.3",
     "typescript-eslint": "8.72.0",

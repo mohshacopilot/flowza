@@ -20,5 +20,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["vite.config.ts", "orval.config.ts", "eslint.config.js", "tooling"]
+  "include": ["vite.config.ts", "orval.config.ts", "orval.check.config.ts", "eslint.config.js", "tooling"]
 }

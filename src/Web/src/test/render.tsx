@@ -1,16 +1,15 @@
-import { QueryClient } from '@tanstack/react-query';
+import type { QueryClient } from '@tanstack/react-query';
 import { render, type RenderResult } from '@testing-library/react';
 import { ConfigProvider } from 'antd';
 import type { ReactNode } from 'react';
 import { createMemoryRouter, type RouteObject } from 'react-router';
 import { RouterProvider } from 'react-router/dom';
 import { AppProviders } from '../app/AppProviders';
+import { createQueryClient } from '../app/queryClient';
 
-/** A query client for tests: no retries, so errors show at once. */
+/** The app's query client, without retries, so errors show at once. */
 export function createTestQueryClient(): QueryClient {
-  return new QueryClient({
-    defaultOptions: { queries: { retry: false, gcTime: Infinity }, mutations: { retry: false } },
-  });
+  return createQueryClient({ queries: { retry: false, gcTime: Infinity }, mutations: { retry: false } });
 }
 
 /**

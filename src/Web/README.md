@@ -24,6 +24,27 @@ Node.js 24 LTS and npm are required (`engines` in package.json).
 | `npm run typecheck`               | `tsc -b`                                                                                                 |
 | `npm test`                        | Vitest once (`npm run test:watch` while coding)                                                          |
 | `npm run format` / `format:check` | Prettier                                                                                                 |
+| `npm run api:fetch`               | Saves each running service's OpenAPI document to `openapi/<service>.json`                                |
+| `npm run api:generate`            | Generates the TanStack Query hooks from `openapi/*.json` into `src/shared/api/generated/<service>/`      |
+| `npm run api:update`              | Both of the above                                                                                        |
+| `npm run api:check`               | Generates a client from a sample document and type-checks it (proves the generator set-up)               |
+
+## Calling the API (tech discussion T10, FE5)
+
+- **Generated hooks only.** orval turns each service's OpenAPI document into typed hooks (`useListUsers`, …).
+  Paths are rewritten to the Gateway's routes (`/api/v1/users` of Identity → `/api/identity/v1/users`).
+  The documents in `openapi/` and the generated code are committed, so CI and other PCs need no running services.
+  Regenerate after an API change: start the AppHost, then `npm run api:update`. Never edit generated files.
+- **One fetch function** (`src/shared/api/apiFetch.ts`) does every call: same-origin cookie, the anti-forgery
+  header `X-CSRF: 1` on POST/PUT/PATCH/DELETE, and every failure as an `ApiError` (status, `code`, `reference`,
+  field errors from ProblemDetails; status 0 when the network failed).
+- **Messages:** `describeApiError(error, i18n)` gives the text to show: the translation of the server's error
+  code (`errors.codes.<code>` in `locales/en/common.json`; add one per code a service defines), else the
+  server's English text for business errors, else a message for the status; plus the reference code and
+  field errors keyed by the form's field names.
+- **Session end:** a 401 from any call sends the browser to the login page (`app/queryClient.ts`).
+- A service publishes its document at `/openapi/v1.json` in Development (anonymous access there is needed
+  for `api:fetch`).
 
 ## Folders (tech discussion T10, FE2)
 

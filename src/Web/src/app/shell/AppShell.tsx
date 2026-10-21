@@ -1,10 +1,8 @@
 import { Flex, Layout, Spin, Typography } from 'antd';
-import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, Outlet } from 'react-router';
 import { ApiError } from '../../shared/api/ApiError';
 import { useCurrentUser } from '../../shared/auth/currentUser';
-import { redirectToLogin } from '../../shared/auth/session';
 import { PageForError } from '../../shared/components/ErrorPages';
 import { SideNavigation } from './SideNavigation';
 import { UserMenu } from './UserMenu';
@@ -19,13 +17,8 @@ const isUnauthenticated = (error: unknown): boolean => error instanceof ApiError
 export function AppShell() {
   const { t } = useTranslation();
   const user = useCurrentUser();
+  // A 401 sends the browser to the login page (query client, app/queryClient.ts); keep the spinner meanwhile.
   const unauthenticated = user.isError && isUnauthenticated(user.error);
-
-  useEffect(() => {
-    if (unauthenticated) {
-      redirectToLogin();
-    }
-  }, [unauthenticated]);
 
   if (user.isPending || unauthenticated) {
     return (

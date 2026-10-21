@@ -1,5 +1,5 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
-import { apiErrorFromResponse } from '../api/problemDetails';
+import { apiFetch } from '../api/apiFetch';
 import { bffEndpoints } from './session';
 import type { SystemRole } from './systemRoles';
 
@@ -11,19 +11,16 @@ export interface CurrentUser {
 
 export const currentUserQueryKey = ['bff', 'user'] as const;
 
-export async function fetchCurrentUser(): Promise<CurrentUser> {
-  const response = await fetch(bffEndpoints.user, {
-    credentials: 'same-origin',
-    headers: { Accept: 'application/json' },
-  });
-  if (!response.ok) {
-    throw await apiErrorFromResponse(response);
-  }
-  return (await response.json()) as CurrentUser;
+export function fetchCurrentUser(signal?: AbortSignal): Promise<CurrentUser> {
+  return apiFetch<CurrentUser>(bffEndpoints.user, signal ? { signal } : {});
 }
 
 export function useCurrentUser(): UseQueryResult<CurrentUser> {
-  return useQuery({ queryKey: currentUserQueryKey, queryFn: fetchCurrentUser, staleTime: 5 * 60_000 });
+  return useQuery({
+    queryKey: currentUserQueryKey,
+    queryFn: ({ signal }) => fetchCurrentUser(signal),
+    staleTime: 5 * 60_000,
+  });
 }
 
 export function hasRole(user: CurrentUser, role: SystemRole): boolean {
