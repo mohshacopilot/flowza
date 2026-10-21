@@ -1,3 +1,5 @@
+using Flowza.Contracts.Identity.Events.V1;
+
 namespace Flowza.Messaging;
 
 /// <summary>
@@ -9,8 +11,14 @@ public sealed class MessageRoutes
 {
     private readonly Dictionary<Type, HashSet<string>> _subscribers = [];
 
+    /// <summary>The services that run the platform; each has its own queue.</summary>
+    public static IReadOnlyList<string> AllServices { get; } = ["identity", "design", "runtime", "worker"];
+
     /// <summary>The platform's routes; features add theirs here as they introduce events.</summary>
-    public static MessageRoutes Default => new();
+    public static MessageRoutes Default => new MessageRoutes()
+        // Every service keeps a deny list of deactivated users (K7; plan 001 §5.4, PA4).
+        .Route<UserDeactivated>([.. AllServices])
+        .Route<UserActivated>([.. AllServices]);
 
     public IReadOnlyDictionary<Type, IReadOnlyCollection<string>> Subscribers =>
         _subscribers.ToDictionary(r => r.Key, r => (IReadOnlyCollection<string>)r.Value);

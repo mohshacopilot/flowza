@@ -1,9 +1,12 @@
+using Flowza.Common.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using OpenIddict.Validation;
 using OpenIddict.Validation.AspNetCore;
+using Wolverine;
 
 namespace Flowza.ServiceDefaults.Security;
 
@@ -54,7 +57,22 @@ public static class ApiSecurityExtensions
 
             options.AddAudiences(Audience);
             options.UseAspNetCore();
+
+            // K7: a deactivated user's token is refused at once, not only when it expires (PA4).
+            options.AddEventHandler(RejectDeniedUsers.Descriptor);
         });
+
+        builder.Services.TryAddSingleton(TimeProvider.System);
+        builder.Services.AddSingleton<UserDenyList>();
+        builder.Services.AddSingleton<IUserDenyList>(provider => provider.GetRequiredService<UserDenyList>());
+        builder.Services.AddHostedService<UserDenyListLoader>();
+
+        // The deny list follows Identity's UserDeactivated / UserActivated events in every service.
+        builder.Services.ConfigureWolverine(options => options.Discovery.IncludeAssembly(typeof(UserDenyListHandler).Assembly));
+
+        // T036: audit columns and event actors record the logged-in user (the system outside requests).
+        builder.Services.AddHttpContextAccessor();
+        builder.Services.Replace(ServiceDescriptor.Scoped<ICurrentUser, HttpCurrentUser>());
 
         builder.Services.AddAuthentication(OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme);
 

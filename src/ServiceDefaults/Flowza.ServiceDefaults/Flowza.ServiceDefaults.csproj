@@ -5,6 +5,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\BuildingBlocks\Flowza.Common\Flowza.Common.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\Flowza.Contracts\Flowza.Contracts.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -23,5 +24,6 @@
     <PackageReference Include="Microsoft.Extensions.ServiceDiscovery" />
     <PackageReference Include="OpenIddict.Validation.AspNetCore" />
     <PackageReference Include="OpenIddict.Validation.SystemNetHttp" />
+    <PackageReference Include="WolverineFx" />
   </ItemGroup>
 </Project>

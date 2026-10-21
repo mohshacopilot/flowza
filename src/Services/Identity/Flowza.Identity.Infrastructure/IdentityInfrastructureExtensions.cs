@@ -66,6 +66,7 @@ public static class IdentityInfrastructureExtensions
     {
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IUserReadStore, UserReadStore>();
+        services.AddScoped<Flowza.ServiceDefaults.Security.IUserDenyListSource, InactiveUsersSource>();
         services.TryAddSingleton(provider => new SequentialGuidGenerator(provider.GetRequiredService<TimeProvider>()));
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IUserCredentials, UserCredentials>();

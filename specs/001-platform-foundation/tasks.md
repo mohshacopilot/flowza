@@ -36,7 +36,8 @@
 | T014 Login pages | ✅ | 0a0bb5d |
 | T015 Users API (+ T035) | ✅ | bf22e83 |
 | T016 Me API | ✅ | 4a4c89d |
-| T017 Integration events | ✅ | (next commit) |
+| T017 Integration events | ✅ | f8d0f72 |
+| T018 Deny list (+ T036 current user) | ✅ | (next commit) |
 
 **Notes from Phase 0 (decisions taken while building, within the approved plan):**
 - Tests run on **Microsoft.Testing.Platform** (xUnit v3 4.x); coverage via **coverlet.MTP** (the coverlet extension for that platform).
@@ -116,6 +117,18 @@ architecture test that was later replaced by the policy; the code is right, the 
   (`IDbContextOutbox`). Standard fields are stamped at save time; the actor of login events is the user. Unknown
   usernames only count in the `flowza.identity.login.unknown_username` metric (meter `Flowza.Identity`). No event has a
   subscriber yet except the deny-list events (T018); the others wait for the Audit service (v0.4).
+- T018: `UserDenyList` in ServiceDefaults (concurrent dictionary, O(1) check; the newer change wins when events
+  arrive out of order), fed by `UserDeactivated` / `UserActivated` (routed to all four services in
+  `MessageRoutes.Default`) and refused inside OpenIddict validation, so a denied user's token gives 401. Start-up
+  load through `IUserDenyListSource`: Identity reads its inactive users. **Other services have no start-up source
+  yet**: it needs an Identity endpoint listing inactive user IDs, which is not in the approved API (PA1); to decide
+  with the owner. **Found: with the SQL Server transport (the default), Wolverine creates every service's queue tables
+  in that service's own database (`queues` schema), not in `flowza_messaging`, so events do not reach other services
+  and the listener fails on `wolverine_<service>.wolverine_incoming_envelopes`.** The Phase 0 messaging tests use one
+  database for sender and receiver and do not see it. The deny-list delivery test therefore runs on RabbitMQ; the
+  SQL Server topology (ADR-0005) needs a decision by the main session / owner.
+- T036 (current-user part): `HttpCurrentUser` in ServiceDefaults replaces the system user, so `CreatedBy`/`UpdatedBy`
+  and event actors are the logged-in user (tested). The RabbitMQ health-check part of T036 is not done here.
 
 ## Phase 0: Foundation (M1)
 | ID | Task | Spec IDs | Done when |
@@ -203,7 +216,7 @@ architecture test that was later replaced by the policy; the code is right, the 
 | IAM-03-AC1 | T019, T014, T029 | 🟡 forced change (T014); first admin in T019; end-to-end in T029 |
 | IAM-04-AC1 | T015, T026 | 🟡 API (T015); screens in T026 |
 | IAM-04-AC2 | T015, T026 | 🟡 API + forced change (T015, T014); screens in T026 |
-| IAM-04-AC3 | T015, T018, T022 | 🟡 Identity refuses the user's tokens at once (T015); other services via deny list T018; Gateway T022 |
+| IAM-04-AC3 | T015, T018, T022 | 🟡 Identity refuses at once (T015); deny list in every service, tested on RabbitMQ (T018); Gateway T022 |
 | IAM-04-AC4 | T010, T015 | ✅ |
 | IAM-04-AC5 | T010, T015 | ✅ |
 | IAM-05-AC1 | T007, T022 | 🟡 services (T007); Gateway part in T022 |

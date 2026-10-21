@@ -65,6 +65,9 @@ public sealed class IdentityEventsTests(IdentityApp app) : IAsyncLifetime
         {
             published.ActorId.ShouldBe(user.Id);
         }
+
+        // T036: through the API, the actor is the logged-in user.
+        changed.ShouldAllBe(e => e.ActorId == other.Id);
     }
 
     [Fact]
@@ -78,9 +81,9 @@ public sealed class IdentityEventsTests(IdentityApp app) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task User_administration_publishes_its_events_with_ids_only()
+    public async Task User_administration_publishes_its_events_with_ids_only_and_the_admin_as_actor()
     {
-        var (_, admin) = await app.UserWithSessionAsync("events.admin", SystemRole.PlatformAdmin);
+        var (adminUser, admin) = await app.UserWithSessionAsync("events.admin", SystemRole.PlatformAdmin);
         using var _ = admin;
         Guid id = default;
 
@@ -110,6 +113,7 @@ public sealed class IdentityEventsTests(IdentityApp app) : IAsyncLifetime
         foreach (var published in created.Concat(roles).Concat(reset).Concat(deactivated).Concat(activated))
         {
             AssertIdsOnly(published);
+            published.ActorId.ShouldBe(adminUser.Id);
         }
     }
 
