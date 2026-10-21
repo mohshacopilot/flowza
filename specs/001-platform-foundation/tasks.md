@@ -38,7 +38,7 @@
 | T016 Me API | ✅ | 4a4c89d |
 | T017 Integration events | ✅ | f8d0f72 |
 | T018 Deny list (+ T036 current user) | ✅ | 6a836f8 |
-| T019 Flowza.Cli init-admin | ✅ | (next commit) |
+| T019 Flowza.Cli init-admin | ✅ | 077b3d2 |
 
 **Notes from Phase 0 (decisions taken while building, within the approved plan):**
 - Tests run on **Microsoft.Testing.Platform** (xUnit v3 4.x); coverage via **coverlet.MTP** (the coverlet extension for that platform).
@@ -135,6 +135,9 @@ architecture test that was later replaced by the policy; the code is right, the 
   one-time password to the console only. Connection strings as for the services, or built from the `flowza-dev` user
   secrets on a developer PC. Wolverine runs `ServerlessWithOutbox` with listeners off, so the tool keeps the outbox
   but never takes the services' messages or joins their cluster.
+- **Phase 1 verification (2026-10-21):** clean build 0 warnings; `dotnet test --solution`: 288 tests, 287 passed, 1 skipped
+  (Azure Service Bus), 0 failed (exit code 8 only because `Flowza.Gateway.IntegrationTests` has no tests yet). Line
+  coverage (unit + integration): Identity.Domain 97.1 %, Identity.Application 84.0 % (gate 80 %, constitution 5.6).
 
 ## Phase 0: Foundation (M1)
 | ID | Task | Spec IDs | Done when |
