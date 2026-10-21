@@ -58,7 +58,11 @@ Admin: "Email log" screen shows Sent / Retrying / Failed, with Resend
 | N7 | Attachments | **Later** |
 | N8 | Email library | **MailKit** (MIT licence), **approved** under constitution 1.6 |
 
-## 4a. SMTP settings in a table (owner's change, 2026-10-21; SM1–SM5 asked, awaiting answers)
+## 4a. SMTP settings in a table (owner's change, 2026-10-21; decided: SM1–SM5 all "a")
+**Decision:** table in `flowza_worker` (SM1); password encrypted, write-only, never logged (SM2); development
+seed for smtp4dev (SM3); the `flowza smtp-settings` command **and an admin screen** to configure the values
+(SM4: the owner asked for the screen, so the **SMTP settings screen and the "Send test email" button (NTF-07)
+move into Milestone 1** with feature 006; the rest of the Settings screen stays in M3); fields as in SM5.
 | # | Question | Options (⭐ = Claude's recommendation) |
 |---|---|---|
 | SM1 | Which service owns the table | **a) Worker (it sends the emails), table in `flowza_worker` ⭐** · b) Identity, with the other installation settings |
