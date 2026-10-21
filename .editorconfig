@@ -49,6 +49,10 @@ dotnet_diagnostic.CA2007.severity = none
 # Flowza is C# only; names such as "Error" that are keywords in other .NET languages are fine.
 dotnet_diagnostic.CA1716.severity = none
 
+[**/Persistence/Migrations/*.cs]
+# EF Core migrations are generated code.
+generated_code = true
+
 [tests/**.cs]
 # Test names carry spec IDs with underscores, e.g. IAM_04_AC1_Admin_creates_user.
 dotnet_diagnostic.CA1707.severity = none

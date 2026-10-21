@@ -6,5 +6,12 @@
     <ProjectReference Include="..\..\src\BuildingBlocks\Flowza.Messaging\Flowza.Messaging.csproj" />
     <ProjectReference Include="..\..\src\ServiceDefaults\Flowza.ServiceDefaults\Flowza.ServiceDefaults.csproj" />
     <ProjectReference Include="..\Flowza.Testing\Flowza.Testing.csproj" />
+    <ProjectReference Include="..\..\src\Services\Identity\Flowza.Identity.Api\Flowza.Identity.Api.csproj" />
+    <ProjectReference Include="..\..\src\Services\Design\Flowza.Design.Api\Flowza.Design.Api.csproj" />
+    <ProjectReference Include="..\..\src\Services\Runtime\Flowza.Runtime.Api\Flowza.Runtime.Api.csproj" />
+    <ProjectReference Include="..\..\src\Services\Worker\Flowza.Worker\Flowza.Worker.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
   </ItemGroup>
 </Project>

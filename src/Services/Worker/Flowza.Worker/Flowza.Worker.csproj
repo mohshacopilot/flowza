@@ -1,8 +1,12 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
   <ItemGroup>
     <ProjectReference Include="..\..\..\ServiceDefaults\Flowza.ServiceDefaults\Flowza.ServiceDefaults.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\Flowza.Persistence\Flowza.Persistence.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\Flowza.Messaging\Flowza.Messaging.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\Flowza.Contracts\Flowza.Contracts.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="AspNetCore.HealthChecks.SqlServer" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
   </ItemGroup>
 </Project>

@@ -1,7 +1,15 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <ProjectReference Include="..\Flowza.Runtime.Application\Flowza.Runtime.Application.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\Flowza.Persistence\Flowza.Persistence.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\Flowza.Messaging\Flowza.Messaging.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AspNetCore.HealthChecks.SqlServer" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
   </ItemGroup>
 </Project>
