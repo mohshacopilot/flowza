@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.Json.Serialization;
 using Flowza.ServiceDefaults.Http;
 using Flowza.ServiceDefaults.Logging;
 using Microsoft.AspNetCore.Builder;
@@ -12,6 +13,7 @@ using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 using Serilog;
+using Serilog.Configuration;
 using Serilog.Events;
 
 namespace Flowza.ServiceDefaults;
@@ -49,6 +51,9 @@ public static class ServiceDefaultsExtensions
         builder.Services.AddProblemDetails(options => options.CustomizeProblemDetails = context =>
             context.ProblemDetails.Extensions["reference"] = ReferenceCode.For(context.HttpContext));
 
+        // Enums travel as their names ("Locked"), so API clients need no number tables.
+        builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+
         builder.Services.AddServiceDiscovery();
         builder.Services.ConfigureHttpClientDefaults(http => http.AddServiceDiscovery());
 
@@ -81,30 +86,36 @@ public static class ServiceDefaultsExtensions
                 .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
                 .Enrich.FromLogContext()
                 .Enrich.WithProperty("Service", serviceName)
-                .Enrich.With<SensitiveDataMaskingEnricher>()
-                .WriteTo.Console(outputTemplate: template, formatProvider: CultureInfo.InvariantCulture);
+                .Enrich.With<SensitiveDataMaskingEnricher>();
 
-            if (writeFiles)
+            // Every sink receives exceptions with personal values masked (T035).
+            var sinks = LoggerSinkConfiguration.CreateSink(sinks =>
             {
-                // Relative to the service's own folder, not the working directory (under IIS or a Windows
-                // service that would be System32).
-                var folder = Path.Combine(builder.Environment.ContentRootPath, string.IsNullOrWhiteSpace(logFolder) ? "logs" : logFolder);
-                logger.WriteTo.File(
-                    Path.Combine(folder, $"{serviceName}-.log"),
-                    outputTemplate: template,
-                    formatProvider: CultureInfo.InvariantCulture,
-                    rollingInterval: RollingInterval.Day,
-                    retainedFileCountLimit: builder.Configuration.GetValue("Flowza:Logging:RetainedDays", 30));
-            }
+                sinks.Console(outputTemplate: template, formatProvider: CultureInfo.InvariantCulture);
 
-            if (!string.IsNullOrWhiteSpace(otlpEndpoint))
-            {
-                logger.WriteTo.OpenTelemetry(options =>
+                if (writeFiles)
                 {
-                    options.Endpoint = otlpEndpoint;
-                    options.ResourceAttributes = new Dictionary<string, object> { ["service.name"] = serviceName };
-                });
-            }
+                    // Relative to the service's own folder, not the working directory (under IIS or a Windows
+                    // service that would be System32).
+                    var folder = Path.Combine(builder.Environment.ContentRootPath, string.IsNullOrWhiteSpace(logFolder) ? "logs" : logFolder);
+                    sinks.File(
+                        Path.Combine(folder, $"{serviceName}-.log"),
+                        outputTemplate: template,
+                        formatProvider: CultureInfo.InvariantCulture,
+                        rollingInterval: RollingInterval.Day,
+                        retainedFileCountLimit: builder.Configuration.GetValue("Flowza:Logging:RetainedDays", 30));
+                }
+
+                if (!string.IsNullOrWhiteSpace(otlpEndpoint))
+                {
+                    sinks.OpenTelemetry(options =>
+                    {
+                        options.Endpoint = otlpEndpoint;
+                        options.ResourceAttributes = new Dictionary<string, object> { ["service.name"] = serviceName };
+                    });
+                }
+            });
+            logger.WriteTo.Sink(new ExceptionMaskingSink(sinks));
         });
 
         return builder;

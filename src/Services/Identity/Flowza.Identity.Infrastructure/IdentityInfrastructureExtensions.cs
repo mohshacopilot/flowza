@@ -1,3 +1,4 @@
+using Flowza.Common.Ids;
 using Flowza.Identity.Application.Abstractions;
 using Flowza.Identity.Application.Users;
 using Flowza.Identity.Domain.Users;
@@ -64,6 +65,8 @@ public static class IdentityInfrastructureExtensions
     private static void AddUserAccounts(this IServiceCollection services)
     {
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IUserReadStore, UserReadStore>();
+        services.TryAddSingleton(provider => new SequentialGuidGenerator(provider.GetRequiredService<TimeProvider>()));
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IUserCredentials, UserCredentials>();
         services.AddScoped<PasswordLogin>();

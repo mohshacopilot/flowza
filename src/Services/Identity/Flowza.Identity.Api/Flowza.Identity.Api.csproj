@@ -3,4 +3,7 @@
     <ProjectReference Include="..\Flowza.Identity.Infrastructure\Flowza.Identity.Infrastructure.csproj" />
     <ProjectReference Include="..\..\..\ServiceDefaults\Flowza.ServiceDefaults\Flowza.ServiceDefaults.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+  </ItemGroup>
 </Project>

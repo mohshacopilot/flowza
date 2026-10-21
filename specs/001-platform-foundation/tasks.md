@@ -33,7 +33,8 @@
 | T011 Identity database | ✅ | dd1ddd0 |
 | T012 Password and lockout rules | ✅ | 305977d |
 | T013 OpenIddict server | ✅ | df9e6b7 |
-| T014 Login pages | ✅ | (next commit) |
+| T014 Login pages | ✅ | 0a0bb5d |
+| T015 Users API (+ T035) | ✅ | (next commit) |
 
 **Notes from Phase 0 (decisions taken while building, within the approved plan):**
 - Tests run on **Microsoft.Testing.Platform** (xUnit v3 4.x); coverage via **coverlet.MTP** (the coverlet extension for that platform).
@@ -94,6 +95,17 @@ architecture test that was later replaced by the policy; the code is right, the 
   must change the password cannot get a code until they do (IAM-03, IAM-04-AC2). Wolverine resolves the ports of a
   use case by service location, so all of them share one DI scope and one DbContext (Wolverine's own default refuses
   internal implementation classes).
+- T015: Users API under `/api/v1/users` (Platform Admin policy), one Wolverine command/query per endpoint; JSON enums
+  as names in every service (`JsonStringEnumConverter` in ServiceDefaults). Responses with a temporary password carry
+  `Cache-Control: no-store`. The row version travels as base64 `version`. Validation stays in the domain value objects
+  and the use cases (role names, version); FluentValidation is not used yet, so its package entry was removed until a
+  rule needs it. Identity publishes its OpenAPI document at `/openapi/v1.json` in Development (package
+  `Microsoft.AspNetCore.OpenApi`, first-party, for the approved "OpenAPI document per service" convention and orval in
+  T025). Known gap: two admins deactivating each other at the very same moment could both pass the last-admin check
+  (no lock across users yet).
+- T035: every log sink gets warnings, errors and events with an exception through `ExceptionMaskingSink`: exception
+  texts and text properties have quoted SQL values and email addresses masked (EF Core also writes the exception text
+  into its message as a property). The duplicate-email log-scan test failed before this fix.
 
 ## Phase 0: Foundation (M1)
 | ID | Task | Spec IDs | Done when |
@@ -176,14 +188,14 @@ architecture test that was later replaced by the policy; the code is right, the 
 |---|---|---|
 | IAM-01-AC1 | T020, T022, T029 | ⬜ |
 | IAM-01-AC2 | T014 | ✅ |
-| IAM-02-AC1 | T015, T024, T026 | ⬜ |
-| IAM-02-AC2 | T010, T015 | 🟡 domain rules (T010); API in T015 |
+| IAM-02-AC1 | T015, T024, T026 | 🟡 Users API needs Platform Admin (T015); designer APIs arrive with feature 004; screens T024/T026 |
+| IAM-02-AC2 | T010, T015 | ✅ |
 | IAM-03-AC1 | T019, T014, T029 | 🟡 forced change (T014); first admin in T019; end-to-end in T029 |
-| IAM-04-AC1 | T015, T026 | ⬜ |
-| IAM-04-AC2 | T015, T026 | ⬜ |
-| IAM-04-AC3 | T015, T018, T022 | ⬜ |
-| IAM-04-AC4 | T010, T015 | 🟡 format rules (T010); uniqueness in T015 |
-| IAM-04-AC5 | T010, T015 | 🟡 domain rule (T010); API in T015 |
+| IAM-04-AC1 | T015, T026 | 🟡 API (T015); screens in T026 |
+| IAM-04-AC2 | T015, T026 | 🟡 API + forced change (T015, T014); screens in T026 |
+| IAM-04-AC3 | T015, T018, T022 | 🟡 Identity refuses the user's tokens at once (T015); other services via deny list T018; Gateway T022 |
+| IAM-04-AC4 | T010, T015 | ✅ |
+| IAM-04-AC5 | T010, T015 | ✅ |
 | IAM-05-AC1 | T007, T022 | 🟡 services (T007); Gateway part in T022 |
 | IAM-06-AC1 | T012 | ✅ |
 | IAM-06-AC3 | T016, T027 | ⬜ |

@@ -1,5 +1,6 @@
 using Flowza.Identity.Api;
 using Flowza.Identity.Api.Connect;
+using Flowza.Identity.Api.Users;
 using Flowza.Identity.Infrastructure;
 using Flowza.Identity.Infrastructure.Persistence;
 using Flowza.Identity.Infrastructure.TokenServer;
@@ -20,6 +21,7 @@ builder.AddFlowzaApiSecurity(validation =>
     validation.EnableTokenEntryValidation();
 });
 builder.AddIdentityLoginSession();
+builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
@@ -30,6 +32,13 @@ app.UseAuthorization();
 app.MapFlowzaDefaultEndpoints();
 app.MapConnectEndpoints();
 app.MapRazorPages();
+app.MapUserEndpoints();
+
+if (app.Environment.IsDevelopment())
+{
+    // The API description for the web app's generated client (orval, T025); development only.
+    app.MapOpenApi().AllowAnonymous();
+}
 
 // Small, login-protected endpoint that tells which service answered (used by Gateway and tests).
 app.MapGet("/api/v1/info", () => new { service = "identity" });
