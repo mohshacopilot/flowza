@@ -54,9 +54,20 @@ Admin: "Email log" screen shows Sent / Retrying / Failed, with Resend
 | N3 | Automatic emails in v0.1 | **Three:** request finished (NTF-04), sent back to you (WF-08), restarted on a new version (APP-05). Each has a built-in default text and can be **turned off per process** |
 | N4 | Changing the automatic texts | The designer can **override them per process**; otherwise the default text is used |
 | N5 | Retries | **5 attempts** with growing waits (1 min, 5 min, 15 min, 1 h, 6 h), then **Failed**. Admins see failures and can **Resend** |
-| N6 | SMTP settings | **Installation configuration** (settings file / environment variables; password in a secret store, constitution 7.6), plus an admin **"Send test email"** button |
+| N6 | SMTP settings | ~~Installation configuration~~ **Changed by the owner on 2026-10-21:** SMTP **host, port, username and password** (plus sender address, sender name and TLS mode) are stored in a **database table**, configurable later. The password is stored **encrypted**, never shown or logged. Plus an admin **"Send test email"** button. Details SM1–SM5 in section 4a |
 | N7 | Attachments | **Later** |
 | N8 | Email library | **MailKit** (MIT licence), **approved** under constitution 1.6 |
+
+## 4a. SMTP settings in a table (owner's change, 2026-10-21; SM1–SM5 asked, awaiting answers)
+| # | Question | Options (⭐ = Claude's recommendation) |
+|---|---|---|
+| SM1 | Which service owns the table | **a) Worker (it sends the emails), table in `flowza_worker` ⭐** · b) Identity, with the other installation settings |
+| SM2 | Password protection | **a) Encrypted with ASP.NET Core Data Protection; the key ring is protected by Windows DPAPI on-premises (Azure Key Vault on Azure); the password is write-only (never returned by any API, never logged) ⭐** · b) Plain text (breaks constitution 7.6) |
+| SM3 | Development | **a) A development seed points to smtp4dev (localhost, no login) so emails work at once; production stays empty until the admin configures it ⭐** · b) Empty everywhere |
+| SM4 | How to configure before the Settings screen exists (M3) | **a) A command `flowza smtp-settings` that asks for the password without showing it and stores it encrypted (an encrypted value cannot be typed into the table by hand); the screen comes in M3 ⭐** · b) Bring the SMTP part of the Settings screen into M1 |
+| SM5 | Fields | **a) Host, port, TLS mode (none / STARTTLS / SSL), username, password, sender address, sender name, active flag ⭐** · b) Other |
+
+While SMTP is not configured, emails wait as "Waiting for email settings" and do not use up their retries (N5).
 
 ## 5. Details accepted by the owner (M1–M7)
 | # | Detail |

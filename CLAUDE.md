@@ -87,7 +87,7 @@ same method by hand; the file layout matches Spec Kit's, so it can be adopted la
 | Deployment | Azure **and** on-premises. No Azure-only dependency without an abstraction |
 | Tenancy | Single tenant (one organization per installation) |
 | Templates | Fluid (Liquid) for email templates |
-| Email sending | **MailKit** (MIT; approved by the owner, N8) behind an `IEmailSender` interface |
+| Email sending | **MailKit** (MIT; approved by the owner, N8) behind an `IEmailSender` interface. **SMTP settings (host, port, username, password, sender, TLS) live in a database table**, password encrypted, never shown or logged (owner's change 2026-10-21; SM1–SM5 in the [NTF discussion](docs/discussions/notifications.md)) |
 | Expression numbers | Decimal arithmetic on both sides: C# `decimal`, TypeScript **decimal.js** (MIT; approved by the owner, E3). Hand-written parser/evaluator in C# and TypeScript, one shared conformance suite |
 | Validation | FluentValidation on the server |
 | Frontend data | TanStack Query (server state), Zustand (designer state), React Hook Form + Zod (forms) |
