@@ -23,6 +23,12 @@ internal sealed class UserRepository(IdentityServiceDbContext context) : IUserRe
     public Task<bool> IsEmailTakenAsync(string normalizedEmail, Guid? exceptUserId, CancellationToken cancellationToken) =>
         context.Users.AnyAsync(u => u.NormalizedEmail == normalizedEmail && u.Id != exceptUserId, cancellationToken);
 
+    public Task<bool> AnyPlatformAdminAsync(CancellationToken cancellationToken)
+    {
+        var adminRoleId = SystemRole.PlatformAdmin.Id;
+        return context.Users.AnyAsync(u => u.RoleAssignments.Any(r => r.RoleId == adminRoleId), cancellationToken);
+    }
+
     public Task<int> CountActivePlatformAdminsAsync(CancellationToken cancellationToken)
     {
         var adminRoleId = SystemRole.PlatformAdmin.Id;

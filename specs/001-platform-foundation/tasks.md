@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | **Phase 0 done (T001–T009), 2026-10-21**; Phase 1 next. 143 automated tests pass |
+| **Status** | **Phase 0 done (T001–T009), 2026-10-21**; **Phase 1 (T010–T019) done in the Identity stream, 2026-10-21**, waiting for review and merge |
 | **Spec / Plan** | [spec.md](spec.md) · [plan.md](plan.md) |
 | **Rules** | One task at a time, in order. Each task ends with: builds without warnings, its tests pass, a local commit (`feat|chore|test(scope): … (IDs)`). `[P]` = can run in parallel with the previous task. Nothing is pushed without the owner's OK |
 
@@ -37,7 +37,8 @@
 | T015 Users API (+ T035) | ✅ | bf22e83 |
 | T016 Me API | ✅ | 4a4c89d |
 | T017 Integration events | ✅ | f8d0f72 |
-| T018 Deny list (+ T036 current user) | ✅ | (next commit) |
+| T018 Deny list (+ T036 current user) | ✅ | 6a836f8 |
+| T019 Flowza.Cli init-admin | ✅ | (next commit) |
 
 **Notes from Phase 0 (decisions taken while building, within the approved plan):**
 - Tests run on **Microsoft.Testing.Platform** (xUnit v3 4.x); coverage via **coverlet.MTP** (the coverlet extension for that platform).
@@ -129,6 +130,11 @@ architecture test that was later replaced by the policy; the code is right, the 
   SQL Server topology (ADR-0005) needs a decision by the main session / owner.
 - T036 (current-user part): `HttpCurrentUser` in ServiceDefaults replaces the system user, so `CreatedBy`/`UpdatedBy`
   and event actors are the logged-in user (tested). The RabbitMQ health-check part of T036 is not done here.
+- T019: `flowza init-admin --email <address> [--username admin] [--display-name ...]` runs the Identity service's own
+  use case (`InitializeAdmin`) in a short-lived host: refused when any Platform Admin exists; prints the 16-character
+  one-time password to the console only. Connection strings as for the services, or built from the `flowza-dev` user
+  secrets on a developer PC. Wolverine runs `ServerlessWithOutbox` with listeners off, so the tool keeps the outbox
+  but never takes the services' messages or joins their cluster.
 
 ## Phase 0: Foundation (M1)
 | ID | Task | Spec IDs | Done when |
@@ -213,7 +219,7 @@ architecture test that was later replaced by the policy; the code is right, the 
 | IAM-01-AC2 | T014 | ✅ |
 | IAM-02-AC1 | T015, T024, T026 | 🟡 Users API needs Platform Admin (T015); designer APIs arrive with feature 004; screens T024/T026 |
 | IAM-02-AC2 | T010, T015 | ✅ |
-| IAM-03-AC1 | T019, T014, T029 | 🟡 forced change (T014); first admin in T019; end-to-end in T029 |
+| IAM-03-AC1 | T019, T014, T029 | 🟡 first admin + forced change tested (T019, T014); end-to-end in T029 |
 | IAM-04-AC1 | T015, T026 | 🟡 API (T015); screens in T026 |
 | IAM-04-AC2 | T015, T026 | 🟡 API + forced change (T015, T014); screens in T026 |
 | IAM-04-AC3 | T015, T018, T022 | 🟡 Identity refuses at once (T015); deny list in every service, tested on RabbitMQ (T018); Gateway T022 |

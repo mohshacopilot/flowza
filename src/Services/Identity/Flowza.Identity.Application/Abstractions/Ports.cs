@@ -18,6 +18,9 @@ public interface IUserRepository
 
     Task<bool> IsEmailTakenAsync(string normalizedEmail, Guid? exceptUserId, CancellationToken cancellationToken);
 
+    /// <summary>Whether any user (active or not) holds Platform Admin, for the first-admin set-up (IAM-03).</summary>
+    Task<bool> AnyPlatformAdminAsync(CancellationToken cancellationToken);
+
     /// <summary>Active users holding Platform Admin, for the last-admin rule (L3).</summary>
     Task<int> CountActivePlatformAdminsAsync(CancellationToken cancellationToken);
 
