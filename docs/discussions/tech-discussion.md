@@ -161,6 +161,9 @@ never pushes without the owner's OK; the first commit holds all documents writte
 | TE8 | Architecture rules as tests | **a) NetArchTest: tests fail if Domain references EF Core, or one service references another service's code ⭐** (the constitution enforced automatically) · b) Reviews only |
 
 ## T9: Local development and CI (decided 2026-10-21: all "a")
+**DV4 follow-up (2026-10-21):** the repository is `https://github.com/mohshacopilot/flowza` on a **free** account.
+Free private repositories cannot protect branches, so the owner chose **a rule instead of a setting**: a change
+counts as done only when CI is green. GitHub Pro can enforce it technically later if more developers join.
 | # | Question | Options (⭐ = Claude's recommendation) |
 |---|---|---|
 | DV1 | Aspire resources | **a) The AppHost connects to the local SQL Server and local RabbitMQ through connection strings (no containers); smtp4dev and Vite run as programs ⭐** · b) Other |
