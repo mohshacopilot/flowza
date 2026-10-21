@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | **Draft**, waiting for the owner's answers to the clarifications (C1–C13) and approval |
+| **Status** | **Draft**; clarifications C1–C13 answered by the owner on 2026-10-21; waiting for approval |
 | **Date** | 2026-10-21 |
 | **Modules** | APP (Apps and versions), FRM (Form builder) |
 | **Scope IDs** | APP-01 to APP-07, FRM-02 to FRM-14 ([v0.1 scope](../v0.1-scope.md)). The scope has no FRM-01; the gap is kept so that IDs never change (constitution 1.3) |
@@ -99,7 +99,7 @@ As an App Designer, I add rules that stop bad data, so that approvers can trust 
 ### US8: Calculations and show/hide (P1, FRM-06, FRM-07)
 As an App Designer, I let the form calculate values and hide what does not apply, so that users fill only what matters.
 1. **Given** a calculated field `DAYS_BETWEEN(FromDate, ToDate) + 1`, **then** it updates as the user types, and the server calculates it again and ignores the browser's value (R1).
-2. **When** the designer makes two calculated fields depend on each other, **then** the loop is rejected when the design is saved.
+2. **When** the designer makes two calculated fields depend on each other, **then** the save reports the loop, and the version cannot be published until it is fixed (C10).
 3. **Given** Medical certificate shown only when Leave type = Sick, **when** Leave type is Casual, **then** the field is hidden, is not validated, and its value is not saved.
 
 ### US9: Upload files (P1, FRM-10)
@@ -143,18 +143,18 @@ As an App Designer, I stop an app from taking new requests without losing anythi
 ## 4. Requirements
 | ID | Requirement | Milestone |
 |---|---|---|
-| APP-01 | An App Designer creates an **app** with a code, a name and a description. The code is unique and cannot change (Q1). Any App Designer can edit any app (A2). Forms and processes belong to **one app only**; form and process keys are unique within the app (Q2) | M1 |
-| APP-02 | **Versions:** Draft → Published. One draft at a time (A1). A new draft is a copy of a chosen published version. Publishing needs a **note** (A6), checks all forms and processes (form checks here; expressions in 003; processes in 005), and is all-or-nothing; each error points to its form, field or node. Versions are numbered 1, 2, 3 in publish order (A6). A published version never changes and cannot be discarded. A draft can be discarded (soft delete, Q3). A save based on an old copy of a form or process is refused with who changed it and when (A8) | M1 |
+| APP-01 | An App Designer creates an **app** with a code, a name and a description. The code is unique ignoring letter case and cannot change (Q1); it starts with a letter and has only letters, digits, `-` and `_`, up to 20 characters (C8). Creating an app also creates its empty first draft (C7). Any App Designer can edit any app (A2). Forms and processes belong to **one app only**; form and process keys are unique within the app (Q2) | M1 |
+| APP-02 | **Versions:** Draft → Published. One draft at a time (A1). A new draft is a copy of a chosen published version. Publishing needs a **note** (A6), checks all forms and processes (form checks here; expressions in 003; processes in 005), and is all-or-nothing; each error points to its form, field or node. Versions are numbered 1, 2, 3 in publish order (A6). A published version never changes and cannot be discarded. A draft can be discarded (soft delete, Q3); an app with no published version and no draft can get a new empty draft (C7). A draft with design errors (broken references, loops, expression errors) **is saved** and lists every error; **publishing is refused** until all are fixed (C10, same rule as 003 C2). A save based on an old copy of a form or process is refused with who changed it and when (A8) | M1 |
 | APP-03 | **Active version:** one published version is active; new requests use it. After publishing, the designer is asked "Make this the active version now?" (default yes, A3). Making an older version active is a **rollback**; requests already started keep their version. In v0.1, form preview is the only way to try a version first (A9) | M1 |
 | APP-04 | **Running requests** stay on the version they started with, unless an admin restarts them (APP-05). A rollback does not change the version of a reopened request (Q6) | M1 |
-| APP-05 | **Restart on the active version** (Platform Admin): for one or several running requests, **only onto the active version** (A5), with a required reason. Open tasks are cancelled; the request goes back to the requester at the start, using the active version's form. Values are copied by field key; type changes follow the conversion table in 4.3 (A7); new fields start empty or with their default; removed fields are no longer shown but their old values stay in the history. The requester reviews, fills and resubmits; the request then follows the new version's flow from the first step. Request number and history are kept; the history shows who restarted it, when, why and onto which version. Until resubmitted, the status is **Waiting for resubmission**. A request whose process is not in the active version is not restarted (Q4). Bulk restart runs in the background, each request on its own, and ends with a result list (Q5). Grid rows are copied too, columns matched by key with the same conversion rules (GR8). The restart email is specified in 006 (NTF-06) | M3 |
+| APP-05 | **Restart on the active version** (Platform Admin): for one or several running requests, **only onto the active version** (A5), with a required reason. Open tasks are cancelled; the request goes back to the requester at the start, using the active version's form. A request already on the active version is not restarted ("already on the active version", C12). Values are copied by field key; type changes follow the conversion rules in 4.3 (A7, C4, C5); new fields start empty or with their default; removed fields are no longer shown but their old values stay in the history. The requester reviews, fills and resubmits; the request then follows the new version's flow from the first step. Request number and history are kept; the history shows who restarted it, when, why and onto which version. Until resubmitted, the status is **Waiting for resubmission**. A request whose process is not in the active version is not restarted (Q4). Bulk restart runs in the background, each request on its own, and ends with a result list (Q5). Grid rows are copied too, columns matched by key with the same conversion rules (GR8). The restart email is specified in 006 (NTF-06) | M3 |
 | APP-06 | Approvers are found **when each task is created**, using the org data at that moment; existing tasks keep their assignee (rule owned by 002, ORG-06-AC-x2; task creation in 005) | M1 |
-| APP-07 | An app can be **disabled**: its processes disappear from "Start a request", no new requests start, running requests continue. It can be enabled again. Apps are never deleted (A4) | M3 |
+| APP-07 | An app can be **disabled**: its processes disappear from "Start a request", no new requests start, running requests continue. Disabling stops only new requests: designers can still edit, publish and change the active version, and requesters can still reopen rejected requests (C11). It can be enabled again. Apps are never deleted (A4) | M3 |
 | FRM-02 | **Drag-and-drop form designer** with live preview in which expressions work; reordering; everything works with the keyboard (constitution 12.2). **M1:** fields, sections, labels/help text. **M2:** tabs and grids | M1 / M2 |
-| FRM-03 | **Field types:** Text, Text area, Number, Currency, Date, Dropdown, Radio buttons, Checkboxes, Yes/No, Email, File upload (multiple files), User picker, Calculated (read-only), and **Grid** (FRM-13). **Layout items:** Tabs, Section (with title), Label/help text. Option lists are fixed lists typed by the designer, each option with a stored value and a label (F4). One currency per installation, shown in the user's locale format (F3). User picker: any active user, searched by name (F9). Yes/No starts blank; "required" means Yes or No must be chosen (R5). Labels and help text are entered in one language in v0.1 (R4). **M1:** all fields and layout items except Grid and Tabs. **M2:** Grid and Tabs | M1 / M2 |
+| FRM-03 | **Field types:** Text, Text area, Number, Currency, Date, Dropdown, Radio buttons, Checkboxes, Yes/No, Email, File upload (multiple files), User picker, Calculated (read-only), and **Grid** (FRM-13). **Layout items:** Tabs, Section (with title), Label/help text. Option lists are fixed lists typed by the designer, each option with a stored value and a label (F4). One currency per installation, shown in the user's locale format (F3). User picker: any active user, searched by name (F9). Yes/No starts blank; "required" means Yes or No must be chosen (R5). Email checks for a basic address format, in the browser and on the server (C13). Labels and help text are entered in one language in v0.1 (R4). **M1:** all fields and layout items except Grid and Tabs. **M2:** Grid and Tabs | M1 / M2 |
 | FRM-04 | **Field properties:** label, key, **data type**, help text, default value, required, read-only. Keys are typed by hand (F2): unique in the form ignoring case, start with a letter, only letters, digits and `_`, no reserved words (003, E1). Renaming a key does not update expressions; the save check reports every broken reference (F2). Default value: a fixed value or an expression, evaluated once when the form opens (F7). Every control has an explicit data type from its allowed list, with a default (DT1, section 4.1). The server rejects values that do not fit the data type. A key keeps **one type family in all versions**; a family change is blocked at publish (DT2, section 4.2) | M1 |
-| FRM-05 | **Validation**, in the levels of section 4.4: field settings (required, "Required when" (CV1), length, min/max value, decimals, data type, ready-made or custom pattern (F8)); expression rules across fields, each with its own message shown under one chosen field or at the top of the form (CV7). Field settings run first; an expression rule runs only when its fields passed their own checks (no double errors); a rule whose result is blank passes (003, EXP-07). Rules run in the browser and again on the server; the server decides. They run on **Submit, Resubmit and Approve** only; on Reject, Reject (final) and Send back nothing is validated and field changes are not saved (CV3). **M1:** all of this. **M2:** grid rules (with FRM-13) and **step rules**: a rule can be limited to chosen workflow steps (default: every step where its field is editable), and a field can be "required at this step" (CV2; the tick is set in the process designer, 005) | M1 / M2 |
-| FRM-06 | **Calculated fields** use the expression language (003). A calculated field may use other calculated fields; loops are rejected when the design is saved. The formula's result must fit the field's chosen data type. The server recalculates and ignores the browser's value (R1) | M1 |
+| FRM-05 | **Validation**, in the levels of section 4.4: field settings (required, "Required when" (CV1), length, min/max value, decimals, data type, ready-made or custom pattern (F8)); expression rules across fields, each with its own message shown under one chosen field or at the top of the form (CV7). Field settings run first; an expression rule runs only when its fields passed their own checks (no double errors); a rule whose result is blank passes (003, EXP-07). Rules run in the browser (when the user leaves a field, and on Submit, C13) and again on the server; the server decides. They run on **Submit, Resubmit and Approve** only; on Approve, a rule runs only at steps where its field is editable (a top-of-form rule: where any field it uses is editable) (C9); on Reject, Reject (final) and Send back nothing is validated and field changes are not saved (CV3). **M1:** all of this. **M2:** grid rules (with FRM-13) and **step rules**: a rule can be limited to chosen workflow steps (default: every step where its field is editable), and a field can be "required at this step" (CV2; the tick is set in the process designer, 005) | M1 / M2 |
+| FRM-06 | **Calculated fields** use the expression language (003). A calculated field may use other calculated fields; loops are reported when the design is saved and block publishing (C10). The formula's result must fit the field's chosen data type. The server recalculates and ignores the browser's value (R1) | M1 |
 | FRM-07 | **Show/hide rules:** a field or a section is visible only while an expression is true. Hidden fields are not validated and their values are not saved. **M2:** the same for fields on a hidden tab (T2) | M1 / M2 |
 | FRM-08 | Forms are versioned only as part of their app (APP-02); there are no separate form versions | M1 |
 | FRM-09 | Form data is saved with the app version used to enter it | M1 |
@@ -173,7 +173,7 @@ default data type is preselected, and the designer may change it within the allo
 |---|---|---|
 | **Text** | Max length 1–4,000, or Unlimited | text |
 | **Whole number** | none | number |
-| **Decimal** | Decimal places 0–10 (see C2) | number |
+| **Decimal** | Decimal places 0–10 (C2) | number |
 | **Date** | none | date |
 | **Yes/No** | none | true/false |
 | *User* (fixed for User picker) | none | text (user ID) |
@@ -182,7 +182,7 @@ default data type is preselected, and the designer may change it within the allo
 | Control | Allowed data types | Default |
 |---|---|---|
 | Text box | Text, Whole number, Decimal | Text (255) |
-| Text area | Text | Text (Unlimited) (see C1) |
+| Text area | Text | Text (Unlimited) (C1) |
 | Number | Whole number, Decimal | Whole number |
 | Currency | Decimal | Decimal (2) |
 | Date | Date | Date |
@@ -196,11 +196,11 @@ default data type is preselected, and the designer may change it within the allo
 | Grid column | Same rules as the control used in the column | |
 
 Stored values of Dropdown, Radio and Checkboxes options must match the data type. Without a designer limit,
-Text allows up to 255 characters and Text area up to 4,000 (R3; see C1); Currency shows 2 decimals; Number
-decimals are set per field (R3; see C2).
+a Text box allows up to 255 characters and a Text area is unlimited (C1). Every Decimal field allows 0–10
+decimal places; Currency defaults to 2 and the designer may change it (C2).
 
 ### 4.2 Type changes between versions (DT2)
-- Within the same family, changes are always allowed: longer or shorter text, Whole number → Decimal, more or fewer decimal places.
+- Within the same family, changes are always allowed: longer or shorter text, Whole number → Decimal, Decimal → Whole number (C3), more or fewer decimal places.
 - A change to a different family (for example Decimal → Text) is **rejected by the publish check**, naming the field: "LoanAmount was Decimal in v2. To change its type, create a new field with a new key."
 - Every key keeps one type family forever, so restart copying (APP-05) only ever converts within a family.
 
@@ -212,9 +212,11 @@ decimals are set per field (R3; see C2).
 | Text → Number/Currency | The text is a valid number |
 | Text → Date | The text is a valid ISO date |
 | Dropdown/Radio → Dropdown/Radio | The stored value exists in the new option list |
+| Checkboxes → Checkboxes | The stored values that still exist in the new option list are kept; removed ones are noted in the history (C5) |
 | Anything else | Not converted: left empty, noted in the history |
 
-Some rows of this table cannot happen any more because of DT2 (see C6).
+- A value that does not fit the new field's limits within the same family (text longer than the new limit, more decimals than allowed, including Decimal → Whole number with a fraction) is **not converted**: left empty and noted in the history (C3, C4).
+- Some rows of this table cannot happen any more because of DT2. The table stays as decided; only the rows that can happen are built and tested (C6).
 
 ### 4.4 Validation levels (CV1–CV7)
 | Level | Checks | Example | Set up by | When |
@@ -236,12 +238,15 @@ Every criterion gets at least one automated test whose name contains its ID (con
 | APP-01-AC1 | A designer creates an app with a unique code, a name and a description; a duplicate code is rejected; the code cannot change later (Q1) |
 | APP-01-AC2 | Any user with App Designer can open and edit any app; a user without it is refused by the server (A2, NFR-01) |
 | APP-01-AC3 | A second form or process with a key already used in the same app is rejected; the same key in another app is allowed (Q2) |
+| APP-01-AC4 | An app code that does not start with a letter, contains other characters than letters, digits, `-` and `_`, is longer than 20 characters, or equals an existing code ignoring letter case is rejected (C8) |
 | APP-02-AC1 | An app has at most one draft (A1); "New draft from version…" is refused while a draft exists |
 | APP-02-AC2 | Publishing requires a note (A6) and checks all forms and processes; if any check fails, nothing is published and every error points to its form, field or node |
 | APP-02-AC3 | A published version cannot be edited or discarded; versions are numbered 1, 2, 3 in publish order |
 | APP-02-AC4 | A second save of the same form or process based on an old copy is rejected with who changed it and when (A8) |
 | APP-02-AC5 | A draft can be discarded; it is only marked as deleted (Q3, NFR-08) |
 | APP-02-AC6 | A new draft from version N contains the same forms and processes as version N; changing the draft leaves version N unchanged |
+| APP-02-AC7 | A new app has an empty first draft; after that draft is discarded (and no version was published), the designer can create a new empty draft (C7) |
+| APP-02-AC8 | A draft with design errors (e.g. a broken reference after a key rename) is saved and lists every error; publishing it is refused until all are fixed (C10) |
 | APP-03-AC1 | After publishing, the designer can make the new version active in the same step; yes is preselected (A3) |
 | APP-03-AC2 | Making an older version active (rollback) makes new requests use it; requests already started keep their version |
 | APP-04-AC1 | A request started on v1 continues on v1 after v2 becomes active |
@@ -253,9 +258,13 @@ Every criterion gets at least one automated test whose name contains its ID (con
 | APP-05-AC5 | *(M3)* A restarted request's open tasks are cancelled; it goes to its requester as "Waiting for resubmission" with the active version's form; new fields are empty or show their default; removed fields are not shown |
 | APP-05-AC6 | *(M3)* After resubmission the request follows the active version's flow from the first step; it keeps its number and history, and the history shows who restarted it, when, why, onto which version, and the old values of removed fields |
 | APP-05-AC7 | *(M3)* Grid rows are copied on restart; columns are matched by key using the same conversion rules (GR8) |
+| APP-05-AC8 | *(M3)* Restarting a request that is already on the active version is refused with "already on the active version" (C12) |
+| APP-05-AC9 | *(M3)* A text value longer than the new limit, or a number with more decimals than the new field allows (also 12.5 into a Whole number field), is left empty and noted in the history (C3, C4) |
+| APP-05-AC10 | *(M3)* A Checkboxes value PAN, AADHAAR, VOTERID, restarted onto a version without VOTERID, keeps PAN and AADHAAR; the history notes that VOTERID was removed (C5) |
 | APP-06-AC1 | A task created after an org change uses the new org data; a task created before keeps its assignee (same rule as ORG-06-AC-x2 in 002; one test may carry both IDs) |
 | APP-07-AC1 | *(M3)* A disabled app's processes disappear from "Start a request" and no new request can start, also not by calling the server directly; its running requests continue normally |
 | APP-07-AC2 | *(M3)* A disabled app can be enabled again; there is no way to delete an app |
+| APP-07-AC3 | *(M3)* In a disabled app, designers can still edit, publish and change the active version, and a requester can reopen a rejected request (C11) |
 | FRM-02-AC1 | The designer drags fields and sections onto the form, reorders them, and sees a live preview where expressions work; *(M2)* the same for tabs and grids |
 | FRM-02-AC2 | The designer's drag-and-drop also works with the keyboard (constitution 12.2) |
 | FRM-03-AC1 | Every field type listed for M1 in FRM-03 can be added, configured and filled; *(M2)* the same for Grid and Tabs |
@@ -263,6 +272,7 @@ Every criterion gets at least one automated test whose name contains its ID (con
 | FRM-03-AC3 | The User picker finds active users by name; inactive users cannot be chosen (F9) |
 | FRM-03-AC4 | A Yes/No field starts blank; when required, the user must choose Yes or No (R5) |
 | FRM-03-AC5 | Currency values are shown in the installation's one currency, in the user's locale format (F3) |
+| FRM-03-AC6 | An Email field rejects an address without a basic valid format (e.g. `ravi@gmail`, `ravi.example.com`) in the browser and on the server; `ravi@example.com` is accepted (C13) |
 | FRM-04-AC1 | A field key must be unique in the form (ignoring case), start with a letter and contain only letters, digits and `_`; reserved words are rejected (E1) |
 | FRM-04-AC2 | Changing a key that expressions use makes the save check report each broken expression (F2) |
 | FRM-04-AC3 | A default expression such as `TODAY()` fills the field when the form opens (F7) |
@@ -270,7 +280,8 @@ Every criterion gets at least one automated test whose name contains its ID (con
 | FRM-04-AC5 | The server rejects a value that does not fit the data type (e.g. "abc" for Whole number, 3 decimals for Decimal (2)) |
 | FRM-04-AC6 | Publishing a version where an existing key changes type family is rejected with a message naming the field (DT2); a change within the family is accepted |
 | FRM-04-AC7 | A field marked read-only shows its value, and the user cannot change it |
-| FRM-04-AC8 | Without a designer limit, Text box allows 255 characters and the other defaults of section 4.1 apply (Text area per C1) |
+| FRM-04-AC8 | Without a designer limit, a Text box allows 255 characters, a Text area is unlimited, and the other defaults of section 4.1 apply (C1) |
+| FRM-04-AC9 | A Decimal field accepts 0–10 decimal places as its setting; a Currency field starts with 2 and the designer can change it (C2). Publishing a change from Decimal to Whole number for an existing key is accepted (C3) |
 | FRM-05-AC1 | A ready-made pattern (e.g. 10-digit mobile) rejects `98765` in the browser and on the server (F8); a custom pattern works the same way |
 | FRM-05-AC2 | A request that skips browser checks (direct call to the server) is still rejected by the server with field-level messages |
 | FRM-05-AC3 | A "Required when" field is required only while its expression is true (CV1) |
@@ -279,8 +290,10 @@ Every criterion gets at least one automated test whose name contains its ID (con
 | FRM-05-AC6 | A rule's message appears under its chosen field, or at the top of the form, as configured (CV7) |
 | FRM-05-AC7 | Min/max length and min/max value are enforced in the browser and on the server |
 | FRM-05-AC8 | When a field fails its own settings, an expression rule that uses it is not checked, so the user sees one error, not two |
+| FRM-05-AC9 | On Approve, a rule runs only at steps where its field is editable (a top-of-form rule: where any field it uses is editable); an approver who cannot edit `FromDate` or `ToDate` is not blocked by `ToDate >= FromDate` (C9) |
+| FRM-05-AC10 | Browser checks show a field's error when the user leaves the field and on Submit, not while the user is still typing in it (C13) |
 | FRM-06-AC1 | The server's value for a calculated field wins over the browser's (R1) |
-| FRM-06-AC2 | A calculated field may use another calculated field; a loop between calculated fields is rejected when the design is saved |
+| FRM-06-AC2 | A calculated field may use another calculated field; a loop between calculated fields is reported when the design is saved and blocks publishing (C10) |
 | FRM-06-AC3 | A formula whose result does not fit the calculated field's data type is reported by the save check |
 | FRM-07-AC1 | A hidden field is not validated and its value is not saved; *(M2)* the same for a field on a hidden tab |
 | FRM-07-AC2 | A section hidden by its rule hides all its fields, with the same effect as FRM-07-AC1 |
@@ -368,27 +381,27 @@ From the [v0.1 scope](../v0.1-scope.md) section 6: NFR-01 (designer screens need
 | A read copy of form data for lists and search; reporting tables per form | Later (ADR-0002, ADR-0003) |
 | Deleting an app | Never (A4) |
 
-## 10. Clarifications (open, for the owner)
-| # | Question | Options | Recommendation |
-|---|---|---|---|
-| C1 | **Text area default limit.** R3 says "Text area up to 4,000" but the data-type table (DT1) says Text area defaults to Text (Unlimited). Which is right? | a) Unlimited, as in the data-type table · b) 4,000, as in R3 | ⭐ a) The data-type table is the later, more detailed decision; the designer can still set a limit |
-| C2 | **Decimal places.** R3 says Number decimals 0–4; the data-type table says Decimal places 0–10. Can a Currency field's decimal places be changed from 2? | a) 0–10 for every Decimal field; Currency defaults to 2 and may be changed · b) 0–4, Currency fixed at 2 · c) 0–10, Currency fixed at 2 | ⭐ a) Matches the data-type table, which allows Decimal settings for Currency |
-| C3 | **Decimal → Whole number** between versions: DT2 allows "Whole number → Decimal" and "fewer decimal places", but does not say whether Decimal → Whole number is in the same family | a) Allowed (same number family); on restart, a value with decimals does not convert cleanly, so it is left empty and noted (A7) · b) Blocked at publish like a family change | ⭐ a) Both are numbers in expressions, and "fewer decimal places" is already allowed |
-| C4 | **Restart of narrowed values within a family:** text longer than the new limit, or more decimals than the new field allows | a) Not clean: left empty and noted in the history (A7 as written) · b) Copied as is; validation at resubmission makes the requester fix it · c) Text cut, decimals rounded | ⭐ a) Follows A7 literally and never changes a value silently |
-| C5 | **Restart of a Checkboxes field whose option list changed.** The A7 table covers Dropdown/Radio only, so Checkboxes falls under "Anything else" (whole value left empty) | a) Keep the options that still exist; note the removed ones in the history · b) Leave the whole value empty and note it ("Anything else") | ⭐ a) Keeps as much of the requester's input as possible, in the spirit of A7 |
-| C6 | **A7 table vs DT2.** DT2 (decided after A7) blocks family changes, so the rows Number/Currency → Text, Text → Number/Currency and Text → Date can no longer happen | a) Keep the table as decided; test only the rows that can happen; the others wait until DT2 ever changes · b) Remove those rows from the spec | ⭐ a) No decision is dropped, and nothing extra is built or tested |
-| C7 | **First draft of a new app.** The screens offer only "New draft from version…", which needs a published version | a) Creating an app also creates an empty first draft; if an app with no published version has no draft (it was discarded), the designer can create a new empty draft · b) A separate "New empty draft" action at any time | ⭐ a) Keeps "one draft, copied from a version" as the normal rule |
-| C8 | **App code format** (Q1 says unique and unchangeable, but not its form) | a) Starts with a letter; letters, digits, `-` and `_`; up to 20 characters; unique ignoring letter case · b) Free text up to 50 characters, unique ignoring case | ⭐ a) Codes appear in screens and links; a strict short format avoids mistakes, like usernames (001, C4) |
-| C9 | **Which steps run a rule in M1**, before step rules (CV2) arrive in M2? | a) The CV2 default from M1: a rule runs on Submit and Resubmit, and on Approve only at steps where its field is editable (a top-of-form rule: where any field it uses is editable) · b) Every rule runs on every Submit, Resubmit and Approve | ⭐ a) An approver who cannot change a field should not be blocked by its rule; M2 then only adds the choice of steps |
-| C10 | **Saving a draft with design errors** (broken references after a key rename, F2; loops, FRM-06). FRM-06 says loops are "rejected when the design is saved" | a) The draft is saved and lists every error; publishing is blocked until all are fixed · b) The save is refused until every error is fixed | ⭐ a) A designer renaming one key in a large form can save and fix the rest step by step; nothing broken can be published. The same answer must apply in 003 (EXP-04) |
-| C11 | **Disabled app (A4):** may designers still edit, publish and change the active version, and may a requester reopen a rejected request (WF-13)? | a) Both allowed; disabling only stops new requests · b) Designers allowed; reopen blocked · c) App read-only and reopen blocked | ⭐ a) A4 stops only *new* requests; a reopen continues an existing one |
-| C12 | **Restart of a request already on the active version** | a) Refused with "already on the active version" · b) Allowed: it goes back to the requester and restarts from the first step | ⭐ a) Restart exists to move requests to a new version; resending to the start on the same version is a different feature |
-| C13 | **Email field format and early browser checks.** Does the Email field check the address format? And R2 says browser checks run "when the user leaves a field", while the validation section says "while typing" | a) Email: a basic address-format check in the browser and on the server; browser checks run when the user leaves a field and on Submit (R2) · b) Email: length only; browser checks while typing | ⭐ a) Users expect an Email field to catch typos; checking on leaving a field avoids errors while the user is still typing |
+## 10. Clarifications (answered by the owner, 2026-10-21)
+| # | Question | Answer |
+|---|---|---|
+| C1 | Text area default limit (R3: 4,000; DT1: Unlimited) | **Unlimited**; the designer can set a limit |
+| C2 | Decimal places (R3: 0–4; DT1: 0–10); can Currency differ from 2? | **0–10 for every Decimal field; Currency defaults to 2 and may be changed** |
+| C3 | Is Decimal → Whole number within the number family? | **Yes, allowed at publish**; on restart a value with decimals is left empty and noted (A7) |
+| C4 | Restart of values that no longer fit (too long, too many decimals) | **Left empty and noted in the history** (A7 as written) |
+| C5 | Restart of a Checkboxes field whose options changed | **Keep the options that still exist; note the removed ones** |
+| C6 | A7 conversion rows made impossible by DT2 | **Keep the table as decided; build and test only the rows that can happen** |
+| C7 | First draft of a new app | **Created with the app**; an app with no published version and no draft can get a new empty draft |
+| C8 | App code format | **Starts with a letter; letters, digits, `-`, `_`; up to 20 characters; unique ignoring letter case** |
+| C9 | Which steps run a rule in M1 | **Submit and Resubmit; on Approve only at steps where the rule's field is editable** (CV2 default) |
+| C10 | Saving a draft with design errors | **Saved with an error list; publishing blocked** (same answer as 003 C2) |
+| C11 | What still works in a disabled app | **Designers can edit, publish and change the active version; requesters can reopen rejected requests** |
+| C12 | Restart of a request already on the active version | **Refused** ("already on the active version") |
+| C13 | Email format check and when browser checks run | **Basic address-format check in the browser and on the server; browser checks when leaving a field and on Submit** (R2) |
 
 ## 11. Spec quality checklist (Claude checks before asking for approval)
 - [x] Every requirement has an ID, a milestone and at least one acceptance criterion
 - [x] No technology choices in the spec (only customer constraints)
 - [x] Every acceptance criterion is testable; none needs a manual check
 - [x] Out-of-scope items are listed so nobody builds them by mistake
-- [ ] All clarifications answered (C1–C13)
+- [x] All clarifications answered (C1–C13, 2026-10-21)
 - [ ] Approved by the owner
