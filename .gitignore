@@ -1,0 +1,35 @@
+# Claude Code personal settings (per machine)
+.claude/settings.local.json
+
+# .NET build output
+bin/
+obj/
+*.user
+*.suo
+.vs/
+TestResults/
+*.trx
+coverage*/
+
+# Node / React
+node_modules/
+dist/
+.vite/
+*.tsbuildinfo
+playwright-report/
+test-results/
+
+# Local secrets and environment files
+appsettings.*.local.json
+*.env
+.env.*
+!.env.example
+
+# Uploaded files in local development
+**/storage/uploads/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+*.swp
