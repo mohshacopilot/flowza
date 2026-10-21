@@ -6,4 +6,7 @@
     <ProjectReference Include="..\..\src\ServiceDefaults\Flowza.ServiceDefaults\Flowza.ServiceDefaults.csproj" />
     <ProjectReference Include="..\Flowza.Testing\Flowza.Testing.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" />
+  </ItemGroup>
 </Project>
