@@ -28,7 +28,8 @@
 | T006 + T007 AppHost and service skeletons | ✅ | 0cc7dfa |
 | T008 Messaging and Contracts | ✅ | e75101f |
 | T009 Platform integration tests | ✅ | 5f88701 |
-| Phase 0 code review fixes | ✅ | (next commit) |
+| Phase 0 code review fixes | ✅ | a269a44 |
+| T010 Identity domain | ✅ | (see git log) |
 
 **Notes from Phase 0 (decisions taken while building, within the approved plan):**
 - Tests run on **Microsoft.Testing.Platform** (xUnit v3 4.x); coverage via **coverlet.MTP** (the coverlet extension for that platform).
@@ -59,6 +60,12 @@
 Also: name properties (UserName, DisplayName, …) are masked in logs; log folder is relative to the service's own
 folder; topic names are safe for nested/generic types. (The T008 commit message mentions a `[Deduplicated]`
 architecture test that was later replaced by the policy; the code is right, the message is outdated.)
+
+**Notes from Phase 1 (Identity stream, decisions taken while building, within the approved plan):**
+- T010: usernames accept **ASCII** letters and digits only (plus `.` `_` `-`), so look-alike letters from other
+  scripts cannot imitate another user's name (C4 reading; to confirm with the owner). Mobile: optional, at most 20
+  characters of digits, spaces, `+ - ( )`. Display name: required, at most 100. `AggregateRoot` + `IDomainEvent`
+  added to Flowza.Common (shared by later services).
 
 ## Phase 0: Foundation (M1)
 | ID | Task | Spec IDs | Done when |
@@ -142,13 +149,13 @@ architecture test that was later replaced by the policy; the code is right, the 
 | IAM-01-AC1 | T020, T022, T029 | ⬜ |
 | IAM-01-AC2 | T014 | ⬜ |
 | IAM-02-AC1 | T015, T024, T026 | ⬜ |
-| IAM-02-AC2 | T010, T015 | ⬜ |
+| IAM-02-AC2 | T010, T015 | 🟡 domain rules (T010); API in T015 |
 | IAM-03-AC1 | T019, T014, T029 | ⬜ |
 | IAM-04-AC1 | T015, T026 | ⬜ |
 | IAM-04-AC2 | T015, T026 | ⬜ |
 | IAM-04-AC3 | T015, T018, T022 | ⬜ |
-| IAM-04-AC4 | T010, T015 | ⬜ |
-| IAM-04-AC5 | T010, T015 | ⬜ |
+| IAM-04-AC4 | T010, T015 | 🟡 format rules (T010); uniqueness in T015 |
+| IAM-04-AC5 | T010, T015 | 🟡 domain rule (T010); API in T015 |
 | IAM-05-AC1 | T007, T022 | 🟡 services (T007); Gateway part in T022 |
 | IAM-06-AC1 | T012 | ⬜ |
 | IAM-06-AC3 | T016, T027 | ⬜ |
