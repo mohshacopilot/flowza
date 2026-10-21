@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | **Draft**, waiting for the owner's answers to clarifications C1–C9 and approval |
+| **Status** | **Draft**; clarifications C1–C9 answered by the owner on 2026-10-21; waiting for approval |
 | **Date** | 2026-10-21 |
 | **Modules** | ORG (Organization hierarchy) |
 | **Scope IDs** | ORG-01 to ORG-06 ([v0.1 scope](../v0.1-scope.md)); ORG-07 moved to v0.2 (G1) |
@@ -43,7 +43,7 @@ or to the requester themselves.
 | Persona | What they need from this feature |
 |---|---|
 | **Platform Admin** | Define unit types; build and maintain the org tree; set unit heads; place users in units and under managers; define business roles and their members |
-| **App Designer** | Describe in a process who should act (an approver rule), without naming people |
+| **App Designer** | Describe in a process who should act (an approver rule), without naming people; look up (not change) unit types, units, roles and users while doing so (C9) |
 | **Workflow engine** (not a person) | Turn an approver rule into users, with an explanation, when a task is created |
 | **Platform Admin handling stuck tasks** | Read why a rule found nobody (the reason), so they can reassign the task |
 
@@ -116,12 +116,12 @@ As a Platform Admin or auditor, I can see why a person was chosen, so that I can
 ## 4. Requirements
 | ID | Requirement | Milestone |
 |---|---|---|
-| ORG-01 | The admin defines **unit types** (code and name), renames and deactivates them. A deactivated unit type cannot be chosen for new units; existing units keep it; deactivation is blocked while active units use it (P9) | M1 |
-| ORG-02 | The admin builds a **tree of org units of any depth**: create, rename, move (with "Move to…" and by dragging), deactivate. Any unit type may sit under any other (O1). There is exactly one root unit. A unit cannot be moved under itself or its own descendants; moving a unit moves its whole subtree. Deactivating a unit with active child units or active users is blocked until they are moved or deactivated (O2). The tree screen works with the keyboard (constitution 12.2) | M1 |
+| ORG-01 | The admin defines **unit types** (code and name), renames, deactivates and re-activates them (C3). A deactivated unit type cannot be chosen for new units; existing units keep it; deactivation is blocked while active units use it (P9) | M1 |
+| ORG-02 | The admin builds a **tree of org units of any depth**: create, rename, move (with "Move to…" and by dragging), deactivate, re-activate (C3). Any unit type may sit under any other (O1). There is exactly one root unit: the installation creates it, with one unit type, both with fixed codes; the admin renames them (C1). A unit cannot be moved under itself or its own descendants; moving a unit moves its whole subtree. An active unit cannot be added or moved under an inactive unit (C4). Deactivating a unit with active child units or active users is blocked until they are moved or deactivated (O2); a unit can be re-activated only while its parent is active (C3). The tree screen works with the keyboard (constitution 12.2) | M1 |
 | ORG-03 | Each unit has a type, a unique **code**, a name and an optional **head** (a user). The head must be an active user; the head need not belong to the unit (O11); one user may head several units (O10) | M1 |
-| ORG-04 | Each active user belongs to exactly one active **primary unit** and may have a **reporting manager**. No reporting loops: a user cannot be their own manager, directly or through a chain. Deactivating a user who is a manager or a unit head is allowed, with a warning that lists their direct reports and the units they head; rules skip inactive users (O13) | M1 |
-| ORG-05 | The admin defines **business roles** (code and name), sees the members of each role, and adds or removes members. A role is not tied to a place (O7). A deactivated role cannot be given to users and is ignored by rule f; process designs that use it show a warning on publish (P10, publish checks in 005) | M1 |
-| ORG-06 | **Approver rules** a–g (section 4.1) that the workflow engine uses to find who should act. Every result is a list of users (0, 1 or many) **plus a readable explanation**; an empty result also carries a **reason** for the admin. Rules use org data at the moment they are resolved (APP-06) | M1 |
+| ORG-04 | Each active user belongs to exactly one active **primary unit** and may have a **reporting manager**. The primary unit is **required when a user is created**; the first admin gets the root unit; re-activating a user (001, C6) needs an active primary unit first (C2; this adds a field to 001's user screen). A newly set reporting manager must be an active user (C7). No reporting loops: a user cannot be their own manager, directly or through a chain. Deactivating a user who is a manager or a unit head is allowed, with a warning that lists their direct reports and the units they head; rules skip inactive users (O13) | M1 |
+| ORG-05 | The admin defines **business roles** (code and name), deactivates and re-activates them (C3), sees the members of each role, and adds or removes members; a new member must be an active user (C7). A role is not tied to a place (O7). A deactivated role cannot be given to users and is ignored by rule f; process designs that use it show a warning on publish (P10, publish checks in 005) | M1 |
+| ORG-06 | **Approver rules** a–g (section 4.1) that the workflow engine uses to find who should act. Every result is a list of users (0, 1 or many) **plus a readable explanation**; an empty result also carries a **reason** for the admin. Rules use org data at the moment they are resolved (APP-06). App Designers can **look up, but not change**, unit types, units, business roles and users (name and username) when they build rules and start permissions (C9). Publishing checks the codes and usernames in rules: unknown ones are errors, deactivated unit types or roles and inactive users are warnings (C8, extends P10; the check is specified in 005, WF-04) | M1 |
 
 **Codes (P7, O9, P8):** codes of unit types, units and business roles use letters, digits, `-` and `_`; up to 50
 characters; unique per kind; letter case is ignored; they are stored in upper case; they **cannot change** after
@@ -132,8 +132,8 @@ creation, because process designs refer to them. Rule a refers to users by **use
 | Rule | Resolves to | Empty or special cases |
 |---|---|---|
 | **a. Specific user** (by username) | That user | Requester or inactive → empty (P1); there is no "level up" from a named user |
-| **b. The requester** | The requester | The self-approval check does not apply |
-| **c. Manager, N levels up** (N ≥ 1) | The user N steps up the manager chain | Chain too short → empty (O4); the manager found at level N is inactive → empty (P3) |
+| **b. The requester** | The requester | The self-approval check does not apply. Requester inactive → empty with reason (C6) |
+| **c. Manager, N levels up** (N ≥ 1) | The user N steps up the manager chain | Chain too short → empty (O4); the manager found at level N is inactive → empty (P3). An inactive manager **below** level N still counts as a level; the walk goes on (C5) |
 | **d. Head of the requester's unit** | That unit's head | No active head, or the head is the requester → walk up (O3, P4) |
 | **e. Head of the nearest unit of type T** | The search starts at the requester's own unit (O6) and goes up; the first unit of type T; its head | No active head, or the head is the requester → walk up (O3, P4). No unit of type T at or above the requester → empty (P6) |
 | **f. Users with business role R, in scope S** | All active users with role R whose primary unit is in scope S, minus the requester | Nobody → empty (P5) |
@@ -162,12 +162,16 @@ an explanation and a reason.
 | ORG-01-AC3 | A unit type used by active units cannot be deactivated (P9) |
 | ORG-01-AC4 | A deactivated unit type cannot be chosen for a new unit; existing units keep it (P9) |
 | ORG-01-AC5 | A unit type code outside the format (letters, digits, `-`, `_`; up to 50 characters) is rejected; a code entered in lower case is stored in upper case and clashes with the same code in another case (P7) |
+| ORG-01-AC6 | A deactivated unit type can be re-activated and can then be chosen for new units again (C3) |
 | ORG-02-AC1 | The admin can create units at any depth; any unit type may sit under any other (O1) |
 | ORG-02-AC2 | Moving a unit under itself or under one of its descendants is rejected with a clear message |
 | ORG-02-AC3 | Moving a unit moves its whole subtree; rule results afterwards reflect the new position |
 | ORG-02-AC4 | Deactivating a unit with active child units or active users is rejected, and the message names them (O2) |
 | ORG-02-AC5 | There is exactly one root unit |
 | ORG-02-AC6 | Every org tree action (expand, select, add child, rename, set head, "Move to…", deactivate) can be done with the keyboard only (constitution 12.2) |
+| ORG-02-AC7 | A new installation has exactly one root unit and one unit type, created with fixed codes; the admin can rename both, and their codes stay unchanged (C1) |
+| ORG-02-AC8 | Adding an active unit under an inactive unit, or moving an active unit under one, is rejected with a clear message (C4) |
+| ORG-02-AC9 | A deactivated unit can be re-activated while its parent is active; re-activating it under an inactive parent is rejected (C3) |
 | ORG-03-AC1 | A unit code is unique and cannot be changed after creation (O9) |
 | ORG-03-AC2 | A head must be an active user; the head need not belong to the unit (O11) and may head several units (O10) |
 | ORG-03-AC3 | A unit code follows the same format and case rules as unit type codes (P7) |
@@ -177,16 +181,21 @@ an explanation and a reason.
 | ORG-04-AC3 | A user cannot be their own manager |
 | ORG-04-AC4 | Deactivating a user who is a manager or a head succeeds and shows a warning listing their direct reports and units (O13) |
 | ORG-04-AC5 | The admin sets a user's primary unit, reporting manager and business roles; a user without a reporting manager is valid |
+| ORG-04-AC6 | Creating a user without a primary unit is rejected; the first admin of a new installation has the root unit as primary unit; re-activating a user whose primary unit is inactive is rejected until an active unit is set (C2) |
+| ORG-04-AC7 | Setting an inactive user as someone's reporting manager is rejected (C7) |
 | ORG-05-AC1 | The admin can create roles with a unique, unchangeable code, and add or remove members |
 | ORG-05-AC2 | A deactivated role cannot be given to users and is ignored by rule f (P10) |
 | ORG-05-AC3 | A business role code follows the same format and case rules as unit type codes (P7) |
 | ORG-05-AC4 | The admin sees the list of roles and the members of each role |
+| ORG-05-AC5 | Adding an inactive user to a role is rejected (C7); a deactivated role can be re-activated and is then used by rule f again (C3) |
 | ORG-06-AC-a1 | Rule a naming Priya's username → Priya |
 | ORG-06-AC-a2 | Rule a naming the requester, or naming an inactive user → empty with reason (P1) |
 | ORG-06-AC-b1 | Requester Ravi, rule b → Ravi; the self-approval check does not apply |
+| ORG-06-AC-b2 | Rule b with an inactive requester → empty with reason (C6) |
 | ORG-06-AC-c1 | Rule c, N=2, chain shorter than 2 → empty result with reason (O4) |
 | ORG-06-AC-c2 | Requester Ravi, rule c, N=1 → Arun |
 | ORG-06-AC-c3 | Requester Ravi, rule c, N=1, Arun inactive → empty with a reason that says the manager is inactive (P3) |
+| ORG-06-AC-c4 | Requester Ravi, rule c, N=2, Arun (level 1) inactive and Arun's manager (level 2) active → Arun's manager; the inactive manager still counts as a level (C5) |
 | ORG-06-AC-d1 | Requester Ravi, rule d → Arun |
 | ORG-06-AC-d2 | Requester in Adyar Branch (vacant), rule d → Suresh (walk up, O3) |
 | ORG-06-AC-d3 | Requester Arun (head of own unit), rule d → Suresh (self-approval, O5/P4) |
@@ -208,6 +217,7 @@ an explanation and a reason.
 | ORG-06-AC-x1 | Every result includes an explanation |
 | ORG-06-AC-x2 | Changes to org data affect only rules resolved afterwards; existing tasks keep their assignee (APP-06) |
 | ORG-06-AC-x3 | Every empty result carries a readable reason, e.g. "No unit of type ZONE above T Nagar Branch" |
+| ORG-06-AC-x4 | A user with App Designer (without Platform Admin) can look up unit types, units, business roles and users (name and username), but any change to org data is refused by the server (C9) |
 
 ## 6. Edge cases
 - **The head of a unit is deactivated** (O13): rules treat the unit as having no active head; rules d and e walk up (ORG-06-AC-d4).
@@ -218,7 +228,8 @@ an explanation and a reason.
 - **A user heads several units:** allowed (O10). Rules d and e still start from the requester's **primary** unit (O7).
 - **A user-picker field is empty when rule g runs:** no user is found, so the result is empty with a reason.
 - **A code is typed in lower case** (`br-tnagar`): it is stored as `BR-TNAGAR` and clashes with an existing `BR-TNAGAR` (P7).
-- **A user is re-activated (001, C6) while their old primary unit is inactive:** ORG-04-AC1 still holds, so the user needs an active primary unit (see C2).
+- **A user is re-activated (001, C6) while their old primary unit is inactive:** re-activation is refused until the admin sets an active primary unit (C2, ORG-04-AC6).
+- **A published process refers to a role code that was later deactivated:** the next publish warns (C8); at run time rule f ignores the role and gives an empty result with a reason (P10).
 - **Two admins edit the same unit or user at the same moment:** the second gets a clear "changed by someone else" message (constitution 8.5).
 - **The admin tries to deactivate the root unit:** it is blocked while it has active child units or active users (O2).
 
@@ -256,18 +267,18 @@ CLAUDE.md that important actions are prepared for the future audit log (details 
 | Audit log screens | v0.4 (actions are prepared now) |
 | Creating, editing and deactivating users; system roles | Feature 001 (not repeated here) |
 
-## 10. Clarifications (open, for the owner)
-| # | Question | Options (⭐ = Claude's recommendation) | Answer |
-|---|---|---|---|
-| C1 | **Where does the root unit come from?** ORG-02-AC5 says there is exactly one root, but a new installation has no tree, and codes can never change (O9) | **a) Installation creates one root unit and one unit type with fixed codes (e.g. `ROOT`); the admin renames them ⭐** · b) The admin creates the root unit as the first step; until then the tree is empty (an exception to ORG-02-AC5) | Open |
-| C2 | **Primary unit when a user is created.** ORG-04-AC1 says every active user has an active primary unit, but the approved 001 spec creates users (and the first admin at installation) without one | **a) Creating a user also asks for the primary unit (required); the first admin gets the root unit; a re-activated user (001, C6) needs an active primary unit first. 001's user screen gains this field (IAM L1: "ORG adds primary unit, manager and business roles") ⭐** · b) New users get the root unit by default until the admin changes it · c) Users may be active without a primary unit; rules that need it give an empty result with a reason (an exception to ORG-04-AC1) | Open |
-| C3 | **Re-activating** a deactivated unit type, unit or business role. Sources name only deactivation | **a) Allowed; a unit can be re-activated only while its parent is active ⭐** · b) Not in v0.1 | Open |
-| C4 | **Adding or moving an active unit under an inactive unit.** O2 keeps inactive units free of active children, but says nothing about adding or moving | **a) Refused with a clear message, so an inactive unit never has active children ⭐** · b) Allowed | Open |
-| C5 | **Rule c with an inactive manager in the middle of the chain** (e.g. N=2, the level-1 manager is inactive, the level-2 manager is active). P3 covers only the manager found at level N | **a) Count the inactive manager as a level and keep walking; only the user at level N must be active ⭐** · b) Skip the inactive manager (do not count them) · c) Empty result with a reason | Open |
-| C6 | **Rule b when the requester is inactive.** Rule b is exempt from the self-approval check, but O13 says rules skip inactive users | **a) Empty result with a reason, like the other rules ⭐** · b) Return the requester anyway | Open |
-| C7 | **Must a reporting manager or a new role member be an active user?** ORG-03-AC2 requires this only for heads | **a) Yes for both, the same as heads ⭐** · b) No | Open |
-| C8 | **Design-time check of approver rules.** Should publishing check that the codes and usernames in a rule exist and are active? P10 asks only for a warning about deactivated roles | **a) Publish error for an unknown code or username; publish warning for a deactivated unit type, deactivated role or inactive user (extends P10). Specified in 005 (WF-04) ⭐** · b) Only the P10 warning; anything else gives an empty result with a reason at run time | Open |
-| C9 | **What may an App Designer see of org data?** Designers choose unit types, roles, units and users in rules and start permissions (WF-06), but directory screens need Platform Admin (IAM-02, NFR-01) | **a) App Designers may look up (not change) unit types, units, business roles and users (name and username) when they build a process ⭐** · b) Designers type codes and usernames by hand · c) Designers also need the Platform Admin role | Open |
+## 10. Clarifications (answered by the owner, 2026-10-21)
+| # | Question | Answer |
+|---|---|---|
+| C1 | Where does the one root unit come from? | **The installation creates one root unit and one unit type with fixed codes**; the admin renames them (codes never change, O9) |
+| C2 | Primary unit when a user is created | **Required when a user is created**; the first admin gets the root unit; a re-activated user (001, C6) needs an active primary unit first. 001's user screen gains this field (IAM L1) |
+| C3 | Re-activating a deactivated unit type, unit or business role | **Allowed**; a unit can be re-activated only while its parent is active |
+| C4 | Adding or moving an active unit under an inactive unit | **Refused** with a clear message, so an inactive unit never has active children |
+| C5 | Rule c with an inactive manager in the middle of the chain | **The inactive manager counts as a level and the walk goes on**; only the user at level N must be active (P3) |
+| C6 | Rule b when the requester is inactive | **Empty result with a reason**, like the other rules (O13) |
+| C7 | Must a newly set reporting manager or role member be an active user? | **Yes for both**, the same as unit heads |
+| C8 | Design-time check of approver rules on publish | **Error** for an unknown code or username; **warning** for a deactivated unit type, deactivated role or inactive user (extends P10). Specified in 005 (WF-04) |
+| C9 | What may an App Designer see of org data? | **Look up, not change**: unit types, units, business roles and users (name and username), when building rules and start permissions |
 
 ## 11. Spec quality checklist (Claude checks before asking for approval)
 - [x] Every requirement has an ID, a milestone and at least one acceptance criterion
@@ -276,5 +287,5 @@ CLAUDE.md that important actions are prepared for the future audit log (details 
 - [x] Every owner decision (O1–O14, P1–P10) appears in the spec
 - [x] Rules owned by other features (001, 004, 005, 006) are referenced, not repeated
 - [x] Out-of-scope items are listed so nobody builds them by mistake
-- [ ] All clarifications answered (C1–C9)
+- [x] All clarifications answered (C1–C9, 2026-10-21)
 - [ ] Approved by the owner
