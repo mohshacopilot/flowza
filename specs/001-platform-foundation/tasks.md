@@ -7,6 +7,9 @@
 | **Rules** | One task at a time, in order. Each task ends with: builds without warnings, its tests pass, a local commit (`feat|chore|test(scope): … (IDs)`). `[P]` = can run in parallel with the previous task. Nothing is pushed without the owner's OK |
 
 ## Before coding: owner's one-time setup
+**Status 2026-10-21:** O1 ✅ (10 databases, compatibility 150, read-committed snapshot, `flowza_app` db_owner; verified)
+· O3 ✅ (RabbitMQ 4.4.0 / Erlang 29, vhosts `flowza` + `flowza_test`, user `flowza_app`; verified) · O2 and O4 open (done in T006).
+
 | # | Step | Needed from |
 |---|---|---|
 | O1 | Allow SQL logins, create the SQL login (e.g. `flowza_app`) and run [docs/setup/create-databases.sql](../../docs/setup/create-databases.sql) (steps: [local-setup.md](../../docs/setup/local-setup.md) §1) | T007 |
