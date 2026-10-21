@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | **Draft for the owner's review** (approval questions in section 14) |
+| **Status** | **Approved by the owner, 2026-10-21**, including PA1–PA7 (section 14) |
 | **Date** | 2026-10-21 |
 | **Spec** | [spec.md](spec.md) (approved 2026-10-21) |
 | **Inputs** | [Tech discussion T1–T10](../../docs/discussions/tech-discussion.md), [IAM](../../docs/discussions/identity-and-access.md), [PLT](../../docs/discussions/platform.md), [ADR-0004](../../docs/decisions/0004-messaging-transports.md), [CLAUDE.md](../../CLAUDE.md) |
@@ -233,7 +233,7 @@ errors) → create test databases → unit + integration tests (both transports)
 Application) → web lint + Vitest → Playwright end-to-end (headless) → licence check of NuGet and npm
 dependencies. Dependabot weekly. Runs only after the owner creates the private repository and allows the push.
 
-## 14. Items needing the owner's approval (constitution 1.6)
+## 14. Items approved by the owner (constitution 1.6, approved 2026-10-21)
 | # | Item | Proposal |
 |---|---|---|
 | PA1 | **Identity API contract** | Section 5.3 |

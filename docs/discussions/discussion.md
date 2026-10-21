@@ -8,8 +8,8 @@
 
 ## What to do next
 Spec Kit is postponed; we follow the same method by hand (see [CLAUDE.md](../../CLAUDE.md), "Feature specs: manual SDD").
-1. Finish `specs/001-platform-foundation/spec.md` (answers C1–C6, then the owner approves it).
-2. Write the specs for 002 to 006 the same way, from the module discussion files.
+1. Implement feature 001 task by task from [tasks.md](../../specs/001-platform-foundation/tasks.md) (starting at T001), one local commit per task.
+2. Write the specs for 002 to 006 the same way, from the module discussion files (can happen alongside).
 3. Per feature: plan → tasks → analyze → implement, building **Milestone 1** first.
 
 In a new session, say:
@@ -36,7 +36,9 @@ module. Sections marked "design notes" go into `plan.md`, never into `spec.md`.
 | 11 | Approve the v0.1 scope | ✅ Approved 2026-10-21 | [specs/v0.1-scope.md](../../specs/v0.1-scope.md) |
 | 12 | Spec Kit | ⏸ Postponed by the owner (2026-10-21): manual SDD instead, same file layout | [CLAUDE.md](../../CLAUDE.md) "Feature specs: manual SDD" |
 | 13 | Spec 001 Platform foundation (IAM + PLT) | ✅ Approved 2026-10-21 (C1–C6 all "a") | [spec.md](../../specs/001-platform-foundation/spec.md) |
-| 14 | Tech discussion (owner's request, before plans) | ⏳ In progress: topic list proposed, T1 asked | [tech-discussion.md](tech-discussion.md) |
+| 14 | Tech discussion (owner's request, before plans) | ✅ T1–T10 decided 2026-10-21 (T11–T13 before features 003–005); code name **Flowza**; ADR-0004 | [tech-discussion.md](tech-discussion.md) |
+| 15 | Plan 001 | ✅ Approved 2026-10-21 (PA1–PA7) | [plan.md](../../specs/001-platform-foundation/plan.md) |
+| 16 | Tasks 001 | ✅ Written and analyzed; **next: implement T001** (owner setup O1–O4 needed from T006) | [tasks.md](../../specs/001-platform-foundation/tasks.md) |
 
 ## 2. Key decisions made today (summary)
 Details and reasons are in each module file and ADR.
