@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | **Draft**; clarifications C1–C11 answered by the owner on 2026-10-21; waiting for approval |
+| **Status** | **Approved by the owner, 2026-10-21** (clarifications C1–C11 answered) |
 | **Date** | 2026-10-21 |
 | **Modules** | EXP (Expression language), shared by forms and workflow |
 | **Scope IDs** | EXP-01 to EXP-07 ([v0.1 scope](../v0.1-scope.md)) |
@@ -302,4 +302,4 @@ From the [v0.1 scope](../v0.1-scope.md) section 6: NFR-05 (dates have no time pa
 - [x] Every owner decision (E1–E12, D1–D7, CV6, GR4, Q2) is kept as recorded, and the draft criteria keep their IDs
 - [x] Uses owned by other features (form rules in 004, Condition nodes in 005) are referenced, not specified twice
 - [x] All clarifications answered (C1–C11, 2026-10-21)
-- [ ] Approved by the owner
+- [x] Approved by the owner (2026-10-21)
