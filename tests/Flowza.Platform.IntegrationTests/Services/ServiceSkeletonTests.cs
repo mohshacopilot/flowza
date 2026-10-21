@@ -1,8 +1,10 @@
 using System.Net;
+using Flowza.Testing;
 
 namespace Flowza.Platform.IntegrationTests.Services;
 
 /// <summary>Every service starts, owns its database, reports health and refuses anonymous API calls (T007).</summary>
+[Collection(ServiceDatabasesTestGroup.Name)]
 public sealed class ServiceSkeletonTests
 {
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
@@ -37,19 +39,25 @@ public sealed class ServiceSkeletonTests
     [MemberData(nameof(ServiceApps.Names), MemberType = typeof(ServiceApps))]
     public async Task PLT_03_AC1_first_start_applies_the_migrations_and_a_restart_changes_nothing(string service)
     {
+        // Start from a database without any service tables, as on a new installation (the database itself is
+        // created by the DBA, owner step O1).
+        await TestDatabase.DropServiceTablesAsync(ServiceApps.DatabaseOf(service), Ct);
+
         IReadOnlyList<string> afterFirstStart;
+        IReadOnlyList<string> allMigrations;
         await using (var first = ServiceApps.Create(service))
         {
             using var client = first.CreateClient();
             afterFirstStart = await first.AppliedMigrationsAsync(Ct);
+            allMigrations = first.AllMigrations();
         }
 
         await using var second = ServiceApps.Create(service);
         using var secondClient = second.CreateClient();
         var afterRestart = await second.AppliedMigrationsAsync(Ct);
 
-        afterFirstStart.ShouldNotBeEmpty();
-        afterFirstStart.ShouldContain(m => m.EndsWith("_Initial", StringComparison.Ordinal));
+        allMigrations.ShouldNotBeEmpty();
+        afterFirstStart.ShouldBe(allMigrations);
         afterRestart.ShouldBe(afterFirstStart);
     }
 }

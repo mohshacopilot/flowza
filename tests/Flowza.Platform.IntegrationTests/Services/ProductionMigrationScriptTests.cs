@@ -10,21 +10,22 @@ namespace Flowza.Platform.IntegrationTests.Services;
 /// PLT-03-AC2: production gets one reviewable script per service (tech discussion PL4). The script is idempotent,
 /// so a DBA can run it twice without harm.
 /// </summary>
+[Collection(ServiceDatabasesTestGroup.Name)]
 public sealed class ProductionMigrationScriptTests
 {
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
-    public static TheoryData<string> Services => ["identity", "design", "runtime", "worker"];
-
     [Theory]
-    [MemberData(nameof(Services))]
+    [MemberData(nameof(ServiceApps.Names), MemberType = typeof(ServiceApps))]
     public async Task PLT_03_AC2_the_production_script_can_be_run_twice_safely(string service)
     {
+        // An empty database, as the DBA receives it.
+        await TestDatabase.DropServiceTablesAsync(ServiceApps.DatabaseOf(service), Ct);
         await using var context = CreateContext(service);
         var script = context.GetService<IMigrator>().GenerateScript(options: MigrationsSqlGenerationOptions.Idempotent);
 
         script.ShouldContain("__EFMigrationsHistory");
-        var before = (await context.Database.GetAppliedMigrationsAsync(Ct)).ToList();
+        (await context.Database.GetAppliedMigrationsAsync(Ct)).ShouldBeEmpty();
 
         for (var run = 0; run < 2; run++)
         {
@@ -36,7 +37,6 @@ public sealed class ProductionMigrationScriptTests
 
         var after = (await context.Database.GetAppliedMigrationsAsync(Ct)).ToList();
         after.ShouldBe(context.Database.GetMigrations().ToList());
-        before.ShouldAllBe(migration => after.Contains(migration));
     }
 
     private static DbContext CreateContext(string service)

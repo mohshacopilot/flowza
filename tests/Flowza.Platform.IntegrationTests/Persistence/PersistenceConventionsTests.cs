@@ -82,6 +82,33 @@ public sealed class PersistenceConventionsTests(PersistenceDatabaseFixture datab
     }
 
     [Fact]
+    public async Task Constitution_8_6_soft_delete_keeps_loaded_children_and_owned_values()
+    {
+        var document = new TestDocument { Title = "with children", IssuedAt = s_start.UtcDateTime, Signer = new TestSigner { Name = "Signer A" } };
+        document.Attachments.Add(new TestAttachment { FileName = "one.pdf" });
+        document.Attachments.Add(new TestAttachment { FileName = "two.pdf" });
+        await using (var context = database.CreateContext(_clock, _user))
+        {
+            context.Documents.Add(document);
+            await context.SaveChangesAsync(Ct);
+        }
+
+        await using (var context = database.CreateContext(_clock, _user))
+        {
+            var loaded = await context.Documents.Include(d => d.Attachments).SingleAsync(d => d.Id == document.Id, Ct);
+            context.Documents.Remove(loaded);
+            await context.SaveChangesAsync(Ct);
+        }
+
+        await using var check = database.CreateContext(_clock, _user);
+        (await check.Attachments.CountAsync(a => a.DocumentId == document.Id, Ct)).ShouldBe(2);
+        var stored = await check.Documents.IgnoreQueryFilters([ShadowColumns.SoftDeleteFilter]).SingleAsync(d => d.Id == document.Id, Ct);
+        stored.Signer.ShouldNotBeNull();
+        stored.Signer.Name.ShouldBe("Signer A");
+        check.Entry(stored).Property<bool>(ShadowColumns.IsDeleted).CurrentValue.ShouldBeTrue();
+    }
+
+    [Fact]
     public async Task Entity_without_markers_is_really_deleted()
     {
         var note = new TestNote { Text = "temporary" };

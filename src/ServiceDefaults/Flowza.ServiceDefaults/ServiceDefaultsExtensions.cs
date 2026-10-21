@@ -32,6 +32,9 @@ public static class ServiceDefaultsExtensions
     /// <summary>Activity sources and meters of Flowza code start with this name.</summary>
     public const string TelemetryPrefix = "Flowza";
 
+    /// <summary>Activity source and meter name used by Wolverine (messaging).</summary>
+    public const string WolverineTelemetryName = "Wolverine";
+
     public static TBuilder AddFlowzaServiceDefaults<TBuilder>(this TBuilder builder)
         where TBuilder : IHostApplicationBuilder
     {
@@ -65,6 +68,11 @@ public static class ServiceDefaultsExtensions
         var logFolder = builder.Configuration["Flowza:Logging:Folder"];
         var writeFiles = !builder.Environment.IsDevelopment() || !string.IsNullOrWhiteSpace(logFolder);
 
+        // Every line carries the service and the trace ID, so the reference code on an error screen (its first
+        // 8 characters, OB4) can be found in the daily files, the only logs on-premises.
+        const string template =
+            "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Service} {TraceId} {SourceContext}: {Message:lj}{NewLine}{Exception}";
+
         builder.Services.AddSerilog(logger =>
         {
             logger
@@ -74,13 +82,16 @@ public static class ServiceDefaultsExtensions
                 .Enrich.FromLogContext()
                 .Enrich.WithProperty("Service", serviceName)
                 .Enrich.With<SensitiveDataMaskingEnricher>()
-                .WriteTo.Console(formatProvider: CultureInfo.InvariantCulture);
+                .WriteTo.Console(outputTemplate: template, formatProvider: CultureInfo.InvariantCulture);
 
             if (writeFiles)
             {
-                var folder = string.IsNullOrWhiteSpace(logFolder) ? "logs" : logFolder;
+                // Relative to the service's own folder, not the working directory (under IIS or a Windows
+                // service that would be System32).
+                var folder = Path.Combine(builder.Environment.ContentRootPath, string.IsNullOrWhiteSpace(logFolder) ? "logs" : logFolder);
                 logger.WriteTo.File(
                     Path.Combine(folder, $"{serviceName}-.log"),
+                    outputTemplate: template,
                     formatProvider: CultureInfo.InvariantCulture,
                     rollingInterval: RollingInterval.Day,
                     retainedFileCountLimit: builder.Configuration.GetValue("Flowza:Logging:RetainedDays", 30));
@@ -109,10 +120,14 @@ public static class ServiceDefaultsExtensions
                 .AddAspNetCoreInstrumentation()
                 .AddHttpClientInstrumentation()
                 .AddRuntimeInstrumentation()
-                .AddMeter($"{TelemetryPrefix}.*"))
+                .AddMeter($"{TelemetryPrefix}.*")
+                .AddMeter(WolverineTelemetryName))
             .WithTracing(tracing => tracing
                 .AddSource(builder.Environment.ApplicationName)
                 .AddSource($"{TelemetryPrefix}.*")
+                // Wolverine starts an activity for each message sent and handled; without it the trace
+                // reference stops at the service boundary (PLT-05-AC2).
+                .AddSource(WolverineTelemetryName)
                 .AddAspNetCoreInstrumentation(options =>
                     options.Filter = context => !context.Request.Path.StartsWithSegments("/health", StringComparison.OrdinalIgnoreCase))
                 .AddHttpClientInstrumentation());

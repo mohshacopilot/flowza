@@ -69,14 +69,17 @@ public sealed class ServiceDefaultsEndpointsTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task PLT_05_AC2_unexpected_errors_show_a_reference_code_and_no_internal_details()
+    public async Task PLT_05_AC2_unexpected_errors_show_the_trace_reference_code_and_no_internal_details()
     {
-        var response = await _client!.GetAsync("/boom", Ct);
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/boom");
+        request.Headers.Add("traceparent", "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01");
+
+        var response = await _client!.SendAsync(request, Ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.InternalServerError);
         var body = await response.Content.ReadAsStringAsync(Ct);
         body.ShouldNotContain("internal detail");
         using var json = JsonDocument.Parse(body);
-        json.RootElement.GetProperty("reference").GetString()!.Length.ShouldBe(8);
+        json.RootElement.GetProperty("reference").GetString().ShouldBe("4bf92f35");
     }
 }

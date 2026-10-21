@@ -15,4 +15,8 @@
     <ProjectReference Include="..\..\Services\Worker\Flowza.Worker\Flowza.Worker.csproj" />
     <ProjectReference Include="..\..\Gateway\Flowza.Gateway\Flowza.Gateway.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.SqlClient" />
+  </ItemGroup>
 </Project>

@@ -17,7 +17,7 @@ using Flowza.Contracts;
 namespace Flowza.Messaging;
 
 /// <summary>
-/// Sets up Wolverine for a Flowza service (plan 001 Â§8; ADR-0004, ADR-0005; tech discussion T4):
+/// Sets up Wolverine for a Flowza service (plan 001 section 8; ADR-0004, ADR-0005; tech discussion T4):
 /// in-process mediator, transactional outbox and durable inbox in the service's <b>own</b> database, retry and
 /// dead-letter policy, and one of three transports chosen by <c>Messaging:Transport</c> (default SqlServer).
 /// </summary>
@@ -43,7 +43,8 @@ public static class FlowzaMessagingExtensions
             return MessageTransport.SqlServer;
         }
 
-        return Enum.TryParse<MessageTransport>(value, ignoreCase: true, out var transport)
+        // IsDefined: Enum.TryParse also accepts numbers such as "5", which would leave no transport configured.
+        return Enum.TryParse<MessageTransport>(value, ignoreCase: true, out var transport) && Enum.IsDefined(transport)
             ? transport
             : throw new InvalidOperationException(
                 $"'{TransportKey}' is '{value}'. Use SqlServer, RabbitMq or AzureServiceBus (ADR-0005).");
@@ -129,6 +130,9 @@ public static class FlowzaMessagingExtensions
                 break;
             case MessageTransport.RabbitMq:
                 health.AddCheck("message-transport", new RabbitMqHealthCheck(new Uri(Required(builder.Configuration, RabbitMqConnectionName))));
+                break;
+            case MessageTransport.AzureServiceBus:
+                health.AddCheck("message-transport", new AzureServiceBusHealthCheck(Required(builder.Configuration, AzureServiceBusConnectionName)));
                 break;
         }
 

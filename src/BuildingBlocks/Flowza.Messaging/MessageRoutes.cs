@@ -51,10 +51,14 @@ public sealed class MessageRoutes
         return service.Trim().ToLowerInvariant();
     }
 
-    /// <summary>Exchange or topic name of a message type: its full .NET name in lower case.</summary>
+    /// <summary>
+    /// Exchange or topic name of a message type: its full .NET name in lower case, with any character that brokers
+    /// do not accept (from nested or generic types, e.g. '+', '`', '[') replaced by '.'.
+    /// </summary>
     public static string TopicName(Type messageType)
     {
         ArgumentNullException.ThrowIfNull(messageType);
-        return (messageType.FullName ?? messageType.Name).ToLowerInvariant();
+        var name = (messageType.FullName ?? messageType.Name).ToLowerInvariant();
+        return new string([.. name.Select(c => char.IsAsciiLetterOrDigit(c) || c is '.' or '-' or '_' ? c : '.')]);
     }
 }

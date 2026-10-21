@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -7,6 +8,7 @@ namespace Flowza.Platform.IntegrationTests.Services;
 /// PLT-05-AC3 / NFR-07: a real service's log files never contain personal values, even when code passes them to
 /// the logger by mistake (the masking policy is the second line of defence; constitution 11.2).
 /// </summary>
+[Collection(ServiceDatabasesTestGroup.Name)]
 public sealed class LogPrivacyTests
 {
     private const string Email = "ravi.secret.test@bank.example";
@@ -14,11 +16,12 @@ public sealed class LogPrivacyTests
     private const string Mobile = "9876501234";
 
     [Fact]
-    public async Task PLT_05_AC3_personal_values_never_reach_the_log_files()
+    public async Task PLT_05_AC3_personal_values_never_reach_the_log_files_and_PLT_05_AC2_lines_carry_the_trace_reference()
     {
         var folder = Path.Combine(Path.GetTempPath(), "flowza-log-scan", Guid.NewGuid().ToString("N"));
         Environment.SetEnvironmentVariable("Flowza__Logging__Folder", folder);
         var userId = Guid.NewGuid();
+        string traceId;
         try
         {
             await using (var app = ServiceApps.Create("identity"))
@@ -26,6 +29,9 @@ public sealed class LogPrivacyTests
                 using var client = app.CreateClient();
                 var services = ((Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactory<Flowza.Identity.Api.ApiAssembly>)app).Services;
                 var logger = services.GetRequiredService<ILoggerFactory>().CreateLogger("LogPrivacyTest");
+                using var source = new ActivitySource("Flowza.Tests");
+                using var userAction = source.StartActivity("user action");
+                traceId = userAction!.TraceId.ToHexString();
 #pragma warning disable CA1848, CA1873, CA2254 // Deliberately "wrong" logging to prove the guard works.
                 logger.LogInformation("User {UserId} changed {Email}, {Password} and {MobileNumber}", userId, Email, Password, Mobile);
                 logger.LogWarning("Request {@Request}", new { UserId = userId, Contact = new { Email, Phone = Mobile } });
@@ -35,6 +41,7 @@ public sealed class LogPrivacyTests
             var text = string.Join("\n", Directory.GetFiles(folder, "*.log").Select(ReadShared));
 
             text.ShouldContain(userId.ToString());
+            text.ShouldContain(traceId[..8], customMessage: "the reference code (OB4) must be findable in the log files");
             text.ShouldNotContain(Email);
             text.ShouldNotContain(Password);
             text.ShouldNotContain(Mobile);

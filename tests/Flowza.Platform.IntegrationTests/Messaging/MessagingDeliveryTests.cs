@@ -42,7 +42,7 @@ public sealed class MessagingDeliveryTests : IAsyncLifetime
         _sender = await MessagingHosts.StartSenderAsync(transport, Ct);
         var orderId = Guid.NewGuid();
 
-        await SaveOrderAndPublishAsync(orderId, commit: true);
+        await SaveOrderAndPublishAsync(orderId);
 
         await EventuallyAsync(() => Log.CountFor(orderId) == 1, $"the event for order {orderId} was not delivered over {transport}");
         (await OrderExistsAsync(orderId)).ShouldBeTrue();
@@ -51,17 +51,19 @@ public sealed class MessagingDeliveryTests : IAsyncLifetime
     [Theory]
     [InlineData("SqlServer")]
     [InlineData("RabbitMq")]
-    public async Task PLT_04_AC1_an_event_from_a_cancelled_change_is_never_delivered(string transport)
+    public async Task PLT_04_AC1_an_event_from_a_failed_change_is_never_delivered(string transport)
     {
         _receiver = await MessagingHosts.StartReceiverAsync(transport, Ct);
         _sender = await MessagingHosts.StartSenderAsync(transport, Ct);
         var orderId = Guid.NewGuid();
+        await InsertOrderWithoutEventAsync(orderId);
 
-        await SaveOrderAndPublishAsync(orderId, commit: false);
+        // Saving the same order again breaks the primary key, so the database rolls the whole transaction back,
+        // including the event written to the outbox in that transaction.
+        await Should.ThrowAsync<DbUpdateException>(() => SaveOrderAndPublishAsync(orderId));
         await Task.Delay(TimeSpan.FromSeconds(8), Ct);
 
         Log.CountFor(orderId).ShouldBe(0);
-        (await OrderExistsAsync(orderId)).ShouldBeFalse();
     }
 
     [Theory]
@@ -74,7 +76,7 @@ public sealed class MessagingDeliveryTests : IAsyncLifetime
         _sender = await MessagingHosts.StartSenderAsync(transport, Ct, reset: false);
         var orderId = Guid.NewGuid();
 
-        await SaveOrderAndPublishAsync(orderId, commit: true);
+        await SaveOrderAndPublishAsync(orderId);
         await Task.Delay(TimeSpan.FromSeconds(3), Ct);
         _receiver = await MessagingHosts.StartReceiverAsync(transport, Ct, reset: false);
 
@@ -104,12 +106,8 @@ public sealed class MessagingDeliveryTests : IAsyncLifetime
     [InlineData("RabbitMq")]
     public async Task PLT_05_AC2_the_trace_reference_travels_with_the_event(string transport)
     {
-        using var listener = new ActivityListener
-        {
-            ShouldListenTo = _ => true,
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
-        };
-        ActivitySource.AddActivityListener(listener);
+        // No test-only listener: only the services' own tracing set-up (Flowza.* and Wolverine sources) records
+        // activities, so this fails if Wolverine's tracing is not registered.
         using var source = new ActivitySource("Flowza.Tests");
 
         _receiver = await MessagingHosts.StartReceiverAsync(transport, Ct);
@@ -120,28 +118,49 @@ public sealed class MessagingDeliveryTests : IAsyncLifetime
         using (var userAction = source.StartActivity("user action"))
         {
             traceId = userAction!.TraceId.ToHexString();
-            await SaveOrderAndPublishAsync(orderId, commit: true);
+            await SaveOrderAndPublishAsync(orderId);
         }
 
         await EventuallyAsync(() => Log.CountFor(orderId) == 1, $"the event for order {orderId} was not delivered over {transport}");
         Log.TraceIdFor(orderId).ShouldBe(traceId);
     }
 
+    /// <summary>
+    /// ADR-0005: Azure Service Bus is coded now and tested later. This runs the same scenarios as soon as
+    /// <c>FLOWZA_ConnectionStrings__azure-servicebus</c> points to a test namespace; until then it is skipped.
+    /// </summary>
+    [Fact]
+    [Trait("Category", "RequiresAzure")]
+    public async Task PLT_04_AC1_AzureServiceBus_delivers_events_and_handles_duplicates_once()
+    {
+        Assert.SkipWhen(
+            string.IsNullOrWhiteSpace(MessagingHosts.AzureServiceBusConnectionString),
+            "Needs an Azure Service Bus test namespace (ADR-0005); set FLOWZA_ConnectionStrings__azure-servicebus.");
+
+        await PLT_04_AC1_an_event_saved_with_its_change_reaches_the_subscriber("AzureServiceBus");
+        await MessagingHosts.StopAsync(_sender);
+        await MessagingHosts.StopAsync(_receiver);
+        (_sender, _receiver) = (null, null);
+        await PLT_04_AC2_the_same_event_published_twice_is_handled_once("AzureServiceBus");
+    }
+
     private ReceivedLog Log => _receiver!.Services.GetRequiredService<ReceivedLog>();
 
-    private async Task SaveOrderAndPublishAsync(Guid orderId, bool commit)
+    private async Task SaveOrderAndPublishAsync(Guid orderId)
     {
         await using var scope = _sender!.Services.CreateAsyncScope();
         var outbox = scope.ServiceProvider.GetRequiredService<IDbContextOutbox<MessagingTestDbContext>>();
         outbox.DbContext.Orders.Add(new TestOrder { Id = orderId, Name = "test order" });
         await outbox.PublishAsync(new TestOrderPlaced(orderId));
+        await outbox.SaveChangesAndFlushMessagesAsync(Ct);
+    }
 
-        if (commit)
-        {
-            await outbox.SaveChangesAndFlushMessagesAsync(Ct);
-        }
-
-        // Without a commit the scope simply ends: the change and its event are both discarded.
+    private async Task InsertOrderWithoutEventAsync(Guid orderId)
+    {
+        await using var scope = _sender!.Services.CreateAsyncScope();
+        var context = scope.ServiceProvider.GetRequiredService<MessagingTestDbContext>();
+        context.Orders.Add(new TestOrder { Id = orderId, Name = "existing order" });
+        await context.SaveChangesAsync(Ct);
     }
 
     private async Task PublishAsync(TestOrderPlaced message)

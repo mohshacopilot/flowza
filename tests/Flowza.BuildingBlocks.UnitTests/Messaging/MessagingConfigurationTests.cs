@@ -26,11 +26,14 @@ public sealed class MessagingConfigurationTests
         FlowzaMessagingExtensions.ReadTransport(configuration).ShouldBe(expected);
     }
 
-    [Fact]
-    public void ADR_0005_an_unknown_transport_is_refused_with_a_clear_message()
+    [Theory]
+    [InlineData("Kafka")]
+    [InlineData("5")]
+    [InlineData("-1")]
+    public void ADR_0005_an_unknown_transport_is_refused_with_a_clear_message(string value)
     {
         var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { [FlowzaMessagingExtensions.TransportKey] = "Kafka" })
+            .AddInMemoryCollection(new Dictionary<string, string?> { [FlowzaMessagingExtensions.TransportKey] = value })
             .Build();
 
         Should.Throw<InvalidOperationException>(() => FlowzaMessagingExtensions.ReadTransport(configuration))
@@ -61,8 +64,20 @@ public sealed class MessagingConfigurationTests
     [Fact]
     public void T4_MS5_topic_names_are_the_full_type_name_in_lower_case()
     {
-        MessageRoutes.TopicName(typeof(SampleCreated)).ShouldBe(typeof(SampleCreated).FullName!.ToLowerInvariant());
+        MessageRoutes.TopicName(typeof(SampleCreated)).ShouldBe(typeof(SampleCreated).FullName!.ToLowerInvariant().Replace('+', '.'));
         MessageRoutes.QueueName(" Runtime ").ShouldBe("runtime");
+    }
+
+    private sealed class Outer
+    {
+        public sealed record Nested : IntegrationEvent;
+    }
+
+    [Fact]
+    public void T4_MS5_topic_names_of_nested_and_generic_types_contain_only_safe_characters()
+    {
+        MessageRoutes.TopicName(typeof(Outer.Nested)).ShouldMatch("^[a-z0-9._-]+$");
+        MessageRoutes.TopicName(typeof(List<SampleCreated>)).ShouldMatch("^[a-z0-9._-]+$");
     }
 
     [Fact]

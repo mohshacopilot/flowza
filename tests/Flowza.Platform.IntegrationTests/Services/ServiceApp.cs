@@ -14,6 +14,9 @@ public interface IServiceApp : IAsyncDisposable
     HttpClient CreateClient();
 
     Task<IReadOnlyList<string>> AppliedMigrationsAsync(CancellationToken cancellationToken);
+
+    /// <summary>All migrations the service's code contains.</summary>
+    IReadOnlyList<string> AllMigrations();
 }
 
 public sealed class ServiceApp<TMarker, TContext>(string name, string connectionStringName, string testDatabase)
@@ -28,6 +31,12 @@ public sealed class ServiceApp<TMarker, TContext>(string name, string connection
         await using var scope = Services.CreateAsyncScope();
         var context = scope.ServiceProvider.GetRequiredService<TContext>();
         return [.. await context.Database.GetAppliedMigrationsAsync(cancellationToken)];
+    }
+
+    public IReadOnlyList<string> AllMigrations()
+    {
+        using var scope = Services.CreateScope();
+        return [.. scope.ServiceProvider.GetRequiredService<TContext>().Database.GetMigrations()];
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -49,9 +58,21 @@ public sealed class ServiceApp<TMarker, TContext>(string name, string connection
     }
 }
 
+/// <summary>
+/// Tests that start the services or reset their tables share the <c>flowza_test_*</c> service tables, so they run
+/// one after another.
+/// </summary>
+[CollectionDefinition(Name, DisableParallelization = true)]
+public sealed class ServiceDatabasesTestGroup
+{
+    public const string Name = "ServiceDatabases";
+}
+
 public static class ServiceApps
 {
     public static TheoryData<string> Names => ["identity", "design", "runtime", "worker"];
+
+    public static string DatabaseOf(string name) => $"flowza_test_{name}";
 
     public static IServiceApp Create(string name) => name switch
     {

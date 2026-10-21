@@ -38,7 +38,9 @@ module. Sections marked "design notes" go into `plan.md`, never into `spec.md`.
 | 13 | Spec 001 Platform foundation (IAM + PLT) | ✅ Approved 2026-10-21 (C1–C6 all "a") | [spec.md](../../specs/001-platform-foundation/spec.md) |
 | 14 | Tech discussion (owner's request, before plans) | ✅ T1–T10 decided 2026-10-21 (T11–T13 before features 003–005); code name **Flowza**; ADR-0004 | [tech-discussion.md](tech-discussion.md) |
 | 15 | Plan 001 | ✅ Approved 2026-10-21 (PA1–PA7) | [plan.md](../../specs/001-platform-foundation/plan.md) |
-| 16 | Tasks 001 | ✅ Written and analyzed; **next: implement T001** (owner setup O1–O4 needed from T006) | [tasks.md](../../specs/001-platform-foundation/tasks.md) |
+| 16 | Tasks 001 | ✅ Written and analyzed | [tasks.md](../../specs/001-platform-foundation/tasks.md) |
+| 17 | Build 001 Phase 0 (T001–T009) | ✅ Done 2026-10-21: solution, persistence, service defaults, AppHost, services, messaging on SQL Server + RabbitMQ; 143 tests pass; code review at phase end | [tasks.md](../../specs/001-platform-foundation/tasks.md) "Progress" |
+| 18 | Build 001 Phase 1 (Identity, T010–T019) | ⏳ Next | |
 
 ## 2. Key decisions made today (summary)
 Details and reasons are in each module file and ADR.

@@ -14,12 +14,13 @@ public sealed class PersistenceDatabaseFixture : IAsyncLifetime
     public const string Database = "flowza_test_worker";
 
     private const string DropTablesSql = $"""
+        IF OBJECT_ID(N'[{PersistenceTestDbContext.Schema}].[Attachments]') IS NOT NULL DROP TABLE [{PersistenceTestDbContext.Schema}].[Attachments];
         IF OBJECT_ID(N'[{PersistenceTestDbContext.Schema}].[Documents]') IS NOT NULL DROP TABLE [{PersistenceTestDbContext.Schema}].[Documents];
         IF OBJECT_ID(N'[{PersistenceTestDbContext.Schema}].[Notes]') IS NOT NULL DROP TABLE [{PersistenceTestDbContext.Schema}].[Notes];
         """;
 
     private const string ClearTablesSql =
-        $"DELETE FROM [{PersistenceTestDbContext.Schema}].[Documents]; DELETE FROM [{PersistenceTestDbContext.Schema}].[Notes];";
+        $"DELETE FROM [{PersistenceTestDbContext.Schema}].[Attachments]; DELETE FROM [{PersistenceTestDbContext.Schema}].[Documents]; DELETE FROM [{PersistenceTestDbContext.Schema}].[Notes];";
 
     public string ConnectionString { get; } = TestSqlServer.ConnectionString(Database);
 

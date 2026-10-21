@@ -19,6 +19,7 @@ public sealed class SensitiveDataMaskingEnricher : ILogEventEnricher
         "password", "secret", "token", "apikey", "connectionstring", "credential",
         "email", "mobile", "phone", "formdata", "formvalue", "fieldvalue",
         "pan", "aadhaar", "address", "dateofbirth", "dob",
+        "username", "displayname", "fullname", "firstname", "lastname",
     ];
 
     public void Enrich(LogEvent logEvent, ILogEventPropertyFactory propertyFactory)

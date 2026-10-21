@@ -29,14 +29,15 @@ public sealed class SensitiveDataMaskingEnricherTests
     [Fact]
     public void PLT_05_AC3_secrets_inside_logged_objects_are_masked()
     {
-        var request = new { UserName = "ravi.k", Password = "Secret#123", Contact = new { Phone = "9876543210", City = "Chennai" } };
+        var request = new { RequestId = 42, UserName = "ravi.k", Password = "Secret#123", Contact = new { Phone = "9876543210", City = "Chennai" } };
 
         _logger.Information("Request {@Request}", request);
 
         var rendered = _sink.Single().Properties["Request"].ToString();
         rendered.ShouldNotContain("Secret#123");
         rendered.ShouldNotContain("9876543210");
-        rendered.ShouldContain("ravi.k");
+        rendered.ShouldNotContain("ravi.k");
+        rendered.ShouldContain("42");
         rendered.ShouldContain("Chennai");
     }
 
@@ -61,6 +62,9 @@ public sealed class SensitiveDataMaskingEnricherTests
     [InlineData("PanNumber", true)]
     [InlineData("Aadhaar", true)]
     [InlineData("DateOfBirth", true)]
+    [InlineData("UserName", true)]
+    [InlineData("DisplayName", true)]
+    [InlineData("FullName", true)]
     [InlineData("Company", false)]
     [InlineData("SpanId", false)]
     [InlineData("RequestNumber", false)]

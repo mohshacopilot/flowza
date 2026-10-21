@@ -1,4 +1,5 @@
 using Aspire.Hosting.ApplicationModel;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 
 // Flowza local orchestration (PLT-02, task T006). Starts every service, the Gateway and smtp4dev on Windows
@@ -12,38 +13,48 @@ string Required(string key) => configuration[key] is { Length: > 0 } value
     : throw new InvalidOperationException(
         $"'{key}' is not set. Run docs\\setup\\set-secrets.ps1 (passwords) or check src\\AppHost\\Flowza.AppHost\\appsettings.json.");
 
-var sqlPassword = builder.AddParameter("sql-password", () => Required("Sql:Password"), secret: true);
-var rabbitPassword = builder.AddParameter("rabbitmq-password", () => Required("RabbitMq:Password"), secret: true);
-
-var sqlServer = Required("Sql:Server");
-var sqlUser = Required("Sql:User");
+// Connection strings are built with proper escaping (a password may contain ';', '@', '/' or ':') and handed
+// to the services as secret values, so the dashboard masks them.
+IResourceBuilder<ConnectionStringResource> SecretConnectionString(string name, Func<string> build)
+{
+    var value = builder.AddParameter($"{name}-value", build, secret: true);
+    return builder.AddConnectionString(name, ReferenceExpression.Create($"{value}"));
+}
 
 IResourceBuilder<ConnectionStringResource> SqlDatabase(string name, string database) =>
-    builder.AddConnectionString(name, ReferenceExpression.Create(
-        $"Server={sqlServer};Database={database};User ID={sqlUser};Password={sqlPassword};Encrypt=True;TrustServerCertificate=True"));
+    SecretConnectionString(name, () => new SqlConnectionStringBuilder
+    {
+        DataSource = Required("Sql:Server"),
+        InitialCatalog = database,
+        UserID = Required("Sql:User"),
+        Password = Required("Sql:Password"),
+        Encrypt = true,
+        TrustServerCertificate = true,
+    }.ConnectionString);
 
 var identityDb = SqlDatabase("identity-db", "flowza_identity");
 var designDb = SqlDatabase("design-db", "flowza_design");
 var runtimeDb = SqlDatabase("runtime-db", "flowza_runtime");
 var workerDb = SqlDatabase("worker-db", "flowza_worker");
-var messagingDb = SqlDatabase("messaging-db", "flowza_messaging");
 
-var rabbitHost = Required("RabbitMq:Host");
-var rabbitPort = Required("RabbitMq:Port");
-var rabbitUser = Required("RabbitMq:User");
-var rabbitVirtualHost = Required("RabbitMq:VirtualHost");
-var rabbitMq = builder.AddConnectionString("rabbitmq", ReferenceExpression.Create(
-    $"amqp://{rabbitUser}:{rabbitPassword}@{rabbitHost}:{rabbitPort}/{rabbitVirtualHost}"));
-
-// One transport value for every service of the installation (ADR-0005).
-var transport = configuration["Messaging:Transport"] ?? "SqlServer";
+// One transport for every service of the installation (ADR-0005). Only the selected transport's connection is
+// created, so an installation without RabbitMQ needs no RabbitMQ settings at all.
+var transport = configuration["Messaging:Transport"] is { Length: > 0 } configured ? configured : "SqlServer";
+IResourceBuilder<ConnectionStringResource> transportConnection = transport.ToUpperInvariant() switch
+{
+    "SQLSERVER" => SqlDatabase("messaging-db", "flowza_messaging"),
+    "RABBITMQ" => SecretConnectionString("rabbitmq", () =>
+        $"amqp://{Uri.EscapeDataString(Required("RabbitMq:User"))}:{Uri.EscapeDataString(Required("RabbitMq:Password"))}" +
+        $"@{Required("RabbitMq:Host")}:{Required("RabbitMq:Port")}/{Uri.EscapeDataString(Required("RabbitMq:VirtualHost"))}"),
+    "AZURESERVICEBUS" => SecretConnectionString("azure-servicebus", () => Required("AzureServiceBus:ConnectionString")),
+    _ => throw new InvalidOperationException($"Messaging:Transport '{transport}' is not SqlServer, RabbitMq or AzureServiceBus (ADR-0005)."),
+};
 
 IResourceBuilder<ProjectResource> Service<TProject>(string name, IResourceBuilder<ConnectionStringResource> database)
     where TProject : IProjectMetadata, new() =>
     builder.AddProject<TProject>(name)
         .WithReference(database)
-        .WithReference(messagingDb)
-        .WithReference(rabbitMq)
+        .WithReference(transportConnection)
         .WithEnvironment("Messaging__Transport", transport);
 
 var identity = Service<Projects.Flowza_Identity_Api>("identity", identityDb);

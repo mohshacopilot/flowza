@@ -1,5 +1,6 @@
 using Flowza.Messaging;
 using Flowza.Persistence;
+using Flowza.ServiceDefaults;
 using Flowza.Testing;
 using JasperFx.Resources;
 using Microsoft.EntityFrameworkCore;
@@ -27,6 +28,10 @@ internal static class MessagingHosts
         """;
 
     public static MessageRoutes Routes => new MessageRoutes().Route<TestOrderPlaced>(Receiver);
+
+    /// <summary>Azure Service Bus tests run only when this environment variable holds a test namespace (ADR-0005).</summary>
+    public static string? AzureServiceBusConnectionString =>
+        Environment.GetEnvironmentVariable("FLOWZA_ConnectionStrings__azure-servicebus");
 
     public static async Task<IHost> StartSenderAsync(string transport, CancellationToken cancellationToken, bool reset = true)
     {
@@ -97,11 +102,15 @@ internal static class MessagingHosts
     private static HostApplicationBuilder CreateBuilder(string transport)
     {
         var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings { EnvironmentName = "Development" });
+
+        // The same tracing set-up as the real services, so the trace test proves what production does.
+        builder.AddFlowzaTelemetry();
         builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
         {
             [FlowzaMessagingExtensions.TransportKey] = transport,
             [$"ConnectionStrings:{FlowzaMessagingExtensions.SqlServerTransportConnectionName}"] = TestSqlServer.ConnectionString("flowza_test_messaging"),
             [$"ConnectionStrings:{FlowzaMessagingExtensions.RabbitMqConnectionName}"] = TestRabbitMq.ConnectionString(),
+            [$"ConnectionStrings:{FlowzaMessagingExtensions.AzureServiceBusConnectionName}"] = AzureServiceBusConnectionString,
         });
         return builder;
     }
