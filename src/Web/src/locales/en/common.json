@@ -1,0 +1,9 @@
+{
+  "app": {
+    "name": "Flowza"
+  },
+  "home": {
+    "title": "Welcome",
+    "intro": "Choose a task from the menu to get started."
+  }
+}
