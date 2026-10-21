@@ -51,6 +51,17 @@ same method by hand; the file layout matches Spec Kit's, so it can be adopted la
 5. Analyze: Claude checks spec ↔ plan ↔ tasks for gaps before building.
 6. Implement one task at a time; tests named by IDs; verify every acceptance criterion.
 
+## Way of working with agents (AG1–AG3, decided 2026-10-21)
+- `AGENTS.md` is a short pointer to this file for other AI tools; **this file stays the single source of truth**.
+- Subagents in `.claude/agents/`: **code-reviewer** (read-only review against spec, plan, constitution; after each
+  phase and before merging a stream), **spec-writer** (writes `specs/<feature>/spec.md` from discussion files;
+  only in `specs/`), **test-verifier** (build + tests + traceability check).
+- **Hybrid flow:** feature 001 tasks T002–T009 run **sequentially** in the main session (they share files). After
+  T009, up to three **parallel streams**, each a separate session in its **own git worktree and branch**:
+  (1) Identity backend T010–T019, (2) web app shell T023–T025, (3) specs 002–006 via spec-writer. A stream is
+  merged only when it builds with 0 warnings and its tests pass; decisions not covered by spec/plan go to the owner.
+- **Check-ins with the owner after each phase**, not after each task.
+
 ## Current phase
 - 2026-10-16 and 2026-10-21: all 9 modules discussed; v0.1 scope **approved** with three milestones (M1 core engine, M2 real-world forms, M3 administration; about 20–25 build days in total).
 - From 2026-10-21: **build on the office PC** (`D:\Projects\Workflow`). The owner reviews on weekdays, full days.
