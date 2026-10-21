@@ -9,6 +9,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Passwords\common-passwords.txt" LogicalName="Flowza.Identity.Infrastructure.Passwords.common-passwords.txt" />
+    <InternalsVisibleTo Include="Flowza.Identity.IntegrationTests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="AspNetCore.HealthChecks.SqlServer" />
     <PackageReference Include="OpenIddict.AspNetCore" />
     <PackageReference Include="OpenIddict.EntityFrameworkCore" />

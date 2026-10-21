@@ -30,7 +30,8 @@
 | T009 Platform integration tests | ✅ | 5f88701 |
 | Phase 0 code review fixes | ✅ | a269a44 |
 | T010 Identity domain | ✅ | faa28b8 |
-| T011 Identity database | ✅ | (next commit) |
+| T011 Identity database | ✅ | dd1ddd0 |
+| T012 Password and lockout rules | ✅ | (next commit) |
 
 **Notes from Phase 0 (decisions taken while building, within the approved plan):**
 - Tests run on **Microsoft.Testing.Platform** (xUnit v3 4.x); coverage via **coverlet.MTP** (the coverlet extension for that platform).
@@ -72,6 +73,11 @@ architecture test that was later replaced by the policy; the code is right, the 
   package). OpenIddict pulls a vulnerable `System.Security.Cryptography.Xml` 10.0.11: pinned to 10.0.13. Integration
   tests that reset `flowza_test_identity` take a SQL application lock (`TestDatabaseLock`), because test projects run
   in parallel processes; Respawn clears data between tests (roles, OpenIddict clients and keys kept).
+- T012: the password rules live in the domain (`PasswordPolicy`) and ASP.NET Core Identity runs them through an
+  adapter; Identity's own character-class rules and user validators are switched off (K2; C3/C4 checked by the
+  domain). The common list is SecLists `10k-most-common.txt` (MIT), embedded unchanged, checked ignoring case.
+  A custom user store over the domain `User` never saves by itself; each use case saves once (one transaction with
+  its events). An inactive user's login gets the same general answer as a wrong password (IAM-01-AC2).
 
 ## Phase 0: Foundation (M1)
 | ID | Task | Spec IDs | Done when |
@@ -163,9 +169,9 @@ architecture test that was later replaced by the policy; the code is right, the 
 | IAM-04-AC4 | T010, T015 | 🟡 format rules (T010); uniqueness in T015 |
 | IAM-04-AC5 | T010, T015 | 🟡 domain rule (T010); API in T015 |
 | IAM-05-AC1 | T007, T022 | 🟡 services (T007); Gateway part in T022 |
-| IAM-06-AC1 | T012 | ⬜ |
+| IAM-06-AC1 | T012 | ✅ |
 | IAM-06-AC3 | T016, T027 | ⬜ |
-| IAM-07-AC1 | T012, T029 | ⬜ |
+| IAM-07-AC1 | T012, T029 | 🟡 service + database (T012); end-to-end in T029 |
 | IAM-07-AC2 | T021 | ⬜ |
 | IAM-08-AC1 | T020, T022 | ⬜ |
 | IAM-L5-AC1 | T017 | ⬜ |
