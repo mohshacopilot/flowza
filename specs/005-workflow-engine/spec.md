@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | **Draft**, 2026-10-21 (clarifications C1–C12 open) |
+| **Status** | **Draft**; clarifications C1–C12 answered by the owner on 2026-10-21; waiting for approval |
 | **Date** | 2026-10-21 |
 | **Modules** | WF (Workflow engine) |
 | **Scope IDs** | WF-01 to WF-09, WF-11 to WF-15 ([v0.1 scope](../v0.1-scope.md)); reference scenarios RS-1 and RS-2. WF-10 is in v0.2 |
@@ -68,7 +68,7 @@ As an App Designer, I want the platform to stop me from publishing a broken proc
 ### US4: Decide who may start a process (P1, WF-06)
 As an App Designer, I choose who may start a process, so that only the right people can raise a request.
 1. **Given** a process that only business role R may start, **when** a user without role R tries to start it, **then** it is refused, even if they call the platform directly.
-2. **Given** a process limited to certain org units, **then** only users of those units may start it (see C6 for the exact meaning).
+2. **Given** a process limited to certain org units, **then** users whose primary unit is one of those units or below it may start it; a user who matches a chosen role or a chosen unit is enough (C6).
 
 ### US5: Tasks reach the right people (P1, WF-07, WF-14 "Any one")
 As an approver, I get exactly the tasks meant for me, so that work is neither lost nor done twice.
@@ -151,22 +151,22 @@ As the owner, I want the two reference processes to run using only configuration
 | ID | Requirement | Milestone |
 |---|---|---|
 | WF-01 | Visual process designer: drag-and-drop nodes and arrows. Node positions are saved; each publish error highlights its node (X4) | M1 |
-| WF-02 | Node types: **Start** (linked to a start form), **Approval** (human task), **Condition** (branches checked in the designer's order; the first true one is taken, otherwise the default path, W6; a blank result is not taken, EXP-07), **Parallel split** and **Parallel join**, **Notification** (email; never stops the flow, X1), **End** (outcome: Approved, Rejected or Completed) | M1 |
-| WF-03 | Each Approval node has: a name, an approver rule (ORG-06, feature 002), an approval mode (WF-14), the maker-checker tick (WF-15), allowed actions (Approve, Reject, Reject (final), Send back), whether a comment is required for Reject/Send back, which form fields (and grids) the approver can see, edit or must fill ("required at this step"), and whether to email new tasks to assignees (see C9). **M2:** "required at this step" (CV2), grid permissions (FRM-13) and choosing "All must approve" | M1 / M2 |
-| WF-04 | Checks before publishing: exactly one Start; at least one End; every node reachable from Start; every node can reach an End; every Condition has a default path; every Parallel split has a matching join; no loops in the diagram; parallel branches never share an editable field (ADR-0003). Each error points to its node; a process with errors is not published. **M2:** "All must approve" steps have no editable fields (Y6) | M1 / M2 |
+| WF-02 | Node types: **Start** (linked to a start form), **Approval** (human task), **Condition** (branches checked in the designer's order; the first true one is taken, otherwise the default path, W6; a blank result is not taken, EXP-07), **Parallel split** and **Parallel join**, **Notification** (email; never stops the flow, X1), **End** (outcome: Approved, Rejected or Completed; an End with outcome Rejected gives status Rejected, which the requester can reopen if the process allows, C1) | M1 |
+| WF-03 | Each Approval node has: a name, an approver rule (ORG-06, feature 002), an approval mode (WF-14), the maker-checker tick (WF-15), allowed actions (Approve, Reject, Reject (final), Send back), whether a comment is required for Reject, Reject (final) and Send back (one setting for all three, C10), which form fields (and grids) the approver can see, edit or must fill ("required at this step"). The "email new tasks to assignees" setting is not shown in v0.1; it comes with NTF-03 in v0.2 (C9). **M2:** "required at this step" (CV2), grid permissions (FRM-13) and choosing "All must approve" | M1 / M2 |
+| WF-04 | Checks before publishing: exactly one Start; at least one End; every node reachable from Start; every node can reach an End; every Condition has a default path; every Parallel split has a matching join, and every path from a split reaches its own join (an End inside a branch is an error; Conditions and nested parallel sections inside a branch are allowed if they stay inside it, C7); no loops in the diagram; parallel branches never share an editable field (ADR-0003); a start permission is chosen (at least one entry, or "All users", C6); approver rules refer only to existing codes and usernames (unknown → error; deactivated unit type or role, or inactive user → warning; 002 C8, extends P10). Each error points to its node; a draft with errors is saved, but it is not published (004 C10). **M2:** "All must approve" steps have no editable fields (Y6) | M1 / M2 |
 | WF-05 | Processes are versioned as part of their app (APP-02 to APP-05, feature 004); there are no separate process versions. A running request follows the process of its own version | M1 |
-| WF-06 | Start permission: the designer chooses which business roles and/or org units may start the process; the server refuses everyone else (details in C6) | M1 |
-| WF-07 | Task assignment: the approver rule is resolved when the task is created, using the org data at that moment (APP-06). One user: assigned. Several users: depends on the approval mode (WF-14); in "Any one" mode the task is offered to all, the first to **claim** owns it, and a claimant can **release** it (W5). Nobody: **Unassigned** queue with the reason; a Platform Admin reassigns it. Admins can reassign any open task (W9). A deactivated user's open tasks move to the Unassigned queue (Q4). If the directory cannot be reached, the action fails cleanly: nothing is saved and the user sees "Please try again in a moment" (W8) | M1 |
-| WF-08 | Actions. **Approve:** validates and saves the fields editable at this step, and the request moves on. **Reject:** the whole request ends as Rejected and all open tasks (also in other parallel branches, X2) are cancelled; it may be reopened (WF-13). **Reject (final):** the same, but never reopenable. **Send back:** to the requester only (W2), who edits and resubmits; the request returns to the same Approval node; inside a parallel section the other branches' tasks are cancelled and, after resubmission, the request returns to the split (W3). Reject, Reject (final) and Send back do not validate or save field changes; only the comment is kept (CV3). Every action happens completely or not at all (X5) | M1 |
+| WF-06 | Start permission: the designer chooses which business roles and/or org units may start the process, or "All users". A user may start when they hold **any** chosen role **or** their primary unit is a chosen unit **or below it**. Choosing nothing is a publish error (C6). The server refuses everyone else | M1 |
+| WF-07 | Task assignment: the approver rule is resolved when the task is created, using the org data at that moment (APP-06). One user: assigned. Several users: depends on the approval mode (WF-14); in "Any one" mode the task is offered to all, the first to **claim** owns it, and a claimant can **release** it (W5). Nobody: **Unassigned** queue with the reason; a Platform Admin reassigns it. Admins can reassign any open task (W9); the target must pass the same checks as automatic assignment: active, not the requester, maker-checker when on, and not already holding a task in the same "All must approve" step (C5). A deactivated user's open tasks move to the Unassigned queue (Q4); for a task offered to several users and not yet claimed, only that user is removed from the candidates, and the task moves to the Unassigned queue only when no candidate is left (C4). If the directory cannot be reached, the action fails cleanly: nothing is saved and the user sees "Please try again in a moment" (W8) | M1 |
+| WF-08 | Actions. **Approve:** validates and saves the fields editable at this step, and the request moves on. **Reject:** the whole request ends as Rejected and all open tasks (also in other parallel branches, X2) are cancelled; it may be reopened (WF-13). **Reject (final):** the same, but never reopenable. **Send back:** to the requester only (W2), who edits and resubmits; the request returns to the same Approval node, whose approver rule is resolved again with the org data at that moment (C3, APP-06); inside a parallel section the other branches' tasks are cancelled and, after resubmission, the request returns to the split (W3). Reject, Reject (final) and Send back do not validate or save field changes; only the comment is kept (CV3). Every action happens completely or not at all (X5) | M1 |
 | WF-09 | Parallel: the join continues only when all branches have finished | M1 |
-| WF-11 | History: every action is recorded with who, what, when, comment, the old and new values of changed fields, and the approver-rule explanation. Everyone who can view the request sees all comments (W7). History is never deleted | M1 |
+| WF-11 | History: every action is recorded with who, what, when, comment, the old and new values of changed fields, and the approver-rule explanation. Automatic steps are recorded as **system entries**: which Condition branch was taken, parallel split and join, Notification sent (C8). Everyone who can view the request sees all comments (W7). History is never deleted | M1 |
 | WF-12 | If two people act on the same task at the same time (including claiming), only the first succeeds; the second sees a clear message. Never cut from v0.1 | M1 |
 | WF-13 | Reopen: if the designer allows it for the process, the requester can reopen a rejected request, edit it and resubmit it. It keeps the same request number, its full history and its app version. After resubmitting, it restarts from the first step. No limit on how many times. A request rejected with Reject (final) cannot be reopened | M1 |
 | WF-14 | Approval mode per Approval node: **Any one** (offered to all; first claim decides) or **All must approve** (one task per person after removing duplicates and applying the maker-checker and self-approval filters, Y2; moves on when all approve, with progress such as "2 of 3 approved", Y3; any Reject ends the request and cancels the other tasks, Y4; any Send back means everyone approves again after resubmission, Y5; fields are view-only, comments allowed, Y6; a deactivated approver's task alone moves to the Unassigned queue, Y7; one user found behaves like "Any one", nobody found goes to the Unassigned queue, Y8). The mode is part of the published design and cannot change on a running request (Y1). **M1:** "Any one". **M2:** "All must approve" | M1 / M2 |
-| WF-15 | Maker-checker: per Approval node, "Must be a different person from earlier approvers", **on by default**. If nobody remains, the task goes to the Unassigned queue (W4) | M1 |
+| WF-15 | Maker-checker: per Approval node, "Must be a different person from earlier approvers", **on by default**. "Earlier approvers" are the users who approved **other** steps of the request **since the last submit, resubmit or reopen**; approvals of the same step, and of earlier rounds, do not count (C2). If nobody remains, the task goes to the Unassigned queue (W4) | M1 |
 | WF-W10 | Request statuses: In progress, Sent back, Waiting for resubmission, Approved, Rejected, Rejected (final), Completed (meanings in section 8). "Waiting for resubmission" after an admin restart comes with APP-05 (feature 004, M3). Withdrawn comes in v0.2 | M1 |
-| RS-1 | The HR leave scenario (scope section 4) is built through the screens only and runs end to end | M1 |
-| RS-2 | The NBFC loan scenario (scope section 4) is built through the screens only and runs end to end. **M2:** the extended RS-2 (co-applicants grid, sanction committee with "All must approve") does the same | M1 / M2 |
+| RS-1 | The HR leave scenario (scope section 4) is built through the screens only and runs end to end. Verified once 006 (inbox and emails) is built; until then the engine part is proven by service-level tests of the same scenario (C12) | M1 |
+| RS-2 | The NBFC loan scenario (scope section 4) is built through the screens only and runs end to end (verified as for RS-1, C12). **M2:** the **extended RS-2** does the same: RS-2 as in the scope (three parallel checks) plus a co-applicants grid, with the Zone head step for loans above 10,00,000 replaced by a **Sanction committee** step (a new business role, rule f, "All must approve") (C11) | M1 / M2 |
 
 ## 5. Acceptance criteria
 Every criterion gets at least one automated test whose name contains its ID (constitution 1.4), unless marked *manual*.
@@ -178,23 +178,31 @@ Every criterion gets at least one automated test whose name contains its ID (con
 | WF-02-AC1 | With two true branches, the first in the designer's order is taken; with none, the default path (W6, EXP-07) |
 | WF-02-AC2 | A branch whose expression gives blank is not taken (EXP-07) |
 | WF-02-AC3 | A request that reaches a Notification node moves on at once, even when the email cannot be sent at that moment (X1) |
-| WF-02-AC4 | A request that reaches an End with outcome Approved or Completed finishes with that status (for outcome Rejected see C1) |
+| WF-02-AC4 | A request that reaches an End with outcome Approved or Completed finishes with that status; an End with outcome Rejected gives status Rejected, and the requester can reopen it when the process allows reopening (C1) |
 | WF-03-AC1 | All Approval node settings are saved and published with the version; the maker-checker tick is on for a new node |
 | WF-03-AC2 | The approver is offered only the allowed actions; any other action is refused by the server |
 | WF-03-AC3 | When a comment is required for Reject/Send back, the server refuses those actions without a comment |
 | WF-03-AC4 | The approver sees only the fields visible at this step; values sent for fields not editable at this step are ignored (ADR-0003) |
 | WF-03-AC5 | *(M2)* A field ticked "required at this step" is required only at that step (CV2); a grid is hidden, view-only or editable as set for the step |
+| WF-03-AC6 | When a comment is required, Reject (final) without a comment is refused too (C10); the Approval node settings in v0.1 have no "email new tasks" option (C9) |
 | WF-04-AC1 | Each failed check (one Start, an End, reachability, can reach an End, default path, split/join pairs, no loops) is reported and highlights its node; nothing is published |
 | WF-04-AC2 | Two parallel branches that can edit the same field are rejected (ADR-0003) |
 | WF-04-AC3 | *(M2)* An "All must approve" step that makes a field editable is rejected (Y6) |
+| WF-04-AC4 | A branch of a parallel section that leads to an End, or leaves the section without reaching its own join, is a publish error; a Condition or a nested parallel section that stays inside the branch is accepted (C7) |
+| WF-04-AC5 | An approver rule with an unknown unit type, unit or role code, or an unknown username, is a publish error; a deactivated unit type or role, or an inactive user, gives a publish warning (002 C8, P10) |
+| WF-04-AC6 | A process with no start permission chosen (no role, no unit, not "All users") is a publish error (C6) |
+| WF-04-AC7 | A draft process with errors is saved and lists its errors; publishing is refused until they are fixed (004 C10) |
 | WF-05-AC1 | A running request keeps following its own version's process after a new version is published and made active |
 | WF-06-AC1 | A user outside the start permission cannot start the process, also by calling the platform directly; a user inside it can |
+| WF-06-AC2 | With start permission "role Loan Officer, unit South Zone": a Loan Officer anywhere may start; a user without the role whose primary unit is a branch below South Zone may start; a user with neither may not; with "All users" every active user may start (C6) |
 | WF-07-AC1 | One resolved user → task assigned; several in "Any one" mode → offered, first claim owns it; nobody → Unassigned queue with the reason |
 | WF-07-AC2 | A claimant can release a task; it is offered to the group again (W5) |
 | WF-07-AC3 | If the directory cannot be reached, the action fails, nothing changes, and the user sees a retry message (W8) |
 | WF-07-AC4 | The approver rule is resolved when the task is created; a later org change does not change the assignee of an existing task (APP-06) |
 | WF-07-AC5 | A Platform Admin reassigns a task from the Unassigned queue, or any open task, to an active user; the history records it (W9) |
 | WF-07-AC6 | When a user is deactivated, the open tasks assigned to or claimed by them move to the Unassigned queue (Q4) |
+| WF-07-AC7 | A task offered to three users and not claimed: when one is deactivated, the other two still see it; when all three are deactivated, it moves to the Unassigned queue (C4) |
+| WF-07-AC8 | An admin reassign to an inactive user, to the requester, to a user excluded by maker-checker, or to a user who already holds a task in the same "All must approve" step, is refused (C5) |
 | WF-08-AC1 | Approve moves the request on; Reject ends it as Rejected and cancels open tasks; Reject (final) ends it so it can never be reopened |
 | WF-08-AC2 | Send back inside a parallel section cancels the other branches' tasks; after resubmission the request returns to the split (W3) |
 | WF-08-AC3 | A Reject in one parallel branch ends the whole request and cancels all open tasks in the other branches (X2) |
@@ -202,9 +210,11 @@ Every criterion gets at least one automated test whose name contains its ID (con
 | WF-08-AC5 | Reject, Reject (final) and Send back succeed with invalid field values, and those field changes are not saved; the comment is kept (CV3) |
 | WF-08-AC6 | Approve with invalid values is refused with field messages, and the request does not move |
 | WF-08-AC7 | If any part of an action fails, nothing of that action is saved: task, request status, form data and history stay as before (X5) |
+| WF-08-AC8 | After a send back and resubmission, the approver rule of the step is resolved again: when the approver who sent it back has moved to another unit, the task goes to the person the rule finds now (C3) |
 | WF-09-AC1 | With one branch still open, the request waits at the join; when the last branch finishes, it continues |
 | WF-11-AC1 | Every action appears in the history with who, what, when, comment, changed fields (old → new) and the approver-rule explanation |
 | WF-11-AC2 | Every user who can view the request sees all its comments (W7) |
+| WF-11-AC3 | The history shows system entries for the Condition branch taken (with the branch name), parallel split and join, and Notification sent (C8) |
 | WF-12-AC1 | When two users act on the same task at once, exactly one succeeds; the other sees a clear message |
 | WF-12-AC2 | When two users claim the same offered task at once, exactly one owns it; the other sees a clear message |
 | WF-13-AC1 | With reopening allowed, the requester reopens a Rejected request; it keeps its number, history and version and shows Waiting for resubmission; after resubmission it starts again at the first step |
@@ -218,12 +228,13 @@ Every criterion gets at least one automated test whose name contains its ID (con
 | WF-14-AC5 | *(M2)* When one of the approvers is deactivated, only their task moves to the Unassigned queue (Y7) |
 | WF-15-AC1 | With the tick on (default), a user who approved an earlier step of the request is not given the task; if nobody remains, it goes to the Unassigned queue |
 | WF-15-AC2 | With the tick off, the same user may act at both steps |
-| WF-W10-AC1 | Each status appears in its situation: In progress after submit, Sent back after a send back, Waiting for resubmission after a reopen, Approved or Completed at an End, Rejected after Reject, Rejected (final) after Reject (final) |
+| WF-15-AC3 | A user who approved step 1, after the request is rejected, reopened and resubmitted, can approve step 1 again; in the same round that user is still excluded from step 2 (C2) |
+| WF-W10-AC1 | Each status appears in its situation: In progress after submit, Sent back after a send back, Waiting for resubmission after a reopen, Approved or Completed at an End, Rejected after Reject or at an End with outcome Rejected (C1), Rejected (final) after Reject (final) |
 | RS-1-AC1 | RS-1 runs end to end: submit; manager approves; more than 10 days goes to an HR Officer, otherwise ends Approved; send back and reject also work |
 | RS-1-AC2 | *(manual checklist)* RS-1 is built through the screens only, with no code change, and shown in a demo |
 | RS-2-AC1 | RS-2 runs end to end: Branch Manager approves; Credit, Legal and Valuer checks in the zone are offered, claimed and approved in parallel; the join waits for all three; the amount routes to the Branch head (up to 10,00,000) or the Zone head (above); the applicant's email field gets the notification; ends Approved |
 | RS-2-AC2 | *(manual checklist)* RS-2 is built through the screens only, with no code change, and shown in a demo |
-| RS-2-AC3 | *(M2)* The extended RS-2 (co-applicants grid, sanction committee in "All must approve" mode) runs end to end (shape in C11) |
+| RS-2-AC3 | *(M2)* The extended RS-2 runs end to end: co-applicants grid; loans above 10,00,000 go to a Sanction committee in "All must approve" mode instead of the Zone head (C11) |
 
 ## 6. Edge cases
 - An approver's org data changes after the task was created: the task keeps its assignee (APP-06); an admin can reassign it.
@@ -253,7 +264,7 @@ From the [v0.1 scope](../v0.1-scope.md) section 6: NFR-01 (only the assignee or 
 | **Task** | Work for a person at an Approval step: assigned, offered (waiting to be claimed), claimed, unassigned, completed or cancelled |
 | **Unassigned queue** | Tasks for which nobody could be found, each with its reason, waiting for an admin |
 | **History entry** | One recorded action: who, what, when, comment, changed fields (old → new), approver-rule explanation |
-| **Request status** | In progress (moving through the steps) · Sent back (with the requester after a Send back) · Waiting for resubmission (with the requester after a reopen or an admin restart) · Approved / Completed (reached an End with that outcome) · Rejected (ended by Reject; may be reopened if the process allows) · Rejected (final) (can never be reopened) |
+| **Request status** | In progress (moving through the steps) · Sent back (with the requester after a Send back) · Waiting for resubmission (with the requester after a reopen or an admin restart) · Approved / Completed (reached an End with that outcome) · Rejected (ended by Reject or at an End with outcome Rejected; may be reopened if the process allows) · Rejected (final) (can never be reopened) |
 
 ## 9. Out of scope
 | Item | When |
@@ -264,31 +275,31 @@ From the [v0.1 scope](../v0.1-scope.md) section 6: NFR-01 (only the assignee or 
 | Approver forwards a task; delegation and out of office | v0.3 (W9) |
 | SLA timers and escalation | v0.3 (X3) |
 | Private notes (comments visible only to some people) | Later (W7) |
-| "New task" email to assignees (NTF-03) | v0.2 (G1), see C9 |
+| "New task" email to assignees (NTF-03) and its Approval node setting | v0.2 (G1, C9) |
 | Sub-processes, timers, loops in processes | Later |
 | Moving a running request into the middle of another version | Not planned (Q10); restart on a new version (APP-05) is used instead |
 | Connectors to outside systems inside a process (e.g. credit bureau) | v0.3 |
 
-## 10. Clarifications (open; the owner answers)
-| # | Question | Options |
+## 10. Clarifications (answered by the owner, 2026-10-21)
+| # | Question | Answer |
 |---|---|---|
-| C1 | An End node can have the outcome **Rejected** (WF-02), but the status "Rejected" is defined as "ended by Reject" (W10). What happens when a request reaches an End with outcome Rejected? | **a) Status Rejected, and it can be reopened if the process allows, like a Reject action ⭐** · b) Status Rejected, never reopenable (like Reject (final)) · c) The designer chooses per End node |
-| C2 | Maker-checker (WF-15): which earlier approvals count? After a reopen the request restarts from the first step, so the first step's approver of the last round would be "an earlier approver" of its own step | **a) Only approvals that still stand: approvals of other steps since the last submit, resubmit or reopen; the same step's own earlier approvals do not count ⭐** · b) Every approval in the whole history of the request · c) Approvals of other steps at any time |
-| C3 | After a Send back and resubmission, the request returns to the same Approval node. Who gets the new task? | **a) The approver rule is resolved again with the org data at that moment (APP-06), so it may reach a different person ⭐** · b) The person who sent it back, if still active; otherwise resolve again |
-| C4 | A deactivated user is one of several candidates of an offered ("Any one") task that nobody has claimed. What happens? | **a) They are removed from the candidates; the task goes to the Unassigned queue only when no candidate remains ⭐** · b) The whole task moves to the Unassigned queue (Q4 read literally) |
-| C5 | When an admin reassigns a task (W9), do the same checks apply as for automatic assignment? | **a) Yes: the target must be active, must not be the requester, must pass maker-checker when the tick is on, and must not already have a task in the same "All must approve" step ⭐** · b) The admin may choose anyone active; the platform only warns |
-| C6 | Start permission (WF-06): what exactly do "business roles and/or org units" mean? | **a) A user may start when they hold any chosen role or their primary unit is a chosen unit or below it; the designer must choose at least one entry or an explicit "All users" option, otherwise the publish check fails ⭐** · b) Same, but a chosen unit means that unit only (not the units below it) · c) Role and unit must both match · d) Nothing chosen means everyone may start |
-| C7 | What may sit inside a parallel section? The checks require matching split/join pairs, but do not say whether a branch may lead to an End, or contain Conditions or another parallel section | **a) Every path from a split must reach its own join (an End inside a branch is a publish error); Conditions and nested parallel sections inside a branch are allowed if they also stay inside it ⭐** · b) Same, but no nested parallel sections in v0.1 · c) A branch may end at an End; reaching it ends the whole request and cancels the other branches |
-| C8 | Should the history (WF-11) also show automatic steps, such as which Condition branch was taken, a parallel split or join, or a Notification being sent? | **a) Yes, as system entries, so support can explain the route a request took ⭐** · b) No, only people's actions and task assignments |
-| C9 | WF-03 lists "whether to email new tasks to assignees", but the "new task" email (NTF-03) moved to v0.2 | **a) The setting is not shown in v0.1; it comes with NTF-03 in v0.2 ⭐** · b) Show the setting in v0.1 without effect · c) Bring NTF-03 back into v0.1 |
-| C10 | Does the "comment required" setting for Reject/Send back also cover Reject (final)? | **a) Yes: one setting covers Reject, Reject (final) and Send back ⭐** · b) A separate setting per action |
-| C11 | The shape of the extended RS-2 (M2) is not written down. The WF discussion's drawing has two parallel checks and sends amounts above 10,00,000 to a "Sanction committee" in "All must approve" mode, while RS-2 in the scope has three parallel checks and sends those amounts to the Zone head | **a) Keep RS-2 as in the scope (three checks), add the co-applicants grid, and replace the Zone head step with a Sanction committee step (rule f, a new business role, "All must approve") ⭐** · b) Keep the Zone head step and add the committee step after it · c) The owner describes it |
-| C12 | RS-1 and RS-2 need the inbox screens and emails of feature 006, which is built after this feature. Where do the end-to-end criteria live? | **a) In this spec (RS-1-AC1, RS-2-AC1 …), verified once 006 is built; until then the engine part is proven by service-level tests of the same scenarios ⭐** · b) Move them to 006 · c) A separate file for cross-feature scenarios |
+| C1 | An End with outcome Rejected: status and reopen? | **Status Rejected; reopenable if the process allows**, like a Reject action |
+| C2 | Which earlier approvals count for maker-checker? | **Approvals of other steps since the last submit, resubmit or reopen**; the same step's earlier approvals do not count |
+| C3 | Who gets the task after send back and resubmission? | **The approver rule is resolved again** with the org data at that moment (APP-06) |
+| C4 | A deactivated candidate of an unclaimed offered task | **Removed from the candidates**; Unassigned queue only when no candidate is left |
+| C5 | Do admin reassigns get the same checks? | **Yes**: active, not the requester, maker-checker when on, no second task in the same "All must approve" step |
+| C6 | What does start permission mean? | **Any chosen role or a chosen unit (or below it)**; at least one entry or "All users" is required at publish |
+| C7 | What may sit inside a parallel section? | **Every path reaches its own join** (End inside a branch is an error); Conditions and nested sections allowed if they stay inside |
+| C8 | Automatic steps in the history? | **Yes, as system entries** |
+| C9 | The "email new tasks" setting in v0.1 | **Not shown**; comes with NTF-03 in v0.2 |
+| C10 | Does "comment required" cover Reject (final)? | **Yes**: one setting for Reject, Reject (final) and Send back |
+| C11 | Shape of the extended RS-2 (M2) | **RS-2 as in the scope + co-applicants grid; the Zone head step is replaced by a Sanction committee** (new business role, rule f, "All must approve") |
+| C12 | Where do the RS end-to-end criteria live? | **In this spec**, verified once 006 is built; service-level tests of the same scenarios until then |
 
 ## 11. Spec quality checklist (Claude checks before asking for approval)
 - [x] Every requirement has an ID, a milestone and at least one acceptance criterion
 - [x] No technology choices in the spec (only customer constraints)
 - [x] Every acceptance criterion is testable; the manual checks are marked
 - [x] Out-of-scope items are listed so nobody builds them by mistake
-- [ ] All clarifications answered (C1–C12)
+- [x] All clarifications answered (C1–C12, 2026-10-21)
 - [ ] Approved by the owner
