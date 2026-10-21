@@ -12,9 +12,9 @@
 | T1 | Solution and repository structure, naming, IDs, way of working with git | 001 | ✅ Decided (code name **Flowza**) |
 | T2 | Inside a service: layers, request handling, validation, errors | 001 | ✅ Decided (S1–S7 a) |
 | T3 | Data access: EF Core, migrations, concurrency, soft delete, JSON, time | 001 | ✅ Decided (D1–D7 a) |
-| T4 | Messaging: Wolverine, outbox, idempotency, event contracts and versions | 001 | ⏳ Transports decided ([ADR-0004](../decisions/0004-messaging-transports.md)); CQRS/Saga decided (AR1) |
-| T5 | Security: login flow, Gateway as BFF, tokens, service-to-service calls, authorization | 001 | ⬜ |
-| T6 | Gateway: routing, rate limiting, serving the web app | 001 | ⬜ |
+| T4 | Messaging: Wolverine, outbox, idempotency, event contracts and versions | 001 | ✅ Decided ([ADR-0004](../decisions/0004-messaging-transports.md), AR1, MS1–MS7 a) |
+| T5 | Security: login flow, Gateway as BFF, tokens, service-to-service calls, authorization | 001 | ✅ Decided (SE1–SE7 a) |
+| T6 | Gateway: routing, rate limiting, serving the web app | 001 | ✅ Decided (GW1–GW6 a) |
 | T7 | Observability: logs, traces, correlation, health, privacy guard | 001 | ⬜ |
 | T8 | Testing: unit, integration on real SQL Server without Docker, end-to-end, coverage | 001 | ⬜ |
 | T9 | Local development and CI: Aspire, SQL Server instance, smtp4dev, GitHub Actions | 001 | ⬜ |
@@ -106,6 +106,38 @@ never pushes without the owner's OK; the first commit holds all documents writte
 | S5 | Domain model | **a) DDD building blocks where rules live (aggregates, value objects, domain events); plain records for simple lookups ⭐** · b) Plain data classes with logic in handlers |
 | S6 | Domain events vs integration events | **a) Domain events stay inside a service (same transaction); integration events (in Contracts, versioned) leave through the outbox ⭐** · b) One kind of event for both |
 | S7 | List paging | **a) Page number + page size (25) + total count; keyset paging later only where needed ⭐** · b) Keyset (cursor) paging everywhere |
+
+## T4: Messaging details (decided 2026-10-21: all "a")
+| # | Question | Options (⭐ = Claude's recommendation) |
+|---|---|---|
+| MS1 | Event contracts | **a) One `Flowza.Contracts` project; records in versioned namespaces (`…Events.V1`); a released event never changes ⭐** · b) Each service defines its own copies |
+| MS2 | Standard event fields | **a) Every integration event carries EventId, OccurredAt (UTC), ActorId, CorrelationId, plus its own data (prepares the Audit service) ⭐** · b) Only the business data |
+| MS3 | Duplicates | **a) Wolverine durable inbox (drops repeated message IDs) **and** handlers written to be safe twice (e.g. data-version checks) ⭐** · b) Handlers only |
+| MS4 | Failures | **a) 3 quick retries, then delayed retries (5 s, 30 s, 5 min), then the dead-letter queue; admin view of dead letters in v0.2 ⭐** · b) Other |
+| MS5 | RabbitMQ routing | **a) Wolverine conventions: one exchange per event type, one queue per subscribing service; commands such as `SendEmailRequested` go point-to-point to one queue ⭐** · b) Hand-made topology |
+| MS6 | Message format | **a) JSON (System.Text.Json) ⭐** · b) A binary format |
+| MS7 | Large messages (`AppVersionPublished` carries whole definitions) | **a) Send in full; warn in logs above 5 MB; "claim check" (send a reference, fetch the body) only if real apps exceed it ⭐** · b) Claim check from day one |
+
+## T5: Security (decided 2026-10-21: all "a"; confirms the Gateway as BFF)
+| # | Question | Options (⭐ = Claude's recommendation) |
+|---|---|---|
+| SE1 | Gateway as BFF (from IAM design notes) | **a) Yes: the browser holds only a secure, HTTP-only, SameSite cookie; the Gateway logs in with the standard code flow + PKCE and keeps the tokens inside its encrypted cookie (Gateway stays stateless, no database) ⭐** · b) The React app holds tokens itself |
+| SE2 | Login page | **a) Served by the Identity service (server-rendered page in Flowza's look, texts from translation files); passwords never pass through the React app; ready for SSO later ⭐** · b) A React login page sending the password to an API (an outdated, weaker pattern) |
+| SE3 | Service-to-service calls (e.g. Runtime → Identity resolve API) | **a) The calling service gets its own token (client credentials); each service validates tokens locally with Identity's signing keys ⭐** · b) No authentication inside the network |
+| SE4 | Authorization | **a) Role policies (Admin, Designer, User) on endpoints **plus** record-level checks in handlers (task assignee, who may view a request, NFR-01) ⭐** · b) Roles only |
+| SE5 | Cross-site request forgery | **a) SameSite=Strict cookie plus an anti-forgery header on every change request ⭐** · b) Cookie setting only |
+| SE6 | Keys and secrets | **a) Development: .NET development certificates and user secrets. Production: certificates from the Windows certificate store or Azure Key Vault, secrets from environment variables or Key Vault, all behind configuration ⭐** · b) Other |
+| SE7 | HTTPS | **a) HTTPS everywhere, also between services; HSTS and security headers (CSP, no framing, no sniffing) added by the Gateway ⭐** · b) HTTPS only at the Gateway |
+
+## T6: Gateway (decided 2026-10-21: all "a")
+| # | Question | Options (⭐ = Claude's recommendation) |
+|---|---|---|
+| GW1 | Routes | **a) `/api/identity/…`, `/api/design/…`, `/api/runtime/…`, `/api/worker/…` to the services; login pages and token endpoints to Identity; everything else = the web app ⭐** · b) Other |
+| GW2 | Serving the web app | **a) Production: the Gateway serves the built React files. Development: it forwards to the Vite dev server (hot reload) ⭐** · b) A separate web server |
+| GW3 | Rate limits | **a) At the Gateway: login per IP (L6) and a general per-user limit; numbers in configuration ⭐** · b) In each service |
+| GW4 | Trust | **a) The Gateway removes any incoming identity headers from the browser and forwards the trace reference (`traceparent`) ⭐** · b) Pass headers through |
+| GW5 | Upload size | **a) Files upload one per request, up to the field's limit (default 10 MB); other requests limited to 1 MB ⭐** · b) One big request with the form and all files |
+| GW6 | Finding services | **a) Aspire service discovery in development; addresses from configuration in production ⭐** · b) A discovery server (e.g. Consul) |
 
 ## T3: Data access (decided 2026-10-21: all "a"; D7 approves READ_COMMITTED_SNAPSHOT in the database script)
 | # | Question | Options (⭐ = Claude's recommendation) |
