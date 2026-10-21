@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | **Draft**, 2026-10-21 (clarifications C1–C11 open) |
+| **Status** | **Draft**; clarifications C1–C11 answered by the owner on 2026-10-21; waiting for approval |
 | **Date** | 2026-10-21 |
 | **Modules** | EXP (Expression language), shared by forms and workflow |
 | **Scope IDs** | EXP-01 to EXP-07 ([v0.1 scope](../v0.1-scope.md)) |
@@ -42,7 +42,7 @@ in the browser and on the server**, proven by one shared set of test cases (cons
 | **App Designer** | Write formulas in a familiar, Excel-like way; get clear messages with a position and a suggestion when a formula is wrong, before anyone uses it |
 | **Requester** | See calculated values and shown/hidden fields update while typing, and get the same values after submitting |
 | **Approver** | Trust that the values on the task screen are the values the platform calculated and saved |
-| **Platform Admin** | Set the installation's time zone, which `TODAY()` uses (the Settings screen comes in M3, PLT-08; see C3) |
+| **Platform Admin** | Set the installation's time zone, which `TODAY()` uses: fixed at installation in M1, editable on the Settings screen in M3 (PLT-08, C3) |
 
 ## 3. User stories and acceptance scenarios
 Priority **P1** = needed for Milestone 1; **P2** = Milestone 2.
@@ -93,10 +93,10 @@ As customer IT, I need formulas to be harmless, so that a designer (or an attack
 ## 4. Requirements
 | ID | Requirement | Milestone |
 |---|---|---|
-| EXP-01 | **Values:** numbers, text in double quotes (`\"` is a quote inside text, D4), `true` and `false`, dates (only from date fields and `TODAY()`; no date literals), and field references by the field's **bare key** (E1). Each field gives a value of a fixed type (section 4.2, see C1). Function names, keywords and field keys are **case-insensitive** (E2) | M1 |
-| EXP-02 | **Operators** `( ) ^ - * / + - = != < <= > >= not and or` with the precedence in section 4.3. Arithmetic is **exact decimal arithmetic, giving the same result in the browser and on the server** (E3). `^` takes whole-number exponents only (E3). Division by zero gives blank (E5). `+` and `-` work on numbers only (E8, E11). Both sides of a comparison must have the same type; text comparison ignores case (E10) | M1 |
-| EXP-03 | **Functions**, exactly those in section 4.4: `DAYS_BETWEEN`, `TODAY`, `YEARS_BETWEEN`, `ROUND`, `MIN`, `MAX`, `IF`, `ISBLANK`, `CONTAINS`. **M2:** `SUM` and `COUNT` over a grid, delivered with the grid (FRM-13, GR4) | M1 / M2 |
-| EXP-04 | **Design-time checks** when a design is saved: syntax, unknown fields, unknown functions, wrong number of arguments, wrong types, a result type that does not fit its use, reserved words used as field keys (E1), at most **2,000 characters** and **50 nesting levels** per expression (D1). Messages come from translation files and include the column position, with a "Did you mean…?" suggestion for unknown fields (D5). A **warning** for the `-x^n` pattern (D6). Whether an error blocks the save or only the publish: see C2 | M1 |
+| EXP-01 | **Values:** numbers, text in double quotes (`\"` is a quote inside text, D4), `true` and `false`, dates (only from date fields and `TODAY()`; no date literals), and field references by the field's **bare key** (E1). Each field gives a value of the type set by its **data type** (section 4.2, C1). Text with no characters, and the literal `""`, count as **blank**; `x = ""` tests for blank like `ISBLANK(x)` (C5). Function names, keywords and field keys are **case-insensitive** (E2) | M1 |
+| EXP-02 | **Operators** `( ) ^ - * / + - = != < <= > >= not and or` with the precedence in section 4.3. Arithmetic is **exact decimal arithmetic, giving the same result in the browser and on the server** (E3). `^` takes whole-number exponents only, negative ones included (E3, C8). Division by zero gives blank (E5); a result too large for the 28-digit precision gives blank (C9). `+` and `-` work on numbers only (E8, E11). Both sides of a comparison must have the same type; text comparison ignores case (E10); `<` `<=` `>` `>=` work only on numbers and dates (C6) | M1 |
+| EXP-03 | **Functions**, exactly those in section 4.4: `DAYS_BETWEEN`, `TODAY`, `YEARS_BETWEEN`, `ROUND`, `MIN`, `MAX`, `IF`, `ISBLANK`, `CONTAINS`. `TODAY()` uses the installation time zone, fixed at installation in M1 and editable from M3 (C3). **M2:** `SUM` and `COUNT` over a grid, delivered with the grid (FRM-13, GR4); their names are reserved from M1 (C11) | M1 / M2 |
+| EXP-04 | **Design-time checks** when a design is saved: syntax, unknown fields, unknown functions, wrong number of arguments, wrong types, a result type that does not fit its use, reserved words used as field keys (E1), at most **2,000 characters** and **50 nesting levels** per expression (D1). Messages come from translation files and include the column position, with a "Did you mean…?" suggestion for unknown fields (D5). A **warning** for the `-x^n` pattern (D6). A draft with expression errors **is saved** and lists every error; **publishing is refused** until all are fixed (C2) | M1 |
 | EXP-05 | The same expression with the same field values gives **exactly the same result in the browser and on the server**, proven by **one shared set of test cases** that both must pass (constitution 5.4) | M1 |
 | EXP-06 | Expressions **cannot run code or access files, network or database**; only the listed operators and functions exist (constitution 7.5). The only inputs are form field values and today's date; requester facts are not available in v0.1 (E12) | M1 |
 | EXP-07 | **Blank values pass through** (E6, D7) as in section 4.5. A blank final result means: show/hide rule → hidden; validation rule → passes; Condition branch → not taken; calculated field → empty | M1 |
@@ -110,56 +110,62 @@ As customer IT, I need formulas to be harmless, so that a designer (or an attack
 | Field reference | The field's key, bare: `FromDate` (E1) |
 | Date | Only from date fields and `TODAY()`; no date literals in v0.1 |
 
-### 4.2 Field types inside expressions (EXP-01, as recorded in the EXP discussion; see C1)
-| Field type | Value in expressions |
+### 4.2 Field types inside expressions (EXP-01)
+The field's **data type** (feature 004, DT1) decides its type in expressions, not its control (C1). For
+example, a Dropdown `Tenure` with stored values 12, 24, 36 and data type Whole number is a number, so
+`Tenure * 2` is valid.
+
+| Data type | Value in expressions |
 |---|---|
-| Text, Text area, Email | text |
-| Number, Currency, Calculated (number) | number |
+| Text | text |
+| Whole number, Decimal | number |
 | Date | date (no time part) |
-| Dropdown, Radio | text: the option's **stored value**, not its label |
 | Yes/No | true/false |
-| Checkboxes (multi-select) | list of values; usable only with `CONTAINS` and `ISBLANK` (E9) |
-| User picker | the user's ID (text); in practice used with `ISBLANK` |
-| File upload | usable only with `ISBLANK` |
+| *User* (User picker) | the user's ID (text); in practice used with `ISBLANK` |
+| *File* (File upload) | usable only with `ISBLANK` |
+
+- Dropdown and Radio give the option's **stored value** (not its label), typed by the field's data type.
+- Checkboxes (multi-select) give a **list** of stored values of the field's data type; usable only with `CONTAINS` and `ISBLANK` (E9).
 
 ### 4.3 Operators (EXP-02), highest precedence first
 | Level | Operators | Notes |
 |---|---|---|
 | 1 | `( )` | |
-| 2 | `^` | Right to left: `2^3^2 = 2^9`. The exponent must be a **whole number** (E3; see C8) |
+| 2 | `^` | Right to left: `2^3^2 = 2^9`. The exponent must be a **whole number**; negative ones are allowed: `2 ^ -2 = 0.25`, `0 ^ -1` is blank (E3, C8) |
 | 3 | unary `-` | `-2^2 = -4` (maths convention; a spreadsheet gives 4). The design check warns about this pattern (D6) |
 | 4 | `*` `/` | Division by zero gives blank (E5) |
 | 5 | `+` `-` | Numbers only (no date arithmetic, E8; no text joining, E11) |
-| 6 | `=` `!=` `<` `<=` `>` `>=` | Both sides must have the same type. Text comparison ignores case (E10; see C6) |
+| 6 | `=` `!=` `<` `<=` `>` `>=` | Both sides must have the same type. Text comparison ignores case (E10). `<` `<=` `>` `>=` only for numbers and dates; text and true/false allow only `=` and `!=` (C6) |
 | 7 | `not` | |
 | 8 | `and` | |
 | 9 | `or` | |
 
-Numbers are exact decimals with the same precision of 28 digits in the browser and on the server (E3; see C9).
+Numbers are exact decimals with the same precision of 28 digits in the browser and on the server (E3). A result
+too large for that precision gives **blank**, so expressions never fail at run time (C9).
 
 ### 4.4 Functions (EXP-03)
 | Function | Returns | Rule | Milestone |
 |---|---|---|---|
 | `DAYS_BETWEEN(a, b)` | number | Calendar days from date `a` to date `b` (`b − a`; negative if `b` is earlier) (Q2) | M1 |
-| `TODAY()` | date | Today in the **installation's time zone** (E7; see C3) | M1 |
-| `YEARS_BETWEEN(a, b)` | number | **Completed** years from date `a` to date `b` (age). A 29 February start date counts its anniversary on 28 February in non-leap years (CV6; see C7) | M1 |
-| `ROUND(x, digits)` | number | `digits` 0–10, default 0. **Half away from zero**: 2.5 → 3, −2.5 → −3 (E4; see C10) | M1 |
+| `TODAY()` | date | Today in the **installation's time zone** (E7); fixed at installation in M1, editable on the Settings screen from M3 (C3) | M1 |
+| `YEARS_BETWEEN(a, b)` | number | **Completed** years from date `a` to date `b` (age). A 29 February start date counts its anniversary on 28 February in non-leap years (CV6). Negative when `b` is earlier than `a`, like `DAYS_BETWEEN` (C7) | M1 |
+| `ROUND(x, digits)` | number | `digits` 0–10, default 0. **Half away from zero**: 2.5 → 3, −2.5 → −3 (E4). A written `digits` outside 0–10 is reported at save; a `digits` from a field that is outside 0–10 or not whole gives blank (C10) | M1 |
 | `MIN(a, b, …)` / `MAX(a, b, …)` | number or date | Two or more values of the same type; a blank input gives blank (D3) | M1 |
-| `IF(condition, a, b)` | type of `a` | `a` and `b` must have the same type; only the chosen branch is evaluated (D2; see C4) | M1 |
+| `IF(condition, a, b)` | type of `a` | `a` and `b` must have the same type; only the chosen branch is evaluated (D2). A blank condition counts as false, so `IF` gives `b` (C4) | M1 |
 | `ISBLANK(x)` | true/false | True if the field is empty | M1 |
 | `CONTAINS(list, "VALUE")` | true/false | True if a multi-select field contains that stored value (E9) | M1 |
 | `SUM(Grid.Column)` | number | Sum of a number or currency column of a grid; blank cells ignored; empty grid → 0 (GR4) | M2 |
 | `COUNT(Grid)` | number | Number of rows in a grid (GR4) | M2 |
 
-Function names and the words `and`, `or`, `not`, `true`, `false` are **reserved** and cannot be field keys (E1;
-for `SUM` and `COUNT` in M1 see C11). Everything is **case-insensitive**: `round` = `ROUND`, `fromdate` =
+Function names (including `SUM` and `COUNT` from M1 on, C11) and the words `and`, `or`, `not`, `true`, `false`
+are **reserved** and cannot be field keys (E1). Everything is **case-insensitive**: `round` = `ROUND`, `fromdate` =
 `FromDate`; field keys are therefore unique ignoring case (E2).
 
 How a grid's row-level calculated columns and row rules refer to the columns of the same row (GR3) is
 specified with the grid in [004-apps-and-form-builder](../004-apps-and-form-builder/); the language rules here apply to them unchanged.
 
 ### 4.5 Blank values (EXP-07, E6)
-1. Any maths, comparison or function with a blank input gives **blank**, except `ISBLANK`, `IF` (only its condition; see C4) and `CONTAINS` (blank list → false).
+1. Any maths, comparison or function with a blank input gives **blank**, except `ISBLANK`, `IF` (a blank condition counts as false, C4) and `CONTAINS` (blank list → false). Text with no characters, and `""`, are blank (C5). Exception: `x = ""` means `ISBLANK(x)` and `x != ""` means `not ISBLANK(x)`; they give true or false, never blank (C5).
 2. Division by zero gives blank (E5).
 3. `and` / `or` treat blank as **false**; `not blank` is blank (D7).
 4. What a blank **final** result means depends on where the expression is used:
@@ -185,13 +191,18 @@ Every criterion that names an expression and its result is also a case in the sh
 | EXP-01-AC4 | A Yes/No field gives true/false: with `Urgent` = Yes, `Urgent and 1 < 2` is true |
 | EXP-01-AC5 | A Checkboxes field used anywhere other than `CONTAINS` or `ISBLANK`, or a File upload field used anywhere other than `ISBLANK`, is reported when the design is saved (E9) |
 | EXP-01-AC6 | There are no date literals: `FromDate > 2026-10-21` is reported as a type mismatch when the design is saved, because `2026-10-21` is a number calculation, not a date |
+| EXP-01-AC7 | A field's data type decides its type: a Dropdown `Tenure` with data type Whole number and stored value 24 gives `Tenure * 2` = 48; the same Dropdown with data type Text makes `Tenure * 2` a type error at save (C1) |
+| EXP-01-AC8 | Text with no characters is blank, and comparing with `""` tests for blank: with `Name` empty, `ISBLANK(Name)` and `Name = ""` are true and `Name != ""` is false; with `Name` = "Ravi", `Name = ""` is false; `ISBLANK("")` is true (C5) |
 | EXP-02-AC1 | `2 + 3 * 4` = 14; `(2 + 3) * 4` = 20; `2 ^ 3 ^ 2` = 512; `-2 ^ 2` = −4 |
 | EXP-02-AC2 | `0.1 + 0.2 = 0.3` is true (decimal arithmetic, E3) |
 | EXP-02-AC3 | `10 / 0` is blank (E5) |
 | EXP-02-AC4 | `"Chennai" = "CHENNAI"` is true (E10) |
-| EXP-02-AC5 | `2 ^ 0.5` is rejected when the design is saved, or gives blank at run time if the exponent comes from a field (E3; see C2) |
+| EXP-02-AC5 | `2 ^ 0.5` is reported when the design is saved (and blocks publishing, C2), or gives blank at run time if the exponent comes from a field (E3) |
 | EXP-02-AC6 | `true or false and false` is true (`and` before `or`); `not 1 = 2` is true (comparison before `not`) |
 | EXP-02-AC7 | `FromDate + 1` (date arithmetic, E8) and `"Ab" + "c"` (text joining, E11) are reported when the design is saved |
+| EXP-02-AC8 | `City < "M"` and `Urgent > false` are reported when the design is saved; `City = "Chennai"`, `Urgent != false`, `Amount > 5` and `ToDate >= FromDate` are valid (C6) |
+| EXP-02-AC9 | `2 ^ -2` = 0.25; `0 ^ -1` is blank (C8) |
+| EXP-02-AC10 | A result larger than the 28-digit precision, such as `10 ^ 40`, is blank; it does not cause an error (C9) |
 | EXP-03-AC1 | `DAYS_BETWEEN` of 2026-10-17 and 2026-10-20 is 3; reversed it is −3 |
 | EXP-03-AC2 | `ROUND(2.5)` = 3, `ROUND(-2.5)` = −3, `ROUND(1.005, 2)` = 1.01 (E4, decimal) |
 | EXP-03-AC3 | `TODAY()` returns the date in the installation's time zone, in the browser and on the server (E7). Example: with the time zone India (UTC+5:30) at 2026-10-20 20:00 UTC, `TODAY()` is 2026-10-21 on both |
@@ -203,6 +214,9 @@ Every criterion that names an expression and its result is also a case in the sh
 | EXP-03-AC9 | `ISBLANK` is true for an empty field (also an empty multi-select, a File upload with no files and an empty User picker) and false when it has a value; `IF(ISBLANK(Discount), Price, Price - Discount)` gives `Price` when `Discount` is empty |
 | EXP-03-AC10 | *(M2)* For a grid with `MonthlyIncome` cells 40,000, blank and 25,000, `SUM(CoApplicants.MonthlyIncome)` is 65,000 and `COUNT(CoApplicants)` is 3; for a grid with no rows they are 0 and 0 (GR4) |
 | EXP-03-AC11 | *(M2)* `SUM` over a grid column that is not a number or currency column is reported when the design is saved |
+| EXP-03-AC12 | `YEARS_BETWEEN` from 2026-10-21 to 2025-10-21 is −1 (C7) |
+| EXP-03-AC13 | `ROUND(2.345, Digits)` is blank when `Digits` is 11, −1 or 2.5 (C10) |
+| EXP-03-AC14 | In M1 the installation time zone is fixed at installation; `TODAY()` uses it in the browser and on the server (C3) |
 | EXP-04-AC1 | An unknown field is reported with its position and a suggestion (`FromDte` → "Did you mean FromDate?") (D5) |
 | EXP-04-AC2 | `"abc" > 5` is rejected (type mismatch); `IF(x, 1, "a")` is rejected (branch types differ) |
 | EXP-04-AC3 | A field key equal to a reserved word is rejected |
@@ -212,6 +226,8 @@ Every criterion that names an expression and its result is also a case in the sh
 | EXP-04-AC7 | A result that does not fit its use is reported: a show/hide, validation or Condition expression that does not give true/false (e.g. `Amount + 1`), or a calculated field whose formula type does not fit the field's data type |
 | EXP-04-AC8 | `-Amount ^ 2` gives a **warning**, not an error, explaining that it means `-(Amount ^ 2)` (D6) |
 | EXP-04-AC9 | Every message shown to designers comes from the translation files (D5, constitution 12) |
+| EXP-04-AC10 | A draft whose expressions have errors is saved and lists every error; publishing it is refused until all are fixed (C2) |
+| EXP-04-AC11 | In M1 a field key `Sum` or `count` is rejected as a reserved word (C11) |
 | EXP-05-AC1 | Every case in the shared conformance file passes in **both** the browser calculation and the server calculation |
 | EXP-05-AC2 | The shared set contains every expression example in this section, and at least one case for every operator, every function, every blank rule and every limit in section 4 |
 | EXP-06-AC1 | No expression can call code, read files, use the network or query a database; only the listed functions exist |
@@ -224,6 +240,7 @@ Every criterion that names an expression and its result is also a case in the sh
 | EXP-07-AC5 | With the Yes/No field `Urgent` empty: `Urgent or 1 < 2` is true, `Urgent and 1 < 2` is false, and `not Urgent` is blank (D7) |
 | EXP-07-AC6 | A calculated field whose formula gives blank (e.g. `Amount / Count` with `Count` = 0) is empty |
 | EXP-07-AC7 | A blank inside the chosen `IF` branch passes through: `IF(true, Fee, 1)` with `Fee` empty is blank |
+| EXP-07-AC8 | A blank `IF` condition counts as false: `IF(Urgent, 2, 5)` with `Urgent` empty is 5 (C4) |
 
 ## 6. Edge cases
 - The browser computes `TODAY()` just before midnight and the user submits just after: the server's value wins (calculated fields are recalculated by the server, FRM-06, feature 004).
@@ -263,21 +280,20 @@ From the [v0.1 scope](../v0.1-scope.md) section 6: NFR-05 (dates have no time pa
 | Full expression language with autocomplete | v0.4 |
 | Lookups to other records or outside systems from an expression | Never in the language (EXP-06); v0.2 "Must be unique" and v0.3 connectors are separate features |
 
-## 10. Clarifications (open, for the owner)
-| # | Question | Options | Recommendation |
-|---|---|---|---|
-| C1 | The EXP discussion maps **controls** to expression types (Dropdown and Radio give text; Text box gives text). The later FRM decision DT1 gives every control an explicit **data type** (a Dropdown, Radio or Checkboxes may be Whole number; a Text box may be Whole number or Decimal). Which decides the type inside expressions? | a) The field's **data type** (FRM section 4a): Text → text, Whole number and Decimal → number, Date → date, Yes/No → true/false, User → user ID text, File → `ISBLANK` only; a Checkboxes list holds values of its data type · b) The control, as in section 4.2 | ⭐ a): DT1 is the later decision, and the form designer already says "the expression checker verifies" against the data type |
-| C2 | Does an expression error **block saving** the draft, or only **publishing**? (The draft criteria say "rejected when the design is saved"; F2 says "the save check reports every broken reference".) | a) The draft is saved and all errors are listed; **publishing** is refused until they are fixed · b) Saving is refused while any expression has an error | ⭐ a): a designer who renames a key does not lose work, and nothing broken can reach users |
-| C3 | Where does the installation time zone for `TODAY()` come from in **M1**, before the Settings screen (PLT-08, M3)? | a) In M1 one fixed time zone set at installation (technical configuration); M3 makes it editable on the Settings screen · b) Move the time zone setting forward into M1 | ⭐ a): the same approach as the fixed defaults for sessions in feature 001 (C1 there) |
-| C4 | What does `IF` give when its **condition is blank**? (Section 4.5 says the condition is an exception to "blank passes through", but not what happens.) | a) A blank condition counts as false, so `IF` gives `b` (like `and` / `or`, D7) · b) `IF` gives blank | ⭐ a): it matches D7 and lets designers write safe defaults |
-| C5 | Is **text with no characters** blank? E.g. is `Name = ""` the same as `ISBLANK(Name)`? | a) Yes: an empty text value, and the literal `""`, count as blank · b) No: empty text is an ordinary text value, different from blank | ⭐ a): one meaning of "empty" for designers; users cannot see a difference between empty text and no value |
-| C6 | May `<` `<=` `>` `>=` compare **text** or **true/false**? (Ordering text by letters may differ by language and threaten EXP-05.) | a) Only `=` and `!=` for text and true/false; ordering only for numbers and dates · b) Allow text ordering by one fixed character order on both sides | ⭐ a): no business example needs it, and it removes a risk to EXP-05 |
-| C7 | What does `YEARS_BETWEEN(a, b)` give when `b` is **earlier** than `a`? | a) Negative completed years, like `DAYS_BETWEEN` (e.g. −1) · b) Blank · c) 0 | ⭐ a): the same rule as `DAYS_BETWEEN` |
-| C8 | Are **negative** whole-number exponents allowed (`2 ^ -1`)? | a) Yes: `2 ^ -2` = 0.25; `0 ^ -1` is a division by zero and gives blank · b) No: only 0 and positive exponents; others are reported at save or give blank from a field | ⭐ a): "whole number" (E3) then has its plain maths meaning |
-| C9 | What happens when a result is **too large** for 28-digit decimals (e.g. `10 ^ 40`)? | a) Blank, like division by zero (no run-time error) · b) A run-time error | ⭐ a): keeps the rule that expressions never fail at run time, so a Condition always ends on a path |
-| C10 | `ROUND`'s `digits` comes from a field and is outside 0–10 or not whole: what happens? | a) Blank, like a non-whole exponent from a field (E3); a written number outside 0–10 is reported at save · b) `digits` must always be a written number, never a field | ⭐ a): the same rule as `^` |
-| C11 | `SUM` and `COUNT` arrive in M2. Are they **reserved** from M1, so that no field key made in M1 (e.g. `Count`) breaks in M2? | a) Yes, all function names in section 4.4 are reserved from M1 · b) Reserve them only in M2 | ⭐ a): avoids published M1 apps becoming invalid in M2 |
-
+## 10. Clarifications (answered by the owner, 2026-10-21)
+| # | Question | Answer |
+|---|---|---|
+| C1 | Does a field's type in expressions come from its control or its data type (DT1)? | **Its data type** (section 4.2) |
+| C2 | Does an expression error block saving the draft, or only publishing? | **Only publishing**: the draft is saved and lists every error (the same answer applies to 004) |
+| C3 | Where does `TODAY()`'s time zone come from in M1? | **Fixed at installation** in M1; editable on the Settings screen in M3 |
+| C4 | What does `IF` give when its condition is blank? | **A blank condition counts as false**, so `IF` gives `b` |
+| C5 | Is text with no characters (and `""`) blank? Is `Name = ""` the same as `ISBLANK(Name)`? | **Yes to both** |
+| C6 | May `<` `<=` `>` `>=` compare text or true/false? | **No**: only numbers and dates |
+| C7 | `YEARS_BETWEEN(a, b)` when `b` is earlier than `a` | **Negative** completed years, like `DAYS_BETWEEN` |
+| C8 | Negative whole-number exponents | **Allowed**: `2 ^ -2` = 0.25; `0 ^ -1` is blank |
+| C9 | A result too large for 28-digit decimals | **Blank**; expressions never fail at run time |
+| C10 | `ROUND` digits from a field outside 0–10 or not whole | **Blank** (a written value outside 0–10 is reported at save) |
+| C11 | Are `SUM` and `COUNT` reserved from M1? | **Yes** |
 ## 11. Spec quality checklist (Claude checks before asking for approval)
 - [x] Every requirement has an ID, a milestone and at least one acceptance criterion
 - [x] No technology choices in the spec (no customer constraint applies to this feature)
@@ -285,5 +301,5 @@ From the [v0.1 scope](../v0.1-scope.md) section 6: NFR-05 (dates have no time pa
 - [x] Out-of-scope items are listed so nobody builds them by mistake
 - [x] Every owner decision (E1–E12, D1–D7, CV6, GR4, Q2) is kept as recorded, and the draft criteria keep their IDs
 - [x] Uses owned by other features (form rules in 004, Condition nodes in 005) are referenced, not specified twice
-- [ ] All clarifications answered (C1–C11)
+- [x] All clarifications answered (C1–C11, 2026-10-21)
 - [ ] Approved by the owner
