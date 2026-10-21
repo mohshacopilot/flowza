@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Accepted (2026-10-21). The selection rule in point 3 is Claude's proposal, awaiting the owner's confirmation (MQ3) |
+| **Status** | Accepted (2026-10-21), including the selection rule in point 3 (MQ3): the owner confirmed testing **SQL Server as default and RabbitMQ** now and raised no objection to explicit selection |
 | **Date** | 2026-10-21 |
 | **Decided by** | Owner |
 | **Amends** | [ADR-0004](0004-messaging-transports.md): Azure Service Bus is **coded now** instead of later; the default transport and the selection rule are defined here |
@@ -21,7 +21,7 @@
    | `RabbitMq` | On-premises with RabbitMQ (development PC uses this) | Yes: locally and in CI |
    | `AzureServiceBus` | Azure | **Code and configuration only.** Its integration tests exist but are skipped until an Azure subscription (or the Service Bus emulator) is available |
 2. Service code never changes between transports: it only publishes and handles messages (Wolverine).
-3. **Selection rule (proposed, MQ3):** the transport is chosen **explicitly by configuration at installation
+3. **Selection rule (MQ3):** the transport is chosen **explicitly by configuration at installation
    time**, the **same value for every service** of the installation, not by detecting at start-up whether
    RabbitMQ answers. If the configured broker is unreachable, the service reports **not ready** with a clear
    message, and events wait safely in each service's **outbox** until the broker is back.

@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\Flowza.Contracts\Flowza.Contracts.csproj" />
+    <ProjectReference Include="..\Flowza.Common\Flowza.Common.csproj" />
+  </ItemGroup>
+</Project>

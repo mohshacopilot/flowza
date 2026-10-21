@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\Flowza.Identity.Domain\Flowza.Identity.Domain.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\Flowza.Common\Flowza.Common.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\Flowza.Contracts\Flowza.Contracts.csproj" />
+  </ItemGroup>
+</Project>

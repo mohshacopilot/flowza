@@ -1,0 +1,59 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path="CLAUDE.md" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="global.json" />
+    <File Path="tests/Directory.Build.props" />
+  </Folder>
+  <Folder Name="/src/" />
+  <Folder Name="/src/AppHost/">
+    <Project Path="src/AppHost/Flowza.AppHost/Flowza.AppHost.csproj" />
+  </Folder>
+  <Folder Name="/src/BuildingBlocks/">
+    <Project Path="src/BuildingBlocks/Flowza.Common/Flowza.Common.csproj" />
+    <Project Path="src/BuildingBlocks/Flowza.Contracts/Flowza.Contracts.csproj" />
+    <Project Path="src/BuildingBlocks/Flowza.Messaging/Flowza.Messaging.csproj" />
+    <Project Path="src/BuildingBlocks/Flowza.Persistence/Flowza.Persistence.csproj" />
+  </Folder>
+  <Folder Name="/src/Gateway/">
+    <Project Path="src/Gateway/Flowza.Gateway/Flowza.Gateway.csproj" />
+  </Folder>
+  <Folder Name="/src/ServiceDefaults/">
+    <Project Path="src/ServiceDefaults/Flowza.ServiceDefaults/Flowza.ServiceDefaults.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/" />
+  <Folder Name="/src/Services/Design/">
+    <Project Path="src/Services/Design/Flowza.Design.Api/Flowza.Design.Api.csproj" />
+    <Project Path="src/Services/Design/Flowza.Design.Application/Flowza.Design.Application.csproj" />
+    <Project Path="src/Services/Design/Flowza.Design.Domain/Flowza.Design.Domain.csproj" />
+    <Project Path="src/Services/Design/Flowza.Design.Infrastructure/Flowza.Design.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/Identity/">
+    <Project Path="src/Services/Identity/Flowza.Identity.Api/Flowza.Identity.Api.csproj" />
+    <Project Path="src/Services/Identity/Flowza.Identity.Application/Flowza.Identity.Application.csproj" />
+    <Project Path="src/Services/Identity/Flowza.Identity.Domain/Flowza.Identity.Domain.csproj" />
+    <Project Path="src/Services/Identity/Flowza.Identity.Infrastructure/Flowza.Identity.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/Runtime/">
+    <Project Path="src/Services/Runtime/Flowza.Runtime.Api/Flowza.Runtime.Api.csproj" />
+    <Project Path="src/Services/Runtime/Flowza.Runtime.Application/Flowza.Runtime.Application.csproj" />
+    <Project Path="src/Services/Runtime/Flowza.Runtime.Domain/Flowza.Runtime.Domain.csproj" />
+    <Project Path="src/Services/Runtime/Flowza.Runtime.Infrastructure/Flowza.Runtime.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/Worker/">
+    <Project Path="src/Services/Worker/Flowza.Worker/Flowza.Worker.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Flowza.ArchitectureTests/Flowza.ArchitectureTests.csproj" />
+    <Project Path="tests/Flowza.BuildingBlocks.UnitTests/Flowza.BuildingBlocks.UnitTests.csproj" />
+    <Project Path="tests/Flowza.Gateway.IntegrationTests/Flowza.Gateway.IntegrationTests.csproj" />
+    <Project Path="tests/Flowza.Identity.IntegrationTests/Flowza.Identity.IntegrationTests.csproj" />
+    <Project Path="tests/Flowza.Identity.UnitTests/Flowza.Identity.UnitTests.csproj" />
+    <Project Path="tests/Flowza.Platform.IntegrationTests/Flowza.Platform.IntegrationTests.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/Flowza.Cli/Flowza.Cli.csproj" />
+  </Folder>
+</Solution>

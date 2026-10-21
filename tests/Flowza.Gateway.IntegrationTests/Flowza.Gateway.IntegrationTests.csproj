@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Gateway\Flowza.Gateway\Flowza.Gateway.csproj" />
+  </ItemGroup>
+</Project>

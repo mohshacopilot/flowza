@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Services\Identity\Flowza.Identity.Api\Flowza.Identity.Api.csproj" />
+  </ItemGroup>
+</Project>

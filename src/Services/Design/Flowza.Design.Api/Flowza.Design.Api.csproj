@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <ItemGroup>
+    <ProjectReference Include="..\Flowza.Design.Infrastructure\Flowza.Design.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\ServiceDefaults\Flowza.ServiceDefaults\Flowza.ServiceDefaults.csproj" />
+  </ItemGroup>
+</Project>

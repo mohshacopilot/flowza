@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\BuildingBlocks\Flowza.Common\Flowza.Common.csproj" />
+    <ProjectReference Include="..\..\src\BuildingBlocks\Flowza.Contracts\Flowza.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\BuildingBlocks\Flowza.Persistence\Flowza.Persistence.csproj" />
+    <ProjectReference Include="..\..\src\BuildingBlocks\Flowza.Messaging\Flowza.Messaging.csproj" />
+    <ProjectReference Include="..\..\src\ServiceDefaults\Flowza.ServiceDefaults\Flowza.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\..\src\Services\Identity\Flowza.Identity.Domain\Flowza.Identity.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Services\Identity\Flowza.Identity.Application\Flowza.Identity.Application.csproj" />
+    <ProjectReference Include="..\..\src\Services\Identity\Flowza.Identity.Infrastructure\Flowza.Identity.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Services\Design\Flowza.Design.Domain\Flowza.Design.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Services\Design\Flowza.Design.Application\Flowza.Design.Application.csproj" />
+    <ProjectReference Include="..\..\src\Services\Design\Flowza.Design.Infrastructure\Flowza.Design.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Services\Runtime\Flowza.Runtime.Domain\Flowza.Runtime.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Services\Runtime\Flowza.Runtime.Application\Flowza.Runtime.Application.csproj" />
+    <ProjectReference Include="..\..\src\Services\Runtime\Flowza.Runtime.Infrastructure\Flowza.Runtime.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Services\Identity\Flowza.Identity.Api\Flowza.Identity.Api.csproj" />
+    <ProjectReference Include="..\..\src\Services\Design\Flowza.Design.Api\Flowza.Design.Api.csproj" />
+    <ProjectReference Include="..\..\src\Services\Runtime\Flowza.Runtime.Api\Flowza.Runtime.Api.csproj" />
+    <ProjectReference Include="..\..\src\Services\Worker\Flowza.Worker\Flowza.Worker.csproj" />
+    <ProjectReference Include="..\..\src\Gateway\Flowza.Gateway\Flowza.Gateway.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NetArchTest.Rules" />
+  </ItemGroup>
+</Project>

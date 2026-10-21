@@ -1,0 +1,17 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.6.2">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <UserSecretsId>flowza-apphost-e10e6583bc5f</UserSecretsId>
+    <!-- The dashboard and orchestrator come from NuGet packages, so F5 in Visual Studio works without the
+         optional Aspire CLI bundle (no extra install on developer PCs). -->
+    <MSBuildWarningsAsMessages>$(MSBuildWarningsAsMessages);ASPIRE010</MSBuildWarningsAsMessages>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Services\Identity\Flowza.Identity.Api\Flowza.Identity.Api.csproj" />
+    <ProjectReference Include="..\..\Services\Design\Flowza.Design.Api\Flowza.Design.Api.csproj" />
+    <ProjectReference Include="..\..\Services\Runtime\Flowza.Runtime.Api\Flowza.Runtime.Api.csproj" />
+    <ProjectReference Include="..\..\Services\Worker\Flowza.Worker\Flowza.Worker.csproj" />
+    <ProjectReference Include="..\..\Gateway\Flowza.Gateway\Flowza.Gateway.csproj" />
+  </ItemGroup>
+</Project>

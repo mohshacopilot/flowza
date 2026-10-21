@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\Flowza.Runtime.Application\Flowza.Runtime.Application.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\Flowza.Persistence\Flowza.Persistence.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\Flowza.Messaging\Flowza.Messaging.csproj" />
+  </ItemGroup>
+</Project>
