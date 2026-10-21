@@ -31,7 +31,7 @@
 4. **Handlers are idempotent** (constitution 3.4): a durable inbox and/or the event ID prevent double processing.
 5. **Both v0.1 transports are tested:** the same messaging integration tests run against RabbitMQ and against
    SQL Server (locally and in CI), so either can replace the other.
-6. The `<code>_messaging` database is used **only** by the SQL Server transport.
+6. The `flowza_messaging` database is used **only** by the SQL Server transport.
 
 ## How a message travels (RabbitMQ)
 ```

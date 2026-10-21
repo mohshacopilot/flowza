@@ -19,7 +19,7 @@ judge a product first by **how easily it installs and runs**.
 
 ## 2. Already decided (PLT-01 to PLT-07, CLAUDE.md)
 - Five services plus the web app; **one command** starts everything (Aspire), **without Docker**.
-- A database per service, with migrations; Wolverine over SQL Server with an outbox (`wf_messaging` for messages only).
+- A database per service, with migrations; Wolverine over SQL Server with an outbox (`flowza_messaging` for messages only).
 - Health checks, structured logs, correlation ID across services, **no personal data in logs**.
 - A README that sets up a fresh machine in under 30 minutes; a demo-data script.
 
@@ -88,7 +88,7 @@ dotnet run --project src/AppHost
 - **Aspire without Docker:** the AppHost uses the local SQL Server through a connection string (no container);
   smtp4dev runs as an executable resource; Vite as a JavaScript app resource.
 - **Migrations:** EF Core migrations per service; production scripts via `dotnet ef migrations script --idempotent` (safe to run twice).
-- **Wolverine:** SQL Server transport and durable outbox in `wf_messaging`; retries and a dead-letter queue.
+- **Wolverine:** SQL Server transport and durable outbox in `flowza_messaging`; retries and a dead-letter queue.
   An admin view of dead letters comes later (v0.2).
 - **Settings:** stored in Identity's database; other services keep an in-memory copy refreshed by `PlatformSettingsChanged`.
 - **Logos** stored through `IFileStorage` (same as uploads).

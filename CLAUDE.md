@@ -1,5 +1,6 @@
 # Workflow Platform — instructions for Claude
 
+**Code name: Flowza** (namespaces `Flowza.<Service>.<Layer>`, solution `Flowza.slnx`, databases `flowza_<service>`).
 A generic, Joget-like low-code platform: **form builder + workflow engine + organization hierarchy**.
 It must fit any organization (bank/NBFC loans, HR leave, healthcare approvals, …). Business processes
 are built **by configuration**, never coded into the platform.
@@ -69,6 +70,7 @@ same method by hand; the file layout matches Spec Kit's, so it can be adopted la
 | Authentication | ASP.NET Core Identity + OpenIddict (local users). AD/LDAP and Entra ID later |
 | Messaging | Wolverine + transactional outbox. Transport chosen by configuration: **RabbitMQ** (default in development) and **SQL Server**, both in v0.1; Azure Service Bus later. See [ADR-0004](docs/decisions/0004-messaging-transports.md) |
 | IDE | The solution opens, builds and debugs in **Visual Studio 2026** (`.slnx`; F5 on the AppHost) |
+| Patterns | **CQRS-lite** in every service (commands vs queries, same DB); full CQRS (read copy) later. The **workflow engine is the process manager** for requests (one DB, one transaction per step). **Wolverine sagas** only for technical multi-step jobs (bulk restart, later timers and connectors). No event sourcing, no distributed transactions (AR1) |
 | Solution layout | One `.slnx`; four layers for Identity, Design, Runtime; Gateway and Worker single projects; Central Package Management; GUID v7 IDs; built-in analyzers + `.editorconfig`, ESLint + Prettier; one React app (tech discussion T1) |
 | Local orchestration | .NET Aspire AppHost; must run on Windows **without Docker** |
 | Deployment | Azure **and** on-premises. No Azure-only dependency without an abstraction |
@@ -105,7 +107,7 @@ source-generated mediator) and manual mapping (or Mapster).
 - Services never read another service's database. They talk by **events** (async, preferred) or **HTTP APIs** (sync, queries only).
 - Runtime keeps its own copy of published definitions, so it never needs Design at run time.
 - v0.1: Runtime calls Identity's API to resolve approvers when it creates a task. A future decision may replace this with a local copy of org data.
-- One extra database, `<code>_messaging`, is used **only** by the SQL Server message transport. It holds no business data. With RabbitMQ it is not used.
+- One extra database, `flowza_messaging`, is used **only** by the SQL Server message transport. It holds no business data. With RabbitMQ it is not used.
 - **Audit service rules (ADR-0001):** all code depends only on the `IAuditStore` interface. The SQL Server and MongoDB implementations live in Infrastructure and are registered by DI from `Audit:Store` (`SqlServer` | `MongoDb`), one per installation. The store is append-only; the event ID is the unique key (idempotent); no form values or personal data. One shared test suite must pass for **both** stores.
 - **Form data rules (ADR-0002):** Runtime's SQL Server is the source of truth. Every change to form data publishes `FormDataSaved` (record ID, form, app version, **data version** that increases by 1 per change, **full snapshot** of values) in the same transaction. Read rule: **if you will change the data, read the original (Runtime); if you only look, read the copy (Datalist service)**. The copy ignores events with an older data version. Until the Datalist service exists, lists read from Runtime.
 - **Form data layers (ADR-0003):** a field key is a name inside the record's JSON, **never** a database column in Runtime. Each workflow step saves **only the fields it may edit** (merged onto the latest record); parallel branches never share an editable field (publish check). Real per-form tables exist only in the rebuildable reporting copy (Layer 3).
@@ -148,6 +150,6 @@ tests/
 - .NET 10 SDK, Node.js 24 LTS, git, SQL Server 2019+ (Developer or Express edition is fine for dev). The office build PC has SQL Server 2025 Express: keep EF Core compatibility level 150 so nothing 2025-only is used
 - Email in development: **smtp4dev** (`dotnet tool install -g Rnwood.Smtp4dev`), so no real emails are sent
 - Docker is optional, not required
-- **Databases** are created **manually by the owner**; the app connects with a **SQL login** whose password lives only in .NET user secrets (never in git or chat). The login needs `db_owner` on each database
+- **Databases** are created **manually by the owner**; the app connects with a **SQL login** whose password lives only in .NET user secrets (never in git or chat). The login needs `db_owner` on each database. Ten databases: `flowza_identity`, `flowza_design`, `flowza_runtime`, `flowza_worker`, `flowza_messaging` and the same five with `flowza_test_` for integration tests (script: `docs/setup/create-databases.sql`)
 - **RabbitMQ** (native Windows install with Erlang) for the default message transport; management UI on `http://localhost:15672`; use a dedicated RabbitMQ user (password in user secrets), not `guest`
 - MongoDB Community Server (native Windows install) only when working on the Audit service's MongoDB store (v0.4)
