@@ -56,6 +56,7 @@ RabbitMQ code, package and tests were removed ([ADR-0005](../../docs/decisions/0
 | T030 Setup guide, checklist, production items a–d | ✅ built; owner signs the checklist after a fresh-PC run | 5c08608 |
 | T033 Production database scripts with Wolverine's tables | ✅ | 7066449 |
 | T034 Start while the database is unreachable | ✅ | 7937972 |
+| T032 Verify 001 | ⏳ checks done 2026-10-22 (CI run 39779982843 green, 89.4 % coverage, every M1 criterion has named tests); **waits for the phase 3–4 review fixes** (below) and the owner's PLT-06 signature | 792f2e6 |
 | T031 CI workflow + Dependabot | ✅ first GitHub run green 2026-10-22 | 7db9946 |
 
 **Notes from Phase 0 (decisions taken while building, within the approved plan):**
@@ -203,6 +204,34 @@ keep rolling refresh tokens and the `/connect/**` route):**
   refresh, Identity unreachable and remote sign-out (all three fail with their fix undone), plus unit tests of the
   decorator and the end-session rule.
 - Not changed (owner): rolling refresh tokens in Identity, the `/connect/**` route. Findings 3 and 7 are in T030.
+
+**Phase 3–4 code review (independent reviewer, 2026-10-22, commits e2cb23e..d6ad066) — to fix next (owner: "fix tomorrow"):**
+1. **HIGH, T034:** `WolverineRuntime.StartAsync` sets its "started" flag before the parts that touch `flowza_messaging`;
+   when that start fails in the background path (e.g. the messaging script was not run, or SQL Server flaps), the
+   retry returns at once and the service reports **ready with messaging dead** (no events; deactivated users not
+   refused in Design/Runtime/Worker). Fix: never retry a half-started Wolverine (log Critical, stop the process so
+   the service manager restarts it); optional pre-check that its tables exist; test: background path in Production
+   without the messaging script → never ready / exits. (`DeferredHostedServices.cs`, `StartupStepRunner.cs`)
+2. **MEDIUM, T034:** stopping during a background step can stop steps while they still run, and a step that failed
+   part-way never stops what it started. Fix: steps stop everything they started even after a failure; stop steps
+   only after the background task ended.
+3. **MEDIUM, owner decision, T028:** `flowza demo-data` on a new, empty production database creates `demo.admin` with
+   the public demo password. Recommended: refuse outside Development (record as a clarification of C5).
+4. **MEDIUM, test gaps, T033:** "run twice" does not prove data survives (insert rows between the runs and assert
+   they remain); no automated test of the real `--database-scripts` path (Production, not started, unreachable
+   database, Identity's throwaway keys).
+5. **LOW–MEDIUM:** README "point the load balancer at /health/ready" protects only the Gateway (YARP has no health
+   checks for the services); the T034 note's deny-list claim holds only for Identity. Reword; optionally YARP active
+   health checks.
+6. **LOW, T030:** Gateway key certificate cannot be rolled over (only the current certificate unprotects keys).
+   Add `PreviousCertificateThumbprints`; document rollover.
+7. **LOW, Identity:** change-password does not count wrong current passwords toward lockout (IAM-07).
+8. **LOW, Identity:** Identity's own Data Protection keys are stored unencrypted in its database.
+9. **LOW, test gap, T026:** no test that the temporary password leaves the query cache (K6).
+10. **LOW, T026:** users search box out of step with the address after Back/Forward.
+11. **LOW, T030:** the built web app answers unknown POSTs with index.html (restrict the fallback to GET/HEAD).
+12. **LOW, T029:** `run-e2e.ps1` stops every `Flowza.*` process on the PC, not only its own.
+Nothing found on translations, accessibility, licences, forwarded headers, privacy in logs.
 
 **Notes from T034 (start while the database is unreachable, 2026-10-22, decisions within the approved plan; no new package):**
 - **What failed before:** Wolverine's start checks its tables (since T033 automatic creation is off outside
