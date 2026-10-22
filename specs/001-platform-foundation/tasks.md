@@ -47,6 +47,7 @@ RabbitMQ code, package and tests were removed ([ADR-0005](../../docs/decisions/0
 | T025 API client set-up | ✅ (generation from Identity's real document still to do) | dfe38a6 |
 | T020 Gateway YARP + BFF | ✅ | 1bf4cc3 |
 | T021 Gateway protection | ✅ | 69a904a |
+| T022 Gateway integration tests | ✅ | (this commit) |
 | T031 CI workflow + Dependabot | ✅ first GitHub run green 2026-10-22 | 7db9946 |
 
 **Notes from Phase 0 (decisions taken while building, within the approved plan):**
@@ -176,6 +177,18 @@ architecture test that was later replaced by the policy; the code is right, the 
 - **Red-run check (2026-10-22):** branch `ci/red-run-demo` with one deliberately failing test, opened as pull request #5:
   CI run 39724745438 failed at "Test with coverage" (gate skipped), shown red on the pull request. The pull request was
   closed without merging and the branch deleted. **PLT-09-AC1 ✅.**
+
+**Notes from T022 (Gateway integration tests, 2026-10-22):**
+- **Owner decision (amends PA4, plan §5.4):** the Gateway keeps no deny list of its own. A YARP response transform on
+  the API routes ends the session (signs the cookie out) when a service answers 401 to the session's token; a refused
+  token refresh ends it too (T020). Identity revokes a deactivated user's tokens at once and every service has its
+  event-fed deny list (T018), so the user's next call is refused and logs them out. `/bff/user` may still show the name
+  until that call; no action is possible.
+- `IAM_04_AC3_*`: an admin deactivates a logged-in user through the Gateway; the user's next call is refused in under
+  1 second, `/bff/user` then answers 401, logging in again shows the login page, and the admin's session is untouched.
+  With the session-ending transform switched off, the test fails.
+- The other T022 criteria were covered while building T020/T021: `IAM_01_AC1_*` (login, logout, refused afterwards),
+  `IAM_05_AC1_*` (anonymous → 401), `IAM_08_AC1_*` (30 minutes idle, 12 hours absolute).
 
 **Notes from T021 (Gateway protection, 2026-10-22, decisions within the approved plan; no new package):**
 - **Anti-forgery (SE5):** POST/PUT/PATCH/DELETE to `/api/**` and `/bff/**` need `X-CSRF: 1` (the header the web app's
@@ -346,7 +359,7 @@ Decisions taken while building (within the approved plan; see [src/Web/README.md
 | IAM-03-AC1 | T019, T014, T029 | 🟡 first admin + forced change tested (T019, T014); end-to-end in T029 |
 | IAM-04-AC1 | T015, T026 | 🟡 API (T015); screens in T026 |
 | IAM-04-AC2 | T015, T026 | 🟡 API + forced change (T015, T014); screens in T026 |
-| IAM-04-AC3 | T015, T018, T022 | 🟡 Identity refuses at once (T015); deny list in every service, tested on the SQL Server transport (T018, fixed 2026-10-22); Gateway T022 |
+| IAM-04-AC3 | T015, T018, T022 | ✅ Identity refuses at once (T015); deny list in every service on the SQL Server transport (T018); through the Gateway the next call is refused in under 1 s and the session ends (T022, `IAM_04_AC3_*`) |
 | IAM-04-AC4 | T010, T015 | ✅ |
 | IAM-04-AC5 | T010, T015 | ✅ |
 | IAM-05-AC1 | T007, T022 | ✅ services (T007); Gateway refuses anonymous API calls (T020, `IAM_05_AC1_*`) |

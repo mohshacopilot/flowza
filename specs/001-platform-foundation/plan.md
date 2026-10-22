@@ -140,9 +140,12 @@ the access token → service validates the token locally (Identity's signing key
 token lifetime capped at 12 hours.
 
 **Deactivation takes effect at once (K7):** Identity revokes the user's tokens, updates the security stamp and
-publishes `UserDeactivated`. Every service and the Gateway keep a small in-memory **deny list** of inactive
+publishes `UserDeactivated`. Every service keeps a small in-memory **deny list** of inactive
 user IDs, filled from these events (and from Identity at start-up); requests from those users are refused
-at once. `UserActivated` removes the entry.
+at once. `UserActivated` removes the entry. **Amended by the owner, 2026-10-22 (T022):** the Gateway keeps no deny
+list of its own (it would need messaging and tables): it ends the user's session as soon as a service refuses the
+session's access token (401), and when Identity refuses a token refresh. `/bff/user` may still show the name until
+that next API call, but no action is possible.
 
 **First admin (IAM-03, C2):** `flowza init-admin` (tools/Flowza.Cli) creates the Platform Admin if none
 exists, generates a strong random password, prints it **once to the console** (never to logs) and sets
@@ -166,7 +169,7 @@ names, emails or passwords (constitution 11).
 | `UserCreated` | UserId | Audit (v0.4); Runtime/others later |
 | `UserUpdated` | UserId | same |
 | `UserRolesChanged` | UserId, roles | Services' role-aware caches |
-| `UserDeactivated` / `UserActivated` | UserId | **Deny lists (K7)** in Gateway and all services |
+| `UserDeactivated` / `UserActivated` | UserId | **Deny lists (K7)** in all services (the Gateway ends the session on a refused token; PA4 amendment) |
 | `UserLoggedIn` / `UserLoginFailed` / `UserLockedOut` | UserId (only for existing users) | Audit (IAM-L5) |
 | `UserPasswordChanged` / `UserPasswordReset` | UserId | Audit |
 
@@ -246,7 +249,7 @@ dependencies. Dependabot weekly. Runs only after the owner allows the push to th
 | PA1 | **Identity API contract** | Section 5.3 |
 | PA2 | **Event contracts** | Section 7 (11 events, IDs only, standard fields) |
 | PA3 | **Identity database design** | Section 5.2, including `PasswordHistory` created now for M3 |
-| PA4 | **Deny list for instant deactivation** (K7) | Section 5.4: event-fed in-memory list in Gateway and every service |
+| PA4 | **Deny list for instant deactivation** (K7) | Section 5.4: event-fed in-memory list in every service; **amended 2026-10-22:** the Gateway ends the session when a service refuses the token |
 | PA5 | **Command-line tool** `tools/Flowza.Cli` for `init-admin` and `demo-data` | Section 5.4 / PLT-07 |
 | PA6 | **Extra libraries** not yet approved | Health checks for SQL Server and RabbitMQ: `AspNetCore.HealthChecks.SqlServer` and `AspNetCore.HealthChecks.Rabbitmq` (Apache 2.0); `Serilog.AspNetCore`, `Serilog.Sinks.File`, `Serilog.Sinks.OpenTelemetry` (Apache 2.0); `Yarp.ReverseProxy` (MIT); `OpenIddict` packages (Apache 2.0); `FluentValidation` (Apache 2.0); `Scalar.AspNetCore` (MIT, approved); Aspire hosting packages (MIT) |
 | PA7 | **Common-password list** | Embed a public top-10,000 list as a resource (no external call) |
