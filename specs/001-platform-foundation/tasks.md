@@ -52,7 +52,7 @@ RabbitMQ code, package and tests were removed ([ADR-0005](../../docs/decisions/0
 | T026 Users admin screens | ✅ checked live on the running platform 2026-10-22 | 731f130, d79e680 |
 | T027 My profile + change password | ✅ checked live 2026-10-22 | d61e8da |
 | T028 Flowza.Cli demo-data | ✅ | f14eb15 |
-| T029 Playwright end-to-end | ✅ green locally (10 tests); CI job runs on the next push | 15f2ed5 |
+| T029 Playwright end-to-end | ✅ green locally and in CI 2026-10-22 (run 39767905954) | 15f2ed5, 26ecbd6, 13436bd |
 | T031 CI workflow + Dependabot | ✅ first GitHub run green 2026-10-22 | 7db9946 |
 
 **Notes from Phase 0 (decisions taken while building, within the approved plan):**
@@ -220,8 +220,14 @@ keep rolling refresh tokens and the `/connect/**` route):**
   `LoadingIndicator` (`role="status"` with hidden text). With a dialog open the check covers only the dialog.
 - The blank page on a full load (noted in T027) is fixed: the root route's `HydrateFallback` shows the loading screen.
 - **CI:** two new jobs, `web` (lint, types, format, tests, build; promised by T031 but never added) and `end-to-end`
-  (SQL Server 2019 container, Playwright with Chromium, report uploaded on failure). They have **not run yet**:
-  they run on the next push (DV4: the task counts as done when that run is green). Dependabot now covers npm.
+  (SQL Server 2019 container, Playwright with Chromium, report uploaded on failure). Dependabot now covers npm.
+- **First CI runs (2026-10-22):** run 39762166289 failed in the end-to-end job, and its log needs a GitHub login, so
+  failures now become annotations (Playwright's `github` reporter; `run-e2e.ps1` adds the error, each service's
+  readiness answer and the AppHost output; 26ecbd6). Run 39766819646 then showed the cause: the axe check of the
+  temporary-password dialog ran while the confirmation dialog was still fading out (slower CI machine), so the
+  helper now waits for it to close; the AppHost log moved to `tests/EndToEnd/logs` (13436bd). **Run 39767905954:
+  all three jobs green**, 10 of 10 end-to-end tests on the first try (1.4 min). The job took 12 min, 9 of them
+  installing Chromium's Linux packages (`--with-deps`); caching the browser is a possible later improvement.
 - **Owner, 2026-10-22:** the demo password `Flowza-Demo-2026` (T028) is confirmed.
 
 **Notes from T028 (`flowza demo-data`, 2026-10-22, decisions within the approved plan):**
