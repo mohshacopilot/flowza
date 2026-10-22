@@ -1,11 +1,11 @@
-# Local setup: SQL Server (owner steps O1–O4)
-
-**Since 2026-10-22 the development PC needs no RabbitMQ** (owner decision, [ADR-0005](../decisions/0005-message-transport-selection.md)
-amendment): messages go through SQL Server (`flowza_messaging`). Section 2 is kept only for a PC that wants to run
-the RabbitMQ transport tests locally; otherwise skip it.
+# Local setup: SQL Server (owner steps O1, O2, O4)
 
 One-time setup of the development PC before the services run (see [tasks 001](../../specs/001-platform-foundation/tasks.md)).
 This will later become part of the README (PLT-06).
+
+**No message broker is needed.** Messages between the services go through SQL Server (`flowza_messaging`); on-premises
+installations use SQL Server only and the cloud uses Azure Service Bus. RabbitMQ was dropped and its code removed
+on 2026-10-22 ([ADR-0005](../decisions/0005-message-transport-selection.md) amendments 2 and 3).
 
 **Never put passwords in git or chat.** They go only into .NET user secrets (commands are given in task T006).
 
@@ -42,81 +42,29 @@ makes `flowza_app` the owner (`db_owner`) of each. It is safe to run again.
 
 If you create them by hand instead: same names, compatibility level 150, `flowza_app` as `db_owner` in each.
 
-## 2. RabbitMQ (optional; native Windows install, no Docker)
-
-If you install it, keep it on this PC only: in `%APPDATA%\RabbitMQ\rabbitmq.conf` set
-`listeners.tcp.local = 127.0.0.1:5672` and `management.tcp.ip = 127.0.0.1`, create your own admin user and delete
-`guest` (`rabbitmqctl delete_user guest`).
-
-### 2.1 Install Erlang, then RabbitMQ (needs admin rights)
-1. Open RabbitMQ's **"Erlang Version Requirements"** page and note the Erlang/OTP version supported by the
-   current RabbitMQ release.
-2. Download and install **Erlang/OTP** (Windows 64-bit installer from erlang.org) in that version. Run the
-   installer **as Administrator**.
-3. Download and install **RabbitMQ Server** (Windows installer `rabbitmq-server-<version>.exe` from rabbitmq.com
-   or its GitHub releases). Run it **as Administrator**. It installs and starts the Windows service **RabbitMQ**.
-
-### 2.2 Enable the web console
-Open **"RabbitMQ Command Prompt (sbin dir)"** from the Start menu **as Administrator** and run:
-```bat
-rabbitmq-plugins enable rabbitmq_management
-```
-Then open http://localhost:15672 and log in with `guest` / `guest` (works only from this PC).
-
-### 2.3 Create Flowza's virtual hosts and user
-In the same command prompt (a virtual host is like a separate RabbitMQ space; tests use their own so they
-never touch development messages):
-```bat
-rabbitmqctl add_vhost flowza
-rabbitmqctl add_vhost flowza_test
-rabbitmqctl add_user flowza_app <a strong password>
-rabbitmqctl set_permissions -p flowza flowza_app ".*" ".*" ".*"
-rabbitmqctl set_permissions -p flowza_test flowza_app ".*" ".*" ".*"
-```
-(Or do the same in the web console: **Admin → Virtual Hosts** and **Admin → Users**.)
-
-### 2.4 Check
-```bat
-rabbitmqctl status
-rabbitmqctl list_vhosts
-rabbitmqctl list_permissions -p flowza
-```
-Ports used: **5672** (applications) and **15672** (web console). Both stay on this PC; no firewall change is needed.
-
-### 2.5 If `rabbitmqctl` says "authentication failed" or cannot connect
-The Windows service and your user account must share the same Erlang cookie file. Copy
-`C:\Windows\System32\config\systemprofile\.erlang.cookie` to your user folder (`C:\Users\<you>\.erlang.cookie`),
-replacing the existing one, then try again.
-
-## 3. Store the passwords on this PC (owner step O2)
+## 2. Store the password on this PC (owner step O2)
 Flowza keeps passwords in **.NET user secrets**: a file in your Windows profile, outside the project folder, so
 they never reach git. The app (AppHost) and the tests share one store called `flowza-dev`.
 
-Run these **yourself** in a terminal (PowerShell or Command Prompt), replacing the placeholders with the real
-passwords. Do not paste the passwords into chat.
+Run this **yourself** in a terminal (PowerShell or Command Prompt), replacing the placeholder with the real
+password (or run `docs\setup\set-secrets.ps1`). Do not paste the password into chat.
 ```bat
 dotnet user-secrets set "Sql:Password" "<flowza_app SQL password>" --id flowza-dev
-```
-Only if RabbitMQ is installed (section 2); without this secret the RabbitMQ tests are skipped:
-```bat
-dotnet user-secrets set "RabbitMq:Password" "<flowza_app RabbitMQ password>" --id flowza-dev
 ```
 Check (shows the keys and values on your screen only):
 ```bat
 dotnet user-secrets list --id flowza-dev
 ```
-The non-secret values (server `localhost`, user `flowza_app`, virtual hosts `flowza` / `flowza_test`) are in
-the project's configuration files.
+The non-secret values (server `localhost`, user `flowza_app`) are in the project's configuration files.
 
-## 4. smtp4dev (owner step O4)
+## 3. smtp4dev (owner step O4)
 ```bat
 dotnet tool install -g Rnwood.Smtp4dev
 ```
 
-## 5. Start Flowza
+## 4. Start Flowza
 Open `Flowza.slnx` in Visual Studio 2026, set **Flowza.AppHost** as the startup project and press **F5**. Development runs on plain HTTP (no certificate needed): the Aspire dashboard opens at http://localhost:15100 and the mailbox (smtp4dev) is at http://localhost:5000.
 
-## 6. What to tell Claude
+## 5. What to tell Claude
 Only these, never passwords:
 - SQL: login name (e.g. `flowza_app`), server `localhost`
-- RabbitMQ (only if installed): user name (e.g. `flowza_app`), virtual hosts `flowza` and `flowza_test`

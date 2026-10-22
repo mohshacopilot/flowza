@@ -14,8 +14,7 @@ public sealed class MessagingConfigurationTests
     [InlineData(null, MessageTransport.SqlServer)]
     [InlineData("", MessageTransport.SqlServer)]
     [InlineData("SqlServer", MessageTransport.SqlServer)]
-    [InlineData("rabbitmq", MessageTransport.RabbitMq)]
-    [InlineData("RabbitMq", MessageTransport.RabbitMq)]
+    [InlineData("sqlserver", MessageTransport.SqlServer)]
     [InlineData("AzureServiceBus", MessageTransport.AzureServiceBus)]
     public void ADR_0005_transport_comes_from_configuration_and_defaults_to_SqlServer(string? value, MessageTransport expected)
     {
@@ -28,6 +27,7 @@ public sealed class MessagingConfigurationTests
 
     [Theory]
     [InlineData("Kafka")]
+    [InlineData("RabbitMq")] // removed 2026-10-22 (ADR-0005 amendment 3)
     [InlineData("5")]
     [InlineData("-1")]
     public void ADR_0005_an_unknown_transport_is_refused_with_a_clear_message(string value)
@@ -37,7 +37,7 @@ public sealed class MessagingConfigurationTests
             .Build();
 
         Should.Throw<InvalidOperationException>(() => FlowzaMessagingExtensions.ReadTransport(configuration))
-            .Message.ShouldContain("SqlServer, RabbitMq or AzureServiceBus");
+            .Message.ShouldContain("SqlServer (on-premises) or AzureServiceBus (cloud)");
     }
 
     [Fact]

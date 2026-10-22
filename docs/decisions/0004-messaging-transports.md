@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Accepted; **amended by [ADR-0005](0005-message-transport-selection.md)** (Azure Service Bus coded now; default `SqlServer`; explicit selection) |
+| **Status** | Accepted; **amended by [ADR-0005](0005-message-transport-selection.md)** (Azure Service Bus coded now; default `SqlServer`; explicit selection). **2026-10-22: RabbitMQ dropped and its code removed** (ADR-0005 amendments 2 and 3); the RabbitMQ parts below are history |
 | **Date** | 2026-10-21 |
 | **Decided by** | Owner (MQ1, MQ2) |
 | **Related** | Constitution Article 3 (events, outbox, idempotency) and Article 6 (portability); [ADR-0001](0001-audit-service-pluggable-store.md) (same pluggable pattern) |

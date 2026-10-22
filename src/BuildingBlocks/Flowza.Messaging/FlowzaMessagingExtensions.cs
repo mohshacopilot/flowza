@@ -10,7 +10,6 @@ using Wolverine.EntityFrameworkCore;
 using Wolverine.ErrorHandling;
 using Wolverine.Persistence;
 using Wolverine.Persistence.Durability;
-using Wolverine.RabbitMQ;
 using Wolverine.SqlServer;
 using Flowza.Contracts;
 
@@ -19,7 +18,8 @@ namespace Flowza.Messaging;
 /// <summary>
 /// Sets up Wolverine for a Flowza service (plan 001 section 8; ADR-0004, ADR-0005; tech discussion T4):
 /// in-process mediator, transactional outbox and durable inbox in the service's <b>own</b> database, retry and
-/// dead-letter policy, and one of three transports chosen by <c>Messaging:Transport</c> (default SqlServer).
+/// dead-letter policy, and one of two transports chosen by <c>Messaging:Transport</c>: SqlServer (on-premises,
+/// default) or AzureServiceBus (cloud).
 /// </summary>
 public static class FlowzaMessagingExtensions
 {
@@ -31,7 +31,6 @@ public static class FlowzaMessagingExtensions
 
     public const string TransportKey = "Messaging:Transport";
     public const string SqlServerTransportConnectionName = "messaging-db";
-    public const string RabbitMqConnectionName = "rabbitmq";
     public const string AzureServiceBusConnectionName = "azure-servicebus";
 
     public static MessageTransport ReadTransport(IConfiguration configuration)
@@ -47,7 +46,7 @@ public static class FlowzaMessagingExtensions
         return Enum.TryParse<MessageTransport>(value, ignoreCase: true, out var transport) && Enum.IsDefined(transport)
             ? transport
             : throw new InvalidOperationException(
-                $"'{TransportKey}' is '{value}'. Use SqlServer, RabbitMq or AzureServiceBus (ADR-0005).");
+                $"'{TransportKey}' is '{value}'. Use SqlServer (on-premises) or AzureServiceBus (cloud) (ADR-0005).");
     }
 
     /// <param name="serviceName">The service's name, also its queue name (e.g. "runtime").</param>
@@ -123,9 +122,6 @@ public static class FlowzaMessagingExtensions
                 case MessageTransport.SqlServer:
                     ConfigureSqlServer(options, builder.Configuration, queue, routes);
                     break;
-                case MessageTransport.RabbitMq:
-                    ConfigureRabbitMq(options, builder.Configuration, queue, routes);
-                    break;
                 case MessageTransport.AzureServiceBus:
                     ConfigureAzureServiceBus(options, builder.Configuration, queue, routes);
                     break;
@@ -143,9 +139,6 @@ public static class FlowzaMessagingExtensions
         {
             case MessageTransport.SqlServer:
                 health.AddSqlServer(Required(builder.Configuration, SqlServerTransportConnectionName), name: "message-transport");
-                break;
-            case MessageTransport.RabbitMq:
-                health.AddCheck("message-transport", new RabbitMqHealthCheck(new Uri(Required(builder.Configuration, RabbitMqConnectionName))));
                 break;
             case MessageTransport.AzureServiceBus:
                 health.AddCheck("message-transport", new AzureServiceBusHealthCheck(Required(builder.Configuration, AzureServiceBusConnectionName)));
@@ -181,28 +174,6 @@ public static class FlowzaMessagingExtensions
                 options.PublishMessage(type).ToSqlServerQueue(subscriber);
             }
         }
-    }
-
-    private static void ConfigureRabbitMq(WolverineOptions options, IConfiguration configuration, string queue, MessageRoutes routes)
-    {
-        var rabbit = options.UseRabbitMq(new Uri(Required(configuration, RabbitMqConnectionName))).AutoProvision();
-
-        // One fan-out exchange per event type, bound to one queue per subscribing service (MS5).
-        foreach (var (type, subscribers) in routes.Subscribers)
-        {
-            var exchange = MessageRoutes.TopicName(type);
-            rabbit.DeclareExchange(exchange, e =>
-            {
-                e.ExchangeType = ExchangeType.Fanout;
-                foreach (var subscriber in subscribers)
-                {
-                    e.BindQueue(subscriber, $"{exchange}.{subscriber}");
-                }
-            });
-            options.PublishMessage(type).ToRabbitExchange(exchange);
-        }
-
-        options.ListenToRabbitQueue(queue);
     }
 
     private static void ConfigureAzureServiceBus(WolverineOptions options, IConfiguration configuration, string queue, MessageRoutes routes)

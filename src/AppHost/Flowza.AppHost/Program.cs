@@ -4,7 +4,7 @@ using Microsoft.Extensions.Configuration;
 
 // Flowza local orchestration (PLT-02, task T006). Starts every service, the Gateway and smtp4dev on Windows
 // without containers; SQL Server is the PC's own installation (tech discussion T9, DV1). Messages go through SQL Server
-// (flowza_messaging); RabbitMQ is used only if Messaging:Transport says so (ADR-0005 amendment, 2026-10-22).
+// (flowza_messaging), as on every on-premises installation (ADR-0005 amendment 2).
 // Passwords come from the "flowza-dev" user secrets (docs/setup/set-secrets.ps1); other values from appsettings.json.
 var builder = DistributedApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
@@ -38,17 +38,14 @@ var designDb = SqlDatabase("design-db", "flowza_design");
 var runtimeDb = SqlDatabase("runtime-db", "flowza_runtime");
 var workerDb = SqlDatabase("worker-db", "flowza_worker");
 
-// One transport for every service of the installation (ADR-0005). Only the selected transport's connection is
-// created, so an installation without RabbitMQ needs no RabbitMQ settings at all.
+// One transport for every service of the installation (ADR-0005): SqlServer on-premises, AzureServiceBus in the cloud.
+// Only the selected transport's connection is created.
 var transport = configuration["Messaging:Transport"] is { Length: > 0 } configured ? configured : "SqlServer";
 IResourceBuilder<ConnectionStringResource> transportConnection = transport.ToUpperInvariant() switch
 {
     "SQLSERVER" => SqlDatabase("messaging-db", "flowza_messaging"),
-    "RABBITMQ" => SecretConnectionString("rabbitmq", () =>
-        $"amqp://{Uri.EscapeDataString(Required("RabbitMq:User"))}:{Uri.EscapeDataString(Required("RabbitMq:Password"))}" +
-        $"@{Required("RabbitMq:Host")}:{Required("RabbitMq:Port")}/{Uri.EscapeDataString(Required("RabbitMq:VirtualHost"))}"),
     "AZURESERVICEBUS" => SecretConnectionString("azure-servicebus", () => Required("AzureServiceBus:ConnectionString")),
-    _ => throw new InvalidOperationException($"Messaging:Transport '{transport}' is not SqlServer, RabbitMq or AzureServiceBus (ADR-0005)."),
+    _ => throw new InvalidOperationException($"Messaging:Transport '{transport}' is not SqlServer or AzureServiceBus (ADR-0005)."),
 };
 
 IResourceBuilder<ProjectResource> Service<TProject>(string name, IResourceBuilder<ConnectionStringResource> database)

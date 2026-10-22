@@ -10,14 +10,14 @@
 **Status 2026-10-21:** O1 ✅ (10 databases, compatibility 150, read-committed snapshot, `flowza_app` db_owner; verified)
 · O3 ✅ (RabbitMQ 4.4.0 / Erlang 29, vhosts `flowza` + `flowza_test`, user `flowza_app`; verified) · O2 ✅ (passwords in the `flowza-dev` user secrets via `docs/setup/set-secrets.ps1`) · O4 ✅ (smtp4dev 3.15). Still open for the owner: trust the HTTPS development certificate (`dotnet dev-certs https --trust`).
 **2026-10-22:** the owner **removed RabbitMQ** from the PC (O3 no longer needed); development uses the SQL Server
-transport only. Then decided: **on-premises = SQL Server only, cloud = Azure Service Bus, RabbitMQ dropped**; the
-RabbitMQ tests are skipped unless configured ([ADR-0005](../../docs/decisions/0005-message-transport-selection.md) amendments 1 and 2).
+transport only. Then decided: **on-premises = SQL Server only, cloud = Azure Service Bus, RabbitMQ dropped**, and the
+RabbitMQ code, package and tests were removed ([ADR-0005](../../docs/decisions/0005-message-transport-selection.md) amendments 1–3).
 
 | # | Step | Needed from |
 |---|---|---|
 | O1 | Allow SQL logins, create the SQL login (e.g. `flowza_app`) and run [docs/setup/create-databases.sql](../../docs/setup/create-databases.sql) (steps: [local-setup.md](../../docs/setup/local-setup.md) §1) | T007 |
-| O2 | Store secrets on the PC (commands will be given in T006): SQL login password, RabbitMQ password | T006 |
-| O3 | *(Optional since 2026-10-22)* Install Erlang + RabbitMQ, enable the management plugin, create virtual hosts `flowza` and `flowza_test` and the user `flowza_app` ([local-setup.md](../../docs/setup/local-setup.md) §2). Only to run the RabbitMQ tests locally | T008 (RabbitMQ part) |
+| O2 | Store secrets on the PC (commands will be given in T006): SQL login password | T006 |
+| O3 | ~~Install Erlang + RabbitMQ~~ **Dropped 2026-10-22** (RabbitMQ removed from the platform) | — |
 | O4 | Install smtp4dev: `dotnet tool install -g Rnwood.Smtp4dev` | T006 |
 
 ## Progress
@@ -135,7 +135,8 @@ architecture test that was later replaced by the policy; the code is right, the 
   queues) and each service's database an ancillary store enrolled with its DbContext (outbox still in the business
   transaction). The messaging tests now give sender and receiver different databases (they failed before the fix),
   and the deny-list delivery test runs on SQL Server. Old `queues` tables left in the service databases by the bug are
-  unused and harmless.
+  unused and harmless. **Later the same day the RabbitMQ transport was removed** (owner; ADR-0005 amendment 3): the
+  T008/T009 rows below mention RabbitMQ as it was built then.
 - T036 (current-user part): `HttpCurrentUser` in ServiceDefaults replaces the system user, so `CreatedBy`/`UpdatedBy`
   and event actors are the logged-in user (tested). The RabbitMQ health-check part of T036 is not done here.
 - T019: `flowza init-admin --email <address> [--username admin] [--display-name ...]` runs the Identity service's own
@@ -205,7 +206,7 @@ architecture test that was later replaced by the policy; the code is right, the 
 | T033 | **Production database scripts include Wolverine's tables** (outbox, inbox, deduplication; exported with Wolverine's own tooling) and Wolverine's automatic table creation is switched off outside Development | PLT-03-AC2 (PL4) | The DBA's script creates everything; a service starts in Production mode on a database prepared only by scripts |
 | T034 | **Start while the database or broker is unreachable:** the service starts, reports "not ready" and recovers by itself (today start-up fails) | PLT-05, spec 001 edge cases | Integration test: unreachable database → `/health/ready` 503, then healthy once reachable |
 | T035 | **No personal values in exception text in logs** (e.g. a duplicate-key error quoting an email): map known database errors to `Result` errors before they are logged; mask exception messages | PLT-05-AC3, constitution 11.2 | Do with T015; log-scan test covers a duplicate email |
-| T036 | **Housekeeping:** register the HTTP current user so audit columns record the real user, not the system (with T018); reuse one RabbitMQ connection in its health check | T3 D1, PLT-05 | Audit test with a logged-in user |
+| T036 | **Housekeeping:** register the HTTP current user so audit columns record the real user, not the system (with T018); ~~reuse one RabbitMQ connection in its health check~~ (obsolete: RabbitMQ removed 2026-10-22) | T3 D1, PLT-05 | Audit test with a logged-in user |
 
 ## Milestone 3 tasks (later, not now)
 | ID | Task | Spec IDs |
@@ -246,8 +247,8 @@ architecture test that was later replaced by the policy; the code is right, the 
 | PLT-02-AC1 | T006, T029 | 🟡 AppHost start verified by hand; end-to-end test in T029 |
 | PLT-03-AC1 | T007 | ✅ |
 | PLT-03-AC2 | T009 | ✅ |
-| PLT-04-AC1 | T009 | ✅ SqlServer (RabbitMq dropped 2026-10-22; its tests skipped) |
-| PLT-04-AC2 | T009 | ✅ SqlServer (RabbitMq dropped 2026-10-22; its tests skipped) |
+| PLT-04-AC1 | T009 | ✅ SqlServer (RabbitMq removed 2026-10-22) |
+| PLT-04-AC2 | T009 | ✅ SqlServer (RabbitMq removed 2026-10-22) |
 | PLT-05-AC1 | T007 | ✅ |
 | PLT-05-AC2 | T009, T024 | 🟡 across services via messaging ✅; error screen in T024 |
 | PLT-05-AC3 | T009 | ✅ |

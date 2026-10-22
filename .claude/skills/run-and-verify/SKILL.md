@@ -6,8 +6,8 @@ description: Start the whole Flowza platform (Aspire AppHost, no containers), ch
 # Run and verify Flowza
 
 ## Preconditions (owner's one-time setup, see `docs/setup/local-setup.md`)
-- SQL Server with the 10 `flowza_*` databases. No RabbitMQ on the development PC (owner, 2026-10-22): messages go
-  through SQL Server (`flowza_messaging`).
+- SQL Server with the 10 `flowza_*` databases. No message broker: messages go through SQL Server
+  (`flowza_messaging`); RabbitMQ was dropped and removed (ADR-0005 amendments 2 and 3).
 - Passwords in the `flowza-dev` user-secrets store (`docs/setup/set-secrets.ps1`); smtp4dev installed.
 - If a check fails because a password is missing, ask the owner to run `docs/setup/set-secrets.ps1`.
   **Never ask for, read or print passwords.**
@@ -27,10 +27,7 @@ powershell -ExecutionPolicy Bypass -File .claude\skills\run-and-verify\scripts\c
 dotnet test --solution Flowza.slnx
 ```
 Report the totals (passed / failed / skipped) and every failed test by name.
-- The Azure Service Bus test is **skipped** unless `FLOWZA_ConnectionStrings__azure-servicebus` is set (ADR-0005).
-- The RabbitMQ transport tests are **skipped** unless `RabbitMq:Password` is set (user secrets or
-  `FLOWZA_RabbitMq__Password`). RabbitMQ is dropped (on-premises = SQL Server, cloud = Azure Service Bus; ADR-0005).
-- Test projects that have no tests yet report "Zero tests ran" (exit code 8); list them as expected, not as failures,
+- The Azure Service Bus test is **skipped** unless `FLOWZA_ConnectionStrings__azure-servicebus` is set (ADR-0005).- Test projects that have no tests yet report "Zero tests ran" (exit code 8); list them as expected, not as failures,
   while their phase has not started.
 - When the web app exists: also run `npm run lint`, `npm run typecheck` and `npm test` in `src/Web`.
 

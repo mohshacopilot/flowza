@@ -14,7 +14,7 @@ namespace Flowza.Platform.IntegrationTests.Messaging;
 /// Two small test services that talk through the real transports: "sender" publishes, "receiver" subscribes.
 /// Like real services they have <b>different</b> databases (sender <c>flowza_test_worker</c>, receiver
 /// <c>flowza_test_runtime</c>, own schemas), so an event must cross from one service to another (T018 finding); the
-/// SQL Server transport uses <c>flowza_test_messaging</c>, RabbitMQ the <c>flowza_test</c> virtual host.
+/// SQL Server transport uses <c>flowza_test_messaging</c>.
 /// </summary>
 internal static class MessagingHosts
 {
@@ -22,10 +22,6 @@ internal static class MessagingHosts
     public const string Receiver = "msgtest_receiver";
     public const string Database = "flowza_test_worker";
     public const string ReceiverDatabase = "flowza_test_runtime";
-
-    /// <summary>RabbitMQ is optional on a developer PC (ADR-0005 amendment); its runs are skipped without it.</summary>
-    public static void SkipUnlessAvailable(string transport) =>
-        Assert.SkipWhen(transport == "RabbitMq" && !TestRabbitMq.IsConfigured, TestRabbitMq.SkipReason);
 
     private const string CreateBusinessTableSql = $"""
         IF SCHEMA_ID(N'{MessagingTestDbContext.Schema}') IS NULL EXEC(N'CREATE SCHEMA [{MessagingTestDbContext.Schema}]');
@@ -116,7 +112,6 @@ internal static class MessagingHosts
         {
             [FlowzaMessagingExtensions.TransportKey] = transport,
             [$"ConnectionStrings:{FlowzaMessagingExtensions.SqlServerTransportConnectionName}"] = TestSqlServer.ConnectionString("flowza_test_messaging"),
-            [$"ConnectionStrings:{FlowzaMessagingExtensions.RabbitMqConnectionName}"] = TestRabbitMq.ConnectionStringOrNull(),
             [$"ConnectionStrings:{FlowzaMessagingExtensions.AzureServiceBusConnectionName}"] = AzureServiceBusConnectionString,
         });
         return builder;

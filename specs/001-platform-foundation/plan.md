@@ -24,9 +24,9 @@ web app gets its shell (layout, routing, translations, error pages) plus the use
 | Item | Choice |
 |---|---|
 | Runtime | .NET 10 (C#), ASP.NET Core Minimal APIs |
-| Orchestration (dev) | Aspire AppHost, no containers; local SQL Server 2025 Express (compatibility level 150) and local RabbitMQ |
+| Orchestration (dev) | Aspire AppHost, no containers; local SQL Server 2025 Express (compatibility level 150); no message broker |
 | Data | EF Core 10 per service; SQL Server; READ_COMMITTED_SNAPSHOT |
-| Messaging | Wolverine: in-process mediator + **SQL Server (default) / RabbitMQ / Azure Service Bus** transports ([ADR-0005](../../docs/decisions/0005-message-transport-selection.md)) + EF Core outbox and durable inbox |
+| Messaging | Wolverine: in-process mediator + **SQL Server (on-premises, default) / Azure Service Bus (cloud)** transports (RabbitMQ removed 2026-10-22) ([ADR-0005](../../docs/decisions/0005-message-transport-selection.md)) + EF Core outbox and durable inbox |
 | Auth | ASP.NET Core Identity + OpenIddict (Identity service); Gateway = BFF (cookie, code flow + PKCE) |
 | Gateway | YARP |
 | Logs/traces | Serilog + OpenTelemetry; Aspire dashboard in dev; daily files in production |
@@ -173,14 +173,14 @@ names, emails or passwords (constitution 11).
 Failed logins for **unknown** usernames publish nothing (no personal data); they are counted in a metric.
 
 ## 8. Shared building blocks
-- **Flowza.Messaging:** `AddFlowzaMessaging()` reads `Messaging:Transport` (`SqlServer` default | `RabbitMq` |
-  `AzureServiceBus`, ADR-0005; one strategy class per transport, chosen once at start-up, no automatic
+- **Flowza.Messaging:** `AddFlowzaMessaging()` reads `Messaging:Transport` (`SqlServer` default |
+  `AzureServiceBus`, ADR-0005; `RabbitMq` removed 2026-10-22; one strategy class per transport, chosen once at start-up, no automatic
   fallback; an unreachable broker makes the service "not ready"), sets up
-  Wolverine with the EF Core outbox, durable inbox, the MS4 retry policy and dead-letter queues, and RabbitMQ
-  conventional routing (MS5). **SQL Server topology (ADR-0005 amendment, 2026-10-22):** Wolverine's main store is
+  Wolverine with the EF Core outbox, durable inbox, the MS4 retry policy and dead-letter queues, and routing
+  from `MessageRoutes` (MS5: a queue per subscribing service). **SQL Server topology (ADR-0005 amendment, 2026-10-22):** Wolverine's main store is
   `flowza_messaging` (shared queue tables in schema `queues`, the service's envelope tables in `wolverine_<service>`);
   the service's own database is an ancillary store enrolled with its DbContext, so outbox and inbox entries still
-  commit with the business change. Other transports keep the service's database as the main store.
+  commit with the business change. Azure Service Bus keeps the service's database as the main store.
 - **Flowza.Persistence:** a base `DbContext` convention set: audit columns (`CreatedAt/By`, `UpdatedAt/By`)
   via a SaveChanges interceptor using `TimeProvider` and the current user; soft-delete query filter; `RowVersion`
   on aggregates; time-ordered GUID value generator in SQL Server order (D3); UTC converters.
@@ -212,8 +212,8 @@ Failed logins for **unknown** usernames publish nothing (no personal data); they
 
 ## 11. Local development and configuration
 - AppHost reads from its **user secrets**: `ConnectionStrings:Sql` parts (server `.`, SQL login, password),
-  `RabbitMq` (host, user, password; only when `Messaging:Transport=RabbitMq`); passes each service its own
-  connection string (`flowza_<service>`). The development PC uses `SqlServer` (no RabbitMQ since 2026-10-22).
+  passes each service its own connection string (`flowza_<service>`) and the transport's connection
+  (`flowza_messaging` for `SqlServer`, the default and the development setting).
 - smtp4dev and Vite started as programs; Aspire dashboard shows logs, traces, metrics, health.
 - First run: owner runs `docs/setup/create-databases.sql`, sets user secrets, F5 on the AppHost, then
   `flowza init-admin` (or `flowza demo-data` on empty databases).
@@ -255,9 +255,9 @@ dependencies. Dependabot weekly. Runs only after the owner allows the push to th
 | Risk | Mitigation |
 |---|---|
 | Tokens make the Gateway cookie large | Chunked cookies (built in); keep claims minimal (IDs and roles) |
-| Aspire hosting without containers needs care for SQL/RabbitMQ | Use connection-string resources; documented in the setup guide |
+| Aspire hosting without containers needs care for SQL Server | Use connection-string resources; documented in the setup guide |
 | Wolverine outbox with EF Core in several DbContexts | One DbContext per service; integration tests prove rollback/delivery (PLT-04) |
-| RabbitMQ dropped (owner, 2026-10-22: on-premises = SQL Server only, cloud = Azure Service Bus) | SQL Server transport everywhere on-premises, including development and CI; RabbitMQ tests skipped unless configured |
+| RabbitMQ dropped (owner, 2026-10-22: on-premises = SQL Server only, cloud = Azure Service Bus) | SQL Server transport everywhere on-premises, including development and CI; RabbitMQ code, package and tests removed (ADR-0005 amendment 3) |
 | Visual Studio 2026 + Aspire + Vite debugging | Verified in the first task (solution skeleton) before features |
 
 ## 16. Estimate

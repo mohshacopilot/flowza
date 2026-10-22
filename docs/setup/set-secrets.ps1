@@ -1,6 +1,6 @@
 # Flowza: store the development passwords on this PC (owner steps O2 and O4).
 #
-# Asks for the SQL (and, optionally, RabbitMQ) passwords of the "flowza_app" accounts (typing is hidden), stores them in
+# Asks for the SQL password of the "flowza_app" login (typing is hidden), stores it in
 # .NET user secrets (store "flowza-dev", in your Windows profile, never in git), checks that the SQL password
 # works, and installs smtp4dev if it is missing. Passwords are never printed.
 #
@@ -31,19 +31,7 @@ while ($true) {
 dotnet user-secrets set 'Sql:Password' $sqlPassword --id flowza-dev | Out-Null
 $sqlPassword = $null
 
-# 2. RabbitMQ (optional since 2026-10-22: the development PC uses the SQL Server transport; ADR-0005 amendment)
-$rabbitPassword = Read-Secret 'Password of the RabbitMQ user flowza_app (press Enter if RabbitMQ is not installed)'
-if ($rabbitPassword) {
-    dotnet user-secrets set 'RabbitMq:Password' $rabbitPassword --id flowza-dev | Out-Null
-    Write-Host '  RabbitMQ password stored; the RabbitMQ tests will run.' -ForegroundColor Green
-}
-else {
-    dotnet user-secrets remove 'RabbitMq:Password' --id flowza-dev | Out-Null
-    Write-Host '  No RabbitMQ: the RabbitMQ tests will be skipped.' -ForegroundColor Green
-}
-$rabbitPassword = $null
-
-# 3. smtp4dev (development mail catcher)
+# 2. smtp4dev (development mail catcher)
 if (Test-Path (Join-Path $env:USERPROFILE '.dotnet\tools\smtp4dev.exe')) {
     Write-Host '  smtp4dev is already installed.' -ForegroundColor Green
 }
@@ -53,7 +41,7 @@ else {
     Write-Host '  smtp4dev installed.' -ForegroundColor Green
 }
 
-# 4. Summary (key names only)
+# 3. Summary (key names only)
 $file = Join-Path $env:APPDATA 'Microsoft\UserSecrets\flowza-dev\secrets.json'
 $keys = (Get-Content $file -Raw | ConvertFrom-Json).PSObject.Properties.Name -join ', '
 Write-Host ''
