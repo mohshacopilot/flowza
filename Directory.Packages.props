@@ -34,7 +34,7 @@
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.13" />
     <PackageVersion Include="AspNetCore.HealthChecks.SqlServer" Version="9.0.0" />
     <!-- Same version as the Aspire AppHost SDK; runs the web app's Vite dev server as a program (no container). -->
-    <PackageVersion Include="Aspire.Hosting.JavaScript" Version="13.6.2" />
+    <PackageVersion Include="Aspire.Hosting.JavaScript" Version="13.6.3" />
   </ItemGroup>
   <ItemGroup Label="Gateway">
     <!-- YARP (MIT): approved in plan 001 PA6. -->
