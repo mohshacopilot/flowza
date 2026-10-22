@@ -1,0 +1,39 @@
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.search {
+  flex: 1 1 280px;
+  max-width: 420px;
+}
+
+.toolbarEnd {
+  margin-left: auto;
+}
+
+.form {
+  max-width: 560px;
+}
+
+/* A fieldset groups the role check boxes under one name for screen readers, without the browser's frame. */
+.fieldset {
+  border: 0;
+  margin: 0 0 24px;
+  padding: 0;
+}
+
+.legend {
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.section {
+  margin-bottom: 24px;
+}
+
+.password {
+  font-family: monospace;
+}

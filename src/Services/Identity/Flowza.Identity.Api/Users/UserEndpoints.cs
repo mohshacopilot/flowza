@@ -30,24 +30,46 @@ public static class UserEndpoints
             .RequireAuthorization(FlowzaPolicies.PlatformAdmin)
             .WithTags("Users");
 
-        users.MapGet("/", ListAsync).WithName("ListUsers");
-        users.MapPost("/", CreateAsync).WithName("CreateUser");
+        // Produces/ProducesProblem only describe the answers in the OpenAPI document, so the web app's generated
+        // client is typed (T026); the answers themselves come from the Result mapping.
+        users.MapGet("/", ListAsync).WithName("ListUsers")
+            .Produces<PagedResult<UserListItem>>()
+            .ProducesValidationProblem();
+        users.MapPost("/", CreateAsync).WithName("CreateUser")
+            .Produces<CreatedUser>(StatusCodes.Status201Created)
+            .ProducesValidationProblem();
         users.MapGet("/{id:guid}", async (Guid id, IMessageBus bus, CancellationToken ct) =>
-            (await bus.InvokeAsync<Result<UserDetails>>(new GetUserQuery(id), ct)).ToHttpResult()).WithName("GetUser");
+            (await bus.InvokeAsync<Result<UserDetails>>(new GetUserQuery(id), ct)).ToHttpResult()).WithName("GetUser")
+            .Produces<UserDetails>()
+            .ProducesProblem(StatusCodes.Status404NotFound);
         users.MapPut("/{id:guid}", async (Guid id, UpdateUserRequest body, IMessageBus bus, CancellationToken ct) =>
             (await bus.InvokeAsync<Result>(new UpdateUserCommand(id, body.DisplayName, body.Email, body.Mobile, body.Version), ct)).ToHttpResult())
-            .WithName("UpdateUser");
+            .WithName("UpdateUser")
+            .ProducesChange();
         users.MapPut("/{id:guid}/roles", async (Guid id, SetUserRolesRequest body, IMessageBus bus, CancellationToken ct) =>
-            (await bus.InvokeAsync<Result>(new SetUserRolesCommand(id, body.Roles), ct)).ToHttpResult()).WithName("SetUserRoles");
+            (await bus.InvokeAsync<Result>(new SetUserRolesCommand(id, body.Roles), ct)).ToHttpResult()).WithName("SetUserRoles")
+            .ProducesChange();
         users.MapPost("/{id:guid}/deactivate", async (Guid id, IMessageBus bus, CancellationToken ct) =>
-            (await bus.InvokeAsync<Result>(new DeactivateUserCommand(id), ct)).ToHttpResult()).WithName("DeactivateUser");
+            (await bus.InvokeAsync<Result>(new DeactivateUserCommand(id), ct)).ToHttpResult()).WithName("DeactivateUser")
+            .ProducesChange();
         users.MapPost("/{id:guid}/activate", async (Guid id, IMessageBus bus, CancellationToken ct) =>
-            (await bus.InvokeAsync<Result>(new ActivateUserCommand(id), ct)).ToHttpResult()).WithName("ActivateUser");
-        users.MapPost("/{id:guid}/reset-password", ResetPasswordAsync).WithName("ResetUserPassword");
+            (await bus.InvokeAsync<Result>(new ActivateUserCommand(id), ct)).ToHttpResult()).WithName("ActivateUser")
+            .ProducesChange();
+        users.MapPost("/{id:guid}/reset-password", ResetPasswordAsync).WithName("ResetUserPassword")
+            .Produces<TemporaryPassword>()
+            .ProducesProblem(StatusCodes.Status404NotFound);
         users.MapPost("/{id:guid}/unlock", async (Guid id, IMessageBus bus, CancellationToken ct) =>
-            (await bus.InvokeAsync<Result>(new UnlockUserCommand(id), ct)).ToHttpResult()).WithName("UnlockUser");
+            (await bus.InvokeAsync<Result>(new UnlockUserCommand(id), ct)).ToHttpResult()).WithName("UnlockUser")
+            .ProducesChange();
         return app;
     }
+
+    /// <summary>A change answers 204, or ProblemDetails for invalid values, a missing user or a conflict.</summary>
+    private static RouteHandlerBuilder ProducesChange(this RouteHandlerBuilder builder) => builder
+        .Produces(StatusCodes.Status204NoContent)
+        .ProducesValidationProblem()
+        .ProducesProblem(StatusCodes.Status404NotFound)
+        .ProducesProblem(StatusCodes.Status409Conflict);
 
     private static async Task<IResult> ListAsync(
         IMessageBus bus,

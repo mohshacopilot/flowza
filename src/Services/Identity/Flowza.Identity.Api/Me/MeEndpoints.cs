@@ -24,13 +24,18 @@ public static class MeEndpoints
             UserIdOf(context) is { } userId
                 ? (await bus.InvokeAsync<Result<MyProfile>>(new GetMyProfileQuery(userId), ct)).ToHttpResult()
                 : NotAUser.ToProblem())
-            .WithName("GetMyProfile");
+            .WithName("GetMyProfile")
+            .Produces<MyProfile>()
+            .ProducesProblem(StatusCodes.Status403Forbidden);
 
         me.MapPost("/password", async (ChangeMyPasswordRequest body, HttpContext context, IMessageBus bus, CancellationToken ct) =>
             UserIdOf(context) is { } userId
                 ? (await bus.InvokeAsync<Result>(new ChangeOwnPasswordCommand(userId, body.CurrentPassword, body.NewPassword), ct)).ToHttpResult()
                 : NotAUser.ToProblem())
-            .WithName("ChangeMyPassword");
+            .WithName("ChangeMyPassword")
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status403Forbidden);
 
         return app;
     }

@@ -31,6 +31,18 @@ export const routes: RouteObject[] = [
                   Component: (await import('../features/admin/users/UsersPage')).UsersPage,
                 }),
               },
+              {
+                path: 'new',
+                lazy: async () => ({
+                  Component: (await import('../features/admin/users/CreateUserPage')).CreateUserPage,
+                }),
+              },
+              {
+                path: ':userId',
+                lazy: async () => ({
+                  Component: (await import('../features/admin/users/UserDetailsPage')).UserDetailsPage,
+                }),
+              },
             ],
           },
           {

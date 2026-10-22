@@ -49,6 +49,7 @@ RabbitMQ code, package and tests were removed ([ADR-0005](../../docs/decisions/0
 | T021 Gateway protection | ✅ | 69a904a |
 | T022 Gateway integration tests | ✅ | a01e964 |
 | Phase 2 code review fixes | ✅ | 5b6fc9f |
+| T026 Users admin screens | ✅ | (next commit) |
 | T031 CI workflow + Dependabot | ✅ first GitHub run green 2026-10-22 | 7db9946 |
 
 **Notes from Phase 0 (decisions taken while building, within the approved plan):**
@@ -196,6 +197,23 @@ keep rolling refresh tokens and the `/connect/**` route):**
   refresh, Identity unreachable and remote sign-out (all three fail with their fix undone), plus unit tests of the
   decorator and the end-session rule.
 - Not changed (owner): rolling refresh tokens in Identity, the `/connect/**` route. Findings 3 and 7 are in T030.
+
+**Notes from T026 (users admin screens, 2026-10-22, decisions within the approved plan):**
+- **Generated client from Identity's real OpenAPI document** (closes T025's open point). Identity's user and me
+  endpoints now declare their answers (`Produces<…>`, `ProducesProblem`), so the hooks are typed instead of `void`;
+  metadata only, the answers themselves did not change. Design, Runtime and Worker answered 401 for
+  `/openapi/v1.json` (not looked into: they have no screen-facing API yet), so only `openapi/identity.json` is saved. Numbers in the document are typed
+  `number | string` (ASP.NET reads numbers from text); the list converts `totalCount` with `Number()`.
+- **React Hook Form 7.89.0 + Zod 4.6.5** installed (both MIT, approved in plan §1/§10; versions at least two weeks
+  old). The small Zod → React Hook Form adapter is our own (`shared/forms/zodResolver.ts`, unit-tested) instead of
+  the extra `@hookform/resolvers` package, so no library outside the approved list was added.
+- Screens: `/admin/users` (search, status filter, paging 25 with total; the filter lives in the address so "back"
+  returns to the same page), `/admin/users/new`, `/admin/users/:id` (details with row version, roles, access).
+  Schema rules mirror Identity's domain so most mistakes show before sending; the server stays the judge.
+- **Temporary password shown once (K6):** kept only in the screen's state; the mutation uses `gcTime: 0` and is reset
+  right after reading, so it does not stay in the query cache; leaving the screen or closing the dialog drops it.
+- Test set-up: `TestProviders` now adds an inner Ant Design `App` inside the "no animation" settings, so
+  `App.useApp()` messages and confirm dialogs open and close in jsdom.
 
 **Notes from T022 (Gateway integration tests, 2026-10-22):**
 - **Owner decision (amends PA4, plan §5.4):** the Gateway keeps no deny list of its own. A YARP response transform on
@@ -373,18 +391,18 @@ Decisions taken while building (within the approved plan; see [src/Web/README.md
 |---|---|---|
 | IAM-01-AC1 | T020, T022, T029 | 🟡 login, logout and refusal afterwards through the Gateway (T020, `IAM_01_AC1_*`); end-to-end in T029 |
 | IAM-01-AC2 | T014 | ✅ |
-| IAM-02-AC1 | T015, T024, T026 | 🟡 Users API needs Platform Admin (T015); web navigation by role and 403 page (T024, `IAM_02_AC1_*`); designer APIs arrive with feature 004; screens in T026 |
-| IAM-02-AC2 | T010, T015 | ✅ |
+| IAM-02-AC1 | T015, T024, T026 | 🟡 Users API needs Platform Admin (T015); web navigation by role and 403 page (T024, `IAM_02_AC1_*`); users screens behind the Platform Admin route (T026); designer APIs arrive with feature 004 |
+| IAM-02-AC2 | T010, T015, T026 | ✅ several roles per user and the last-admin refusal shown on screen (T026, `IAM_02_AC2_*`) |
 | IAM-03-AC1 | T019, T014, T029 | 🟡 first admin + forced change tested (T019, T014); end-to-end in T029 |
-| IAM-04-AC1 | T015, T026 | 🟡 API (T015); screens in T026 |
-| IAM-04-AC2 | T015, T026 | 🟡 API + forced change (T015, T014); screens in T026 |
+| IAM-04-AC1 | T015, T026 | ✅ API (T015); list, create and edit screens, username read-only (T026, `IAM_04_AC1_*`) |
+| IAM-04-AC2 | T015, T026 | ✅ API + forced change (T015, T014); temporary password shown once with a copy button after create and reset (T026, `IAM_04_AC2_*`) |
 | IAM-04-AC3 | T015, T018, T022 | ✅ Identity refuses at once (T015); deny list in every service on the SQL Server transport (T018); through the Gateway (to Identity's API) the next call is refused in under 1 s and the session ends (T022, `IAM_04_AC3_*`); the deny-list path of Design/Runtime/Worker is tested in T018, not through the Gateway |
-| IAM-04-AC4 | T010, T015 | ✅ |
-| IAM-04-AC5 | T010, T015 | ✅ |
+| IAM-04-AC4 | T010, T015, T026 | ✅ also on screen: format checked before sending, taken username/email shown at the field (T026, `IAM_04_AC4_*`) |
+| IAM-04-AC5 | T010, T015, T026 | ✅ activate button for inactive users (T026, `IAM_04_AC5_*`) |
 | IAM-05-AC1 | T007, T022 | ✅ services (T007); Gateway refuses anonymous API calls (T020, `IAM_05_AC1_*`) |
 | IAM-06-AC1 | T012 | ✅ |
 | IAM-06-AC3 | T016, T027 | 🟡 API (T016); screen in T027 |
-| IAM-07-AC1 | T012, T029 | 🟡 service + database (T012); end-to-end in T029 |
+| IAM-07-AC1 | T012, T026, T029 | 🟡 service + database (T012); admin unlock on screen (T026, `IAM_07_AC1_*`); end-to-end in T029 |
 | IAM-07-AC2 | T021 | ✅ password submissions limited per network address at the Gateway (`IAM_07_AC2_*`) |
 | IAM-08-AC1 | T020, T022 | ✅ 30 minutes idle and 12 hours absolute, with a test clock (T020, `IAM_08_AC1_*`) |
 | IAM-L5-AC1 | T017 | ✅ |

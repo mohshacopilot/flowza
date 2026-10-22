@@ -22,7 +22,94 @@
   },
   "users": {
     "title": "Users",
-    "intro": "Here Platform Admins will create and manage user accounts."
+    "intro": "Create user accounts, give them system roles and manage their access.",
+    "newUser": "New user",
+    "backToList": "Back to users",
+    "search": "Search by username, name or email",
+    "statusFilter": "Status",
+    "allStatuses": "All statuses",
+    "listLabel": "Users",
+    "noUsers": "No users match your search.",
+    "pageSummary": "{{start}}–{{end}} of {{total}} users",
+    "columns": {
+      "username": "Username",
+      "displayName": "Name",
+      "email": "Email",
+      "roles": "System roles",
+      "status": "Status"
+    },
+    "status": {
+      "Active": "Active",
+      "Inactive": "Inactive",
+      "Locked": "Locked"
+    },
+    "fields": {
+      "username": "Username",
+      "usernameHelp": "3–50 characters: letters, digits, '.', '_' or '-'. It can never be changed.",
+      "displayName": "Display name",
+      "email": "Email",
+      "mobile": "Mobile (optional)",
+      "roles": "System roles",
+      "userRoleHelp": "Every user has the User role."
+    },
+    "validation": {
+      "usernameRequired": "Enter a username.",
+      "usernameFormat": "A username has 3–50 characters: letters, digits, '.', '_' or '-'.",
+      "displayNameRequired": "Enter a display name.",
+      "displayNameTooLong": "A display name has at most 100 characters.",
+      "emailRequired": "Enter an email address.",
+      "emailFormat": "Enter a valid email address.",
+      "mobileFormat": "A mobile number has at most 20 characters: digits, spaces, '+', '-', '(' or ')'."
+    },
+    "create": {
+      "title": "New user",
+      "submit": "Create user",
+      "cancel": "Cancel",
+      "createdTitle": "User created",
+      "createdMessage": "Give the temporary password to {{username}}. They must change it at their first login."
+    },
+    "details": {
+      "title": "User {{username}}",
+      "loading": "Loading user…",
+      "profileSection": "Details",
+      "save": "Save changes",
+      "saved": "The changes were saved.",
+      "reload": "Reload",
+      "mustChangePassword": "Must change the password at the next login.",
+      "rolesSection": "System roles",
+      "saveRoles": "Save roles",
+      "rolesSaved": "The roles were saved.",
+      "accessSection": "Access",
+      "deactivate": "Deactivate",
+      "deactivateConfirmTitle": "Deactivate {{username}}?",
+      "deactivateConfirmMessage": "They are logged out at once and cannot log in until they are activated again. Their history stays.",
+      "deactivated": "{{username}} was deactivated.",
+      "activate": "Activate",
+      "activated": "{{username}} was activated.",
+      "unlock": "Unlock",
+      "unlocked": "{{username}} was unlocked.",
+      "lockedMessage": "This account is locked for a while after too many wrong passwords.",
+      "resetPassword": "Reset password",
+      "resetConfirmTitle": "Reset the password of {{username}}?",
+      "resetConfirmMessage": "Their current password stops working. You get a temporary password to give them.",
+      "resetTitle": "Temporary password for {{username}}",
+      "confirm": "Yes, continue",
+      "cancel": "Cancel"
+    },
+    "temporaryPassword": {
+      "label": "Temporary password",
+      "onceWarning": "This password is shown only once. Copy it now and give it to the user in a safe way.",
+      "copy": "Copy password",
+      "copied": "The password was copied.",
+      "copyFailed": "The password could not be copied. Select it and copy it by hand.",
+      "done": "Done",
+      "openUser": "Open the user"
+    }
+  },
+  "roles": {
+    "PlatformAdmin": "Platform Admin",
+    "AppDesigner": "App Designer",
+    "User": "User"
   },
   "profile": {
     "title": "My profile",
@@ -57,6 +144,23 @@
       "server": "Something went wrong on the server. Please try again.",
       "unexpected": "Something went wrong. Please try again."
     },
-    "codes": {}
+    "codes": {
+      "common": {
+        "changed_by_someone_else": "Someone else changed this user in the meantime. Reload it and make your change again.",
+        "version_required": "The page is out of date. Reload it and try again."
+      },
+      "users": {
+        "username_invalid": "A username has 3–50 characters: letters, digits, '.', '_' or '-'.",
+        "username_taken": "This username is already used.",
+        "email_invalid": "Enter a valid email address.",
+        "email_taken": "This email address is already used.",
+        "display_name_invalid": "A display name is required and has at most 100 characters.",
+        "mobile_invalid": "A mobile number has at most 20 characters: digits, spaces, '+', '-', '(' or ')'.",
+        "role_unknown": "One of the roles is not known.",
+        "status_unknown": "This status is not known.",
+        "last_active_platform_admin": "This is the last active Platform Admin. Make another user Platform Admin first.",
+        "not_found": "This user does not exist."
+      }
+    }
   }
 }

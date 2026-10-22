@@ -1,7 +1,7 @@
 # Flowza web app
 
 One React app for every screen (tech discussion T1): React 19 + TypeScript (strict) + Vite, Ant Design,
-React Router, TanStack Query, react-i18next. Tests: Vitest + React Testing Library + MSW.
+React Router, TanStack Query, React Hook Form + Zod (forms), react-i18next. Tests: Vitest + React Testing Library + MSW.
 
 ## Run it
 

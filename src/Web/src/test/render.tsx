@@ -1,6 +1,6 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { render, type RenderResult } from '@testing-library/react';
-import { ConfigProvider } from 'antd';
+import { App as AntApp, ConfigProvider } from 'antd';
 import type { ReactNode } from 'react';
 import { createMemoryRouter, type RouteObject } from 'react-router';
 import { RouterProvider } from 'react-router/dom';
@@ -14,12 +14,15 @@ export function createTestQueryClient(): QueryClient {
 
 /**
  * The real providers (translations, theme, query client), with animations off: jsdom never finishes them,
- * so menus and popups would stay "hidden" to Testing Library.
+ * so menus and popups would stay "hidden" to Testing Library. The inner App makes App.useApp() (messages,
+ * confirm dialogs) use the settings without animations too.
  */
 export function TestProviders({ children }: { children: ReactNode }) {
   return (
     <AppProviders queryClient={createTestQueryClient()}>
-      <ConfigProvider theme={{ token: { motion: false } }}>{children}</ConfigProvider>
+      <ConfigProvider theme={{ token: { motion: false } }}>
+        <AntApp>{children}</AntApp>
+      </ConfigProvider>
     </AppProviders>
   );
 }
