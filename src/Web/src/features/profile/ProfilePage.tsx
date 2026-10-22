@@ -1,10 +1,11 @@
-import { Descriptions, Spin, Tag, Typography } from 'antd';
+import { Descriptions, Tag, Typography } from 'antd';
 import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { describeApiError } from '../../shared/api/errorMessages';
 import { useGetMyProfile } from '../../shared/api/generated/identity/me/me';
 import { roleLabel } from '../../shared/auth/roleLabel';
 import { ApiErrorAlert } from '../../shared/components/ApiErrorAlert';
+import { LoadingIndicator } from '../../shared/components/LoadingIndicator';
 import { ChangePasswordSection } from './ChangePasswordSection';
 import styles from './profile.module.css';
 
@@ -24,7 +25,7 @@ export function ProfilePage() {
         <Typography.Title level={2} id={headingId}>
           {t('profile.detailsSection')}
         </Typography.Title>
-        {profile.isPending && <Spin aria-label={t('profile.loading')} />}
+        {profile.isPending && <LoadingIndicator label={t('profile.loading')} />}
         {profile.isError && <ApiErrorAlert error={describeApiError(profile.error, i18n)} />}
         {profile.isSuccess && (
           <>

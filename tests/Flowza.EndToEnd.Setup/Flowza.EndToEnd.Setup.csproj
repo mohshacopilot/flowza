@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Prepares the flowza_test_* databases for the end-to-end run (tests/EndToEnd, T029). Never shipped. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Flowza.EndToEnd.Setup</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Flowza.Testing\Flowza.Testing.csproj" />
+    <ProjectReference Include="..\..\tools\Flowza.Cli\Flowza.Cli.csproj" />
+  </ItemGroup>
+</Project>

@@ -48,6 +48,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/Flowza.ArchitectureTests/Flowza.ArchitectureTests.csproj" />
     <Project Path="tests/Flowza.BuildingBlocks.UnitTests/Flowza.BuildingBlocks.UnitTests.csproj" />
+    <Project Path="tests/Flowza.EndToEnd.Setup/Flowza.EndToEnd.Setup.csproj" />
     <Project Path="tests/Flowza.Gateway.IntegrationTests/Flowza.Gateway.IntegrationTests.csproj" />
     <Project Path="tests/Flowza.Identity.IntegrationTests/Flowza.Identity.IntegrationTests.csproj" />
     <Project Path="tests/Flowza.Identity.UnitTests/Flowza.Identity.UnitTests.csproj" />

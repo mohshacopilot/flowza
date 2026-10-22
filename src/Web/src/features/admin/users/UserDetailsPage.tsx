@@ -1,9 +1,10 @@
-import { Alert, Space, Spin, Typography } from 'antd';
+import { Alert, Space, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
 import { describeApiError } from '../../../shared/api/errorMessages';
 import { useGetUser } from '../../../shared/api/generated/identity/users/users';
 import { ApiErrorAlert } from '../../../shared/components/ApiErrorAlert';
+import { LoadingIndicator } from '../../../shared/components/LoadingIndicator';
 import { AccessSection } from './AccessSection';
 import { ProfileSection } from './ProfileSection';
 import { RolesSection } from './RolesSection';
@@ -18,7 +19,7 @@ export function UserDetailsPage() {
   const backLink = <Link to="/admin/users">{t('users.backToList')}</Link>;
 
   if (user.isPending) {
-    return <Spin aria-label={t('users.details.loading')} />;
+    return <LoadingIndicator label={t('users.details.loading')} />;
   }
   if (user.isError) {
     return (

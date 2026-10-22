@@ -1,9 +1,10 @@
-import { Flex, Layout, Spin, Typography } from 'antd';
+import { Layout, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { Link, Outlet } from 'react-router';
 import { ApiError } from '../../shared/api/ApiError';
 import { useCurrentUser } from '../../shared/auth/currentUser';
 import { PageForError } from '../../shared/components/ErrorPages';
+import { AppLoading } from './AppLoading';
 import { SideNavigation } from './SideNavigation';
 import { UserMenu } from './UserMenu';
 import styles from './AppShell.module.css';
@@ -21,11 +22,7 @@ export function AppShell() {
   const unauthenticated = user.isError && isUnauthenticated(user.error);
 
   if (user.isPending || unauthenticated) {
-    return (
-      <Flex className={styles.loading} align="center" justify="center">
-        <Spin size="large" aria-label={t('shell.loading')} />
-      </Flex>
-    );
+    return <AppLoading />;
   }
   if (user.isError) {
     return (

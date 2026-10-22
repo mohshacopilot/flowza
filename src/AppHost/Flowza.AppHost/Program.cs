@@ -34,17 +34,19 @@ IResourceBuilder<ConnectionStringResource> SqlDatabase(string name, string datab
         TrustServerCertificate = true,
     }.ConnectionString);
 
-var identityDb = SqlDatabase("identity-db", "flowza_identity");
-var designDb = SqlDatabase("design-db", "flowza_design");
-var runtimeDb = SqlDatabase("runtime-db", "flowza_runtime");
-var workerDb = SqlDatabase("worker-db", "flowza_worker");
+// "flowza_" (development databases) by default; the end-to-end run uses "flowza_test_" (tests/EndToEnd, T029).
+var databasePrefix = configuration["Databases:Prefix"] is { Length: > 0 } prefix ? prefix : "flowza_";
+var identityDb = SqlDatabase("identity-db", $"{databasePrefix}identity");
+var designDb = SqlDatabase("design-db", $"{databasePrefix}design");
+var runtimeDb = SqlDatabase("runtime-db", $"{databasePrefix}runtime");
+var workerDb = SqlDatabase("worker-db", $"{databasePrefix}worker");
 
 // One transport for every service of the installation (ADR-0005): SqlServer on-premises, AzureServiceBus in the cloud.
 // Only the selected transport's connection is created.
 var transport = configuration["Messaging:Transport"] is { Length: > 0 } configured ? configured : "SqlServer";
 IResourceBuilder<ConnectionStringResource> transportConnection = transport.ToUpperInvariant() switch
 {
-    "SQLSERVER" => SqlDatabase("messaging-db", "flowza_messaging"),
+    "SQLSERVER" => SqlDatabase("messaging-db", $"{databasePrefix}messaging"),
     "AZURESERVICEBUS" => SecretConnectionString("azure-servicebus", () => Required("AzureServiceBus:ConnectionString")),
     _ => throw new InvalidOperationException($"Messaging:Transport '{transport}' is not SqlServer or AzureServiceBus (ADR-0005)."),
 };
@@ -85,6 +87,13 @@ var gateway = builder.AddProject<Projects.Flowza_Gateway>("gateway")
     .WithEnvironment("Gateway__Oidc__ClientSecret", gatewaySecret)
     .WithEnvironment("Flowza__Identity__Authority", identity.GetEndpoint("http"))
     .WithExternalHttpEndpoints();
+
+// The end-to-end tests log in far more often than a person can (T029); only that run raises the per-address limit
+// of password submissions (IAM-07-AC2, whose own tests run against the Gateway in memory, T021).
+if (configuration["Gateway:LoginPermitLimit"] is { Length: > 0 } loginPermitLimit)
+{
+    gateway.WithEnvironment("Gateway__Protection__LoginPerAddress__PermitLimit", loginPermitLimit);
+}
 
 // The browser reaches Identity's pages through the Gateway, so tokens get one fixed issuer (Identity's own address,
 // where services check them) and come back to the Gateway's addresses.

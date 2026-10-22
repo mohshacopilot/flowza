@@ -52,6 +52,7 @@ RabbitMQ code, package and tests were removed ([ADR-0005](../../docs/decisions/0
 | T026 Users admin screens | ✅ checked live on the running platform 2026-10-22 | 731f130, d79e680 |
 | T027 My profile + change password | ✅ checked live 2026-10-22 | d61e8da |
 | T028 Flowza.Cli demo-data | ✅ | f14eb15 |
+| T029 Playwright end-to-end | ✅ green locally (10 tests); CI job runs on the next push | (next commit) |
 | T031 CI workflow + Dependabot | ✅ first GitHub run green 2026-10-22 | 7db9946 |
 
 **Notes from Phase 0 (decisions taken while building, within the approved plan):**
@@ -199,6 +200,29 @@ keep rolling refresh tokens and the `/connect/**` route):**
   refresh, Identity unreachable and remote sign-out (all three fail with their fix undone), plus unit tests of the
   decorator and the end-session rule.
 - Not changed (owner): rolling refresh tokens in Identity, the `/connect/**` route. Findings 3 and 7 are in T030.
+
+**Notes from T029 (end-to-end tests, 2026-10-22, decisions within the approved plan; approved libraries only):**
+- **How it runs (TE5):** `tests/EndToEnd/run-e2e.ps1` builds, empties the `flowza_test_*` databases
+  (`tests/Flowza.EndToEnd.Setup reset`, under the integration tests' database lock), starts the AppHost on them
+  (`Databases:Prefix = flowza_test_`, new AppHost setting, default `flowza_`), loads the demo users with the real
+  `flowza demo-data`, runs Playwright and stops the platform. Works in Windows PowerShell 5.1 (this PC) and
+  PowerShell 7 (CI). Same ports as the development AppHost: stop that first.
+- The e2e run raises the Gateway's login limit (`Gateway:LoginPermitLimit`, passed only when set): the tests log in
+  far more often than 10 times a minute. IAM-07-AC2 keeps its own tests (T021).
+- **Packages (approved in the tech discussion):** `@playwright/test` 1.63.0 (Apache-2.0), `@axe-core/playwright`
+  4.13.0 (MPL-2.0, test only), with an npm override so axe uses the same `playwright-core`. Chromium for Playwright
+  is downloaded by `npx playwright install chromium` (once per PC; in CI each run).
+- Each test makes its own users (`e2e.<purpose>.<stamp>`), so tests are independent and re-runs never collide.
+- **What the axe checks found and what was fixed (NFR-11):** (1) grey help texts too pale on the page grey →
+  `colorTextSecondary`/`colorTextDescription` 65 % black; (2) Ant Design's default success/warning/error colours too
+  pale as text (status tags, the danger button) → darker status colours with explicit light backgrounds and borders
+  in `theme.ts` (checked by eye too); (3) spinners carried an `aria-label` on a plain element → shared
+  `LoadingIndicator` (`role="status"` with hidden text). With a dialog open the check covers only the dialog.
+- The blank page on a full load (noted in T027) is fixed: the root route's `HydrateFallback` shows the loading screen.
+- **CI:** two new jobs, `web` (lint, types, format, tests, build; promised by T031 but never added) and `end-to-end`
+  (SQL Server 2019 container, Playwright with Chromium, report uploaded on failure). They have **not run yet**:
+  they run on the next push (DV4: the task counts as done when that run is green). Dependabot now covers npm.
+- **Owner, 2026-10-22:** the demo password `Flowza-Demo-2026` (T028) is confirmed.
 
 **Notes from T028 (`flowza demo-data`, 2026-10-22, decisions within the approved plan):**
 - **Framework (Strategy + registry):** one `IDemoDataSet` per service (`HasDataAsync`, `LoadAsync`); the runner asks
@@ -417,24 +441,24 @@ Decisions taken while building (within the approved plan; see [src/Web/README.md
 ### Traceability (M1 acceptance criteria → tasks)
 | Criterion | Task(s) | Status |
 |---|---|---|
-| IAM-01-AC1 | T020, T022, T029 | 🟡 login, logout and refusal afterwards through the Gateway (T020, `IAM_01_AC1_*`); end-to-end in T029 |
-| IAM-01-AC2 | T014 | ✅ |
+| IAM-01-AC1 | T020, T022, T029 | ✅ through the Gateway (T020, `IAM_01_AC1_*`); end to end in a browser: log in, log out, then pages and the API are refused (T029) |
+| IAM-01-AC2 | T014, T029 | ✅ also end to end: wrong password and unknown user give the same message (T029) |
 | IAM-02-AC1 | T015, T024, T026 | 🟡 Users API needs Platform Admin (T015); web navigation by role and 403 page (T024, `IAM_02_AC1_*`); users screens behind the Platform Admin route (T026); designer APIs arrive with feature 004 |
 | IAM-02-AC2 | T010, T015, T026 | ✅ several roles per user and the last-admin refusal shown on screen (T026, `IAM_02_AC2_*`) |
-| IAM-03-AC1 | T019, T014, T029 | 🟡 first admin + forced change tested (T019, T014); end-to-end in T029 |
-| IAM-04-AC1 | T015, T026 | ✅ API (T015); list, create and edit screens, username read-only (T026, `IAM_04_AC1_*`) |
-| IAM-04-AC2 | T015, T026 | ✅ API + forced change (T015, T014); temporary password shown once with a copy button after create and reset (T026, `IAM_04_AC2_*`) |
-| IAM-04-AC3 | T015, T018, T022 | ✅ Identity refuses at once (T015); deny list in every service on the SQL Server transport (T018); through the Gateway (to Identity's API) the next call is refused in under 1 s and the session ends (T022, `IAM_04_AC3_*`); the deny-list path of Design/Runtime/Worker is tested in T018, not through the Gateway |
+| IAM-03-AC1 | T019, T014, T029 | ✅ `flowza init-admin` with the one-time password and the redirect to the forced change (T019, T014); the forced change at the first login end to end for a new user (T029). The e2e run starts from demo data, so `init-admin` itself is covered by T019's tests, not by the browser |
+| IAM-04-AC1 | T015, T026, T029 | ✅ API (T015); list, create and edit screens, username read-only (T026, `IAM_04_AC1_*`); end to end (T029) |
+| IAM-04-AC2 | T015, T026, T029 | ✅ API + forced change (T015, T014); temporary password shown once with a copy button after create and reset (T026, `IAM_04_AC2_*`); end to end: the old password stops working, the temporary one leads to the forced change (T029) |
+| IAM-04-AC3 | T015, T018, T022, T029 | ✅ end to end in a browser: the deactivated user's next page load goes to the login page (T029); Identity refuses at once (T015); deny list in every service on the SQL Server transport (T018); through the Gateway (to Identity's API) the next call is refused in under 1 s and the session ends (T022, `IAM_04_AC3_*`); the deny-list path of Design/Runtime/Worker is tested in T018, not through the Gateway |
 | IAM-04-AC4 | T010, T015, T026 | ✅ also on screen: format checked before sending, taken username/email shown at the field (T026, `IAM_04_AC4_*`) |
-| IAM-04-AC5 | T010, T015, T026 | ✅ activate button for inactive users (T026, `IAM_04_AC5_*`) |
+| IAM-04-AC5 | T010, T015, T026, T029 | ✅ activate button for inactive users (T026, `IAM_04_AC5_*`); end to end the same password works again (T029) |
 | IAM-05-AC1 | T007, T022 | ✅ services (T007); Gateway refuses anonymous API calls (T020, `IAM_05_AC1_*`) |
 | IAM-06-AC1 | T012 | ✅ |
 | IAM-06-AC3 | T016, T027 | ✅ API (T016); My profile screen with current + new password, server refusals at their field (T027, `IAM_06_AC3_*`); checked live: old password refused, new one logs in |
-| IAM-07-AC1 | T012, T026, T029 | 🟡 service + database (T012); admin unlock on screen (T026, `IAM_07_AC1_*`); end-to-end in T029 |
+| IAM-07-AC1 | T012, T026, T029 | ✅ service + database (T012); admin unlock on screen (T026, `IAM_07_AC1_*`); end to end: 5 wrong passwords lock, even the right one is refused, the admin unlocks (T029) |
 | IAM-07-AC2 | T021 | ✅ password submissions limited per network address at the Gateway (`IAM_07_AC2_*`) |
 | IAM-08-AC1 | T020, T022 | ✅ 30 minutes idle and 12 hours absolute, with a test clock (T020, `IAM_08_AC1_*`) |
 | IAM-L5-AC1 | T017 | ✅ |
-| PLT-02-AC1 | T006, T029 | 🟡 AppHost start verified by hand; end-to-end test in T029 |
+| PLT-02-AC1 | T006, T029 | ✅ one command (`run-e2e.ps1` → the AppHost) starts every service and the web app on Windows without containers, and the app with its login opens at one address (T029, `PLT_02_AC1_*`). The mail catcher is switched off in that run; with it the AppHost is started by hand (T006) |
 | PLT-03-AC1 | T007 | ✅ |
 | PLT-03-AC2 | T009 | ✅ |
 | PLT-04-AC1 | T009 | ✅ SqlServer (RabbitMq removed 2026-10-22) |

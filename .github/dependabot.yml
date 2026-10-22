@@ -1,6 +1,6 @@
 # Flowza Dependabot (T031, tech discussion T9): weekly pull requests for package and action updates.
 # Every update still needs a green CI run, and new or changed licences must stay permissive (CLAUDE.md licensing rule).
-# npm is added when the web app exists (T023).
+# npm covers the web app and the end-to-end tests (added with T029).
 version: 2
 updates:
   - package-ecosystem: nuget
@@ -25,6 +25,22 @@ updates:
         patterns: ["xunit*", "Shouldly", "coverlet*", "Respawn", "NetArchTest*", "Microsoft.AspNetCore.Mvc.Testing", "Microsoft.AspNetCore.TestHost"]
       microsoft:
         patterns: ["Microsoft.*", "System.*"]
+
+  - package-ecosystem: npm
+    directories: ["/src/Web", "/tests/EndToEnd"]
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 10
+    groups:
+      react:
+        patterns: ["react", "react-dom", "@types/react", "@types/react-dom"]
+      lint:
+        patterns: ["eslint*", "@eslint/*", "typescript-eslint", "prettier"]
+      test-tools:
+        patterns: ["vitest", "@testing-library/*", "msw", "jsdom"]
+      playwright:
+        patterns: ["@playwright/*", "playwright*", "@axe-core/*"]
 
   - package-ecosystem: github-actions
     directory: "/"

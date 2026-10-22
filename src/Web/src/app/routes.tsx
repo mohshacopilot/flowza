@@ -1,6 +1,7 @@
 import type { RouteObject } from 'react-router';
 import { SystemRole } from '../shared/auth/systemRoles';
 import { NotFoundPage, RouteErrorPage } from '../shared/components/ErrorPages';
+import { AppLoading } from './shell/AppLoading';
 import { AppShell } from './shell/AppShell';
 import { RequireRole } from './shell/RequireRole';
 
@@ -12,6 +13,7 @@ export const routes: RouteObject[] = [
   {
     path: '/',
     Component: AppShell,
+    HydrateFallback: AppLoading,
     ErrorBoundary: RouteErrorPage,
     children: [
       {
