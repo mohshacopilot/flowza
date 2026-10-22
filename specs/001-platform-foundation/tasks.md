@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | **Phase 0 done (T001–T009), 2026-10-21**; **Phase 1 (T010–T019) done in the Identity stream, 2026-10-21**, waiting for review and merge |
+| **Status** | **Phase 0 done (T001–T009), 2026-10-21**; **Phase 1 (T010–T019) done and merged, 2026-10-22**; **Phase 2 (T020–T022) done and reviewed, 2026-10-22**; web shell T023–T025 and CI T031 done; next T026 |
 | **Spec / Plan** | [spec.md](spec.md) · [plan.md](plan.md) |
 | **Rules** | One task at a time, in order. Each task ends with: builds without warnings, its tests pass, a local commit (`feat|chore|test(scope): … (IDs)`). `[P]` = can run in parallel with the previous task. Nothing is pushed without the owner's OK |
 
