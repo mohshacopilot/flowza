@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Flowza.Gateway.Protection;
 using Microsoft.AspNetCore.Authentication;
 
 namespace Flowza.Gateway.Session;
@@ -15,7 +16,7 @@ public static class BffEndpoints
     public static IEndpointRouteBuilder MapBffEndpoints(this IEndpointRouteBuilder app)
     {
         ArgumentNullException.ThrowIfNull(app);
-        var bff = app.MapGroup("/bff").ExcludeFromDescription();
+        var bff = app.MapGroup("/bff").ExcludeFromDescription().RequireRateLimiting(GatewayProtectionExtensions.PerUserPolicy);
         bff.MapGet("/login", Login).AllowAnonymous();
         bff.MapGet("/logout", Logout).AllowAnonymous();
         bff.MapGet("/user", CurrentUser).RequireAuthorization();

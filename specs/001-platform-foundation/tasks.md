@@ -46,6 +46,7 @@ RabbitMQ code, package and tests were removed ([ADR-0005](../../docs/decisions/0
 | T024 Shell | ✅ | 0e87e65 |
 | T025 API client set-up | ✅ (generation from Identity's real document still to do) | dfe38a6 |
 | T020 Gateway YARP + BFF | ✅ | 1bf4cc3 |
+| T021 Gateway protection | ✅ | (this commit) |
 | T031 CI workflow + Dependabot | ✅ first GitHub run green 2026-10-22 | 7db9946 |
 
 **Notes from Phase 0 (decisions taken while building, within the approved plan):**
@@ -175,6 +176,31 @@ architecture test that was later replaced by the policy; the code is right, the 
 - **Red-run check (2026-10-22):** branch `ci/red-run-demo` with one deliberately failing test, opened as pull request #5:
   CI run 39724745438 failed at "Test with coverage" (gate skipped), shown red on the pull request. The pull request was
   closed without merging and the branch deleted. **PLT-09-AC1 ✅.**
+
+**Notes from T021 (Gateway protection, 2026-10-22, decisions within the approved plan; no new package):**
+- **Anti-forgery (SE5):** POST/PUT/PATCH/DELETE to `/api/**` and `/bff/**` need `X-CSRF: 1` (the header the web app's
+  `apiFetch` already sends), else 403 with code `gateway.antiforgery_header_missing`. Identity's pages keep their own
+  form tokens, so `/account/**` and `/connect/**` are not checked.
+- **Identity headers (GW4):** a YARP transform on every route removes `Authorization`, the common "user" headers of
+  proxies and hosting platforms (`Remote-User`, `X-User-*`, `X-Forwarded-User`, `X-MS-CLIENT-PRINCIPAL*`, …) and every
+  `X-Flowza-*` header (prefix reserved for Flowza). YARP already replaces incoming `X-Forwarded-*` and sends a fresh
+  `traceparent` from the Gateway's own activity (not separately tested here; correlation across services is T009).
+- **Security headers (SE7):** on every answer, overwriting proxied values (Identity's `X-Frame-Options: SAMEORIGIN`
+  becomes `DENY`): Content-Security-Policy (same origin only, `frame-ancestors 'none'`, inline styles allowed for
+  Ant Design; development also allows Vite's inline refresh script and its web socket; configurable as
+  `Gateway:Protection:ContentSecurityPolicy`), `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`,
+  `Referrer-Policy: no-referrer` (login answers carry a code in the address). HSTS (1 year) and HTTPS redirection
+  outside Development only. Checked in a real browser: the web app, Vite hot reload and the login page load with no
+  CSP errors.
+- **Rate limits (GW3, L6):** ASP.NET Core's built-in rate limiter, fixed windows, numbers in `Gateway:Protection`:
+  POSTs to `/account/**` 10 per minute per network address (`login` policy); API routes and `/bff/**` 600 per minute
+  per user, per address when nobody is logged in (`per-user` policy). Refusal: 429 with `Retry-After` and code
+  `gateway.rate_limited`. Addresses are only in-memory partition keys, never logged. **Behind a load balancer the
+  address is the balancer's** until forwarded headers are trusted (production setup, T030).
+- **Body limit (GW5):** 1 MB (`MaxRequestBodyBytes`): a declared larger body gets 413 (`gateway.request_too_large`) at
+  once; bodies without a length are cut off by Kestrel/IIS at the same limit. Upload routes get their own limit with 004.
+- Tests: each browser in the Gateway tests has its own network address (test-only header), and a recorder shows what
+  reached Identity. With the protection switched off, all six T021 integration tests fail.
 
 **Notes from T020 (Gateway YARP + BFF, 2026-10-22, decisions within the approved plan):**
 - Packages: `Yarp.ReverseProxy` 2.3.0 (PA6), `Microsoft.AspNetCore.Authentication.OpenIdConnect` 10.0.13 (first-party,
@@ -327,7 +353,7 @@ Decisions taken while building (within the approved plan; see [src/Web/README.md
 | IAM-06-AC1 | T012 | ✅ |
 | IAM-06-AC3 | T016, T027 | 🟡 API (T016); screen in T027 |
 | IAM-07-AC1 | T012, T029 | 🟡 service + database (T012); end-to-end in T029 |
-| IAM-07-AC2 | T021 | ⬜ |
+| IAM-07-AC2 | T021 | ✅ password submissions limited per network address at the Gateway (`IAM_07_AC2_*`) |
 | IAM-08-AC1 | T020, T022 | ✅ 30 minutes idle and 12 hours absolute, with a test clock (T020, `IAM_08_AC1_*`) |
 | IAM-L5-AC1 | T017 | ✅ |
 | PLT-02-AC1 | T006, T029 | 🟡 AppHost start verified by hand; end-to-end test in T029 |

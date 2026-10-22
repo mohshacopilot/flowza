@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+using System.Net;
 using Flowza.Gateway;
 using Flowza.Gateway.Session;
 using Flowza.Identity.Api;
@@ -5,6 +7,7 @@ using Flowza.Identity.Application.Abstractions;
 using Flowza.Identity.Domain.Users;
 using Flowza.Testing;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -46,9 +49,22 @@ public sealed class GatewayPlatform : IAsyncLifetime
         _ = Gateway.Services;
     }
 
-    /// <summary>A browser: keeps cookies, does not follow redirects (tests follow them step by step).</summary>
-    public HttpClient CreateBrowser() =>
-        Gateway.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false, HandleCookies = true, BaseAddress = new Uri(Origin) });
+    /// <summary>What the Gateway forwarded to Identity (through YARP), newest last.</summary>
+    public RecordingHandler Forwarded { get; } = new();
+
+    /// <summary>
+    /// A browser: keeps cookies, does not follow redirects (tests follow them step by step). Each browser has its own
+    /// network address, so per-address rate limits of one test never touch another.
+    /// </summary>
+    public HttpClient CreateBrowser(string? remoteAddress = null)
+    {
+        var browser = Gateway.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false, HandleCookies = true, BaseAddress = new Uri(Origin) });
+        browser.DefaultRequestHeaders.Add(TestRemoteAddress.HeaderName, remoteAddress ?? $"10.0.{Random.Shared.Next(256)}.{Random.Shared.Next(1, 255)}");
+        return browser;
+    }
+
+    /// <summary>API calls per user per minute in the test Gateway (the real default is 600).</summary>
+    public const int ApiPermitLimit = 50;
 
     /// <summary>A new active user with a known password; usernames are unique, so tests need no data reset.</summary>
     public async Task<User> CreateUserAsync(params SystemRole[] roles)
@@ -104,21 +120,66 @@ public sealed class GatewayPlatform : IAsyncLifetime
             builder.UseSetting("Gateway:Oidc:ClientSecret", ClientSecret);
             builder.UseSetting("Flowza:Identity:Authority", Origin);
             builder.UseSetting("ReverseProxy:Clusters:identity:Destinations:identity:Address", Origin);
+            builder.UseSetting("Gateway:Protection:ApiPerUser:PermitLimit", ApiPermitLimit.ToString(System.Globalization.CultureInfo.InvariantCulture));
             builder.ConfigureTestServices(services =>
             {
+                services.AddSingleton<IStartupFilter, TestRemoteAddress>();
                 services.AddSingleton<TimeProvider>(platform.Clock);
-                services.AddSingleton<IForwarderHttpClientFactory>(new TestServerForwarderFactory(platform.Identity));
+                services.AddSingleton<IForwarderHttpClientFactory>(new TestServerForwarderFactory(platform));
                 services.Configure<OpenIdConnectOptions>(GatewaySession.OidcScheme, options => options.BackchannelHttpHandler = platform.TokenCalls);
             });
         }
     }
 
-    /// <summary>YARP forwards to Identity's in-memory server instead of the network.</summary>
-    private sealed class TestServerForwarderFactory(IdentityHost identity) : IForwarderHttpClientFactory
+    /// <summary>YARP forwards to Identity's in-memory server instead of the network, through the recorder.</summary>
+    private sealed class TestServerForwarderFactory(GatewayPlatform platform) : IForwarderHttpClientFactory
     {
-        public HttpMessageInvoker CreateClient(ForwarderHttpClientContext context) => new(identity.Server.CreateHandler(), disposeHandler: true);
+        public HttpMessageInvoker CreateClient(ForwarderHttpClientContext context)
+        {
+            platform.Forwarded.InnerHandler ??= platform.Identity.Server.CreateHandler();
+            return new HttpMessageInvoker(platform.Forwarded, disposeHandler: false);
+        }
+    }
+
+    /// <summary>TestServer has no client address; tests set one per browser with a header (test-only middleware).</summary>
+    private sealed class TestRemoteAddress : IStartupFilter
+    {
+        public const string HeaderName = "X-Test-Remote-Address";
+
+        public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next) => app =>
+        {
+            app.Use((context, nextMiddleware) =>
+            {
+                if (IPAddress.TryParse(context.Request.Headers[HeaderName], out var address))
+                {
+                    context.Connection.RemoteIpAddress = address;
+                }
+
+                return nextMiddleware(context);
+            });
+            next(app);
+        };
     }
 }
+
+/// <summary>Passes requests on and keeps the path and headers of each, as the receiving service saw them.</summary>
+public sealed class RecordingHandler : DelegatingHandler
+{
+    private readonly ConcurrentQueue<RecordedRequest> _requests = new();
+
+    public IReadOnlyList<RecordedRequest> Requests => [.. _requests];
+
+    public RecordedRequest Last(string path) => Requests.Last(r => r.Path == path);
+
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        var headers = request.Headers.ToDictionary(h => h.Key, h => string.Join(", ", h.Value), StringComparer.OrdinalIgnoreCase);
+        _requests.Enqueue(new RecordedRequest(request.Method.Method, request.RequestUri!.AbsolutePath, headers));
+        return base.SendAsync(request, cancellationToken);
+    }
+}
+
+public sealed record RecordedRequest(string Method, string Path, IReadOnlyDictionary<string, string> Headers);
 
 /// <summary>Passes requests on and counts those to one path.</summary>
 public sealed class CountingHandler(HttpMessageHandler inner, string path) : DelegatingHandler(inner)

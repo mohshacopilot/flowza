@@ -1,4 +1,5 @@
 using System.Net.Http.Headers;
+using Flowza.Gateway.Protection;
 using Flowza.Gateway.Session;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -31,6 +32,7 @@ public static class GatewayProxyExtensions
             {
                 var forwardToken = context.Route.Metadata?.TryGetValue(ForwardAccessTokenKey, out var value) == true
                     && bool.TryParse(value, out var enabled) && enabled;
+                context.AddRequestTransform(IdentityHeaders.RemoveAsync);
                 context.AddRequestTransform(forwardToken ? ForwardAccessTokenAsync : RemoveSessionCookie);
             });
         return builder;
