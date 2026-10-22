@@ -54,7 +54,7 @@ RabbitMQ code, package and tests were removed ([ADR-0005](../../docs/decisions/0
 | T028 Flowza.Cli demo-data | ✅ | f14eb15 |
 | T029 Playwright end-to-end | ✅ green locally and in CI 2026-10-22 (run 39767905954) | 15f2ed5, 26ecbd6, 13436bd |
 | T030 Setup guide, checklist, production items a–d | ✅ built; owner signs the checklist after a fresh-PC run | 5c08608 |
-| T033 Production database scripts with Wolverine's tables | ✅ | (next commit) |
+| T033 Production database scripts with Wolverine's tables | ✅ | 7066449 |
 | T031 CI workflow + Dependabot | ✅ first GitHub run green 2026-10-22 | 7db9946 |
 
 **Notes from Phase 0 (decisions taken while building, within the approved plan):**
