@@ -60,7 +60,18 @@ var design = Service<Projects.Flowza_Design_Api>("design", designDb);
 var runtime = Service<Projects.Flowza_Runtime_Api>("runtime", runtimeDb);
 var worker = Service<Projects.Flowza_Worker>("worker", workerDb);
 
+// The web app's Vite dev server (task T023), started as a program, not a container; "npm install" runs first.
+// Fixed port 5105 next to the services' ports; the Gateway proxies every non-API path to it (T021).
+var web = builder.AddViteApp("web", "../../Web")
+    .WithNpm(install: true)
+    .WithEndpoint("http", endpoint =>
+    {
+        endpoint.Port = 5105;
+        endpoint.IsProxied = false;
+    });
+
 builder.AddProject<Projects.Flowza_Gateway>("gateway")
+    .WithReference(web)
     .WithReference(identity)
     .WithReference(design)
     .WithReference(runtime)
@@ -75,7 +86,6 @@ if (configuration.GetValue("Smtp4dev:Enabled", true) && FindSmtp4dev() is { } sm
         .WithUrlForEndpoint("http", url => url.DisplayText = "Mailbox");
 }
 
-// The web app (Vite) joins in task T023.
 await builder.Build().RunAsync();
 
 // smtp4dev is a .NET global tool; its launcher is a .cmd file, so start the real program it points to.

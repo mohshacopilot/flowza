@@ -1,0 +1,44 @@
+/* Layout only: colours, fonts and radii come from the theme tokens (app/theme.ts). */
+.shell {
+  min-height: 100vh;
+}
+
+.loading {
+  min-height: 100vh;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--flowza-color-border-secondary);
+}
+
+.brand {
+  font-size: var(--flowza-font-size-lg);
+}
+
+.sider {
+  border-right: 1px solid var(--flowza-color-border-secondary);
+}
+
+.content {
+  padding: 24px;
+  outline: none;
+}
+
+/* Hidden until it receives keyboard focus. */
+.skipLink {
+  position: absolute;
+  left: 8px;
+  top: -48px;
+  z-index: 1000;
+  padding: 8px 16px;
+  background: var(--flowza-color-bg-container);
+  border: 2px solid var(--flowza-color-primary);
+  border-radius: var(--flowza-border-radius);
+}
+
+.skipLink:focus {
+  top: 8px;
+}
