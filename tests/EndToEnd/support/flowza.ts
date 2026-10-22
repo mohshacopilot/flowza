@@ -87,7 +87,10 @@ export async function openUser(page: Page, username: string): Promise<void> {
 /** Clicks an access action and confirms it in the dialog (deactivate, reset password). */
 export async function confirmAction(page: Page, button: string): Promise<void> {
   await page.getByRole('region', { name: 'Access' }).getByRole('button', { name: button }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'Yes, continue' }).click();
+  const confirmButton = page.getByRole('dialog').getByRole('button', { name: 'Yes, continue' });
+  await confirmButton.click();
+  // Wait until the confirmation has fully closed (its fade-out ends), so the next step sees only what follows.
+  await expect(confirmButton).toHaveCount(0);
 }
 
 /**

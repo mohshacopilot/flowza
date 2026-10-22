@@ -33,3 +33,5 @@ appsettings.*.local.json
 Thumbs.db
 .idea/
 *.swp
+# End-to-end run: the AppHost output (tests/EndToEnd/run-e2e.ps1)
+tests/EndToEnd/logs/

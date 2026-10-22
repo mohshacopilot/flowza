@@ -157,4 +157,5 @@ jobs:
           path: |
             tests/EndToEnd/playwright-report/
             tests/EndToEnd/test-results/
+            tests/EndToEnd/logs/
           retention-days: 14

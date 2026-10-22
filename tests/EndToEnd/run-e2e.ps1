@@ -117,7 +117,8 @@ Write-Host '3. Starting the platform on the test databases'
 $env:Databases__Prefix = 'flowza_test_'
 $env:Gateway__LoginPermitLimit = '1000'
 $env:Smtp4dev__Enabled = 'false'
-$log = Join-Path $e2e 'test-results/apphost.log'
+# Not under test-results/: Playwright empties that folder when it starts.
+$log = Join-Path $e2e 'logs/apphost.log'
 New-Item -ItemType Directory -Force -Path (Split-Path $log) | Out-Null
 $appHost = Start-Process -FilePath 'dotnet' -PassThru -NoNewWindow `
     -ArgumentList @('run', '--project', $appHostProject, '--no-build', '--launch-profile', 'http') `
