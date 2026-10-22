@@ -1,8 +1,6 @@
-using System.Diagnostics.CodeAnalysis;
+using Flowza.Common.Hosting;
 using Flowza.Contracts.Identity.Events.V1;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using OpenIddict.Abstractions;
 using OpenIddict.Validation;
 using static OpenIddict.Validation.OpenIddictValidationEvents;
@@ -57,43 +55,33 @@ public sealed class RejectDeniedUsers(IUserDenyList denyList) : IOpenIddictValid
     }
 }
 
-/// <summary>Fills the deny list at start-up from the service's <see cref="IUserDenyListSource"/>, if it has one.</summary>
-internal sealed partial class UserDenyListLoader(
+/// <summary>
+/// Fills the deny list at start-up from the service's <see cref="IUserDenyListSource"/>, if it has one. A start-up
+/// step (T034): when the database is down at start it runs once it answers, so a deactivated user is never let in
+/// just because the service started during an outage; a failure is tried again.
+/// </summary>
+internal sealed class UserDenyListLoader(
     IServiceScopeFactory scopeFactory,
     IUserDenyList denyList,
-    TimeProvider timeProvider,
-    ILogger<UserDenyListLoader> logger) : IHostedService
+    TimeProvider timeProvider) : IStartupStep
 {
-    [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "A failed load must not stop the service; events keep the list current.")]
-    public async Task StartAsync(CancellationToken cancellationToken)
+    public int Order => StartupStepOrder.Data;
+
+    public string Name => "deny list";
+
+    public async Task RunAsync(CancellationToken cancellationToken)
     {
         await using var scope = scopeFactory.CreateAsyncScope();
         var sources = scope.ServiceProvider.GetServices<IUserDenyListSource>().ToList();
-        if (sources.Count == 0)
-        {
-            return;
-        }
 
         // Older than any event that may still arrive, so a newer activation event wins.
         var loadedAt = timeProvider.GetUtcNow().AddDays(-1);
-        try
+        foreach (var source in sources)
         {
-            foreach (var source in sources)
+            foreach (var userId in await source.InactiveUserIdsAsync(cancellationToken))
             {
-                foreach (var userId in await source.InactiveUserIdsAsync(cancellationToken))
-                {
-                    denyList.Deny(userId, loadedAt);
-                }
+                denyList.Deny(userId, loadedAt);
             }
         }
-        catch (Exception exception)
-        {
-            LogLoadFailed(logger, exception);
-        }
     }
-
-    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
-
-    [LoggerMessage(Level = LogLevel.Warning, Message = "The deny list could not be loaded at start-up; it fills from events")]
-    private static partial void LogLoadFailed(ILogger logger, Exception exception);
 }

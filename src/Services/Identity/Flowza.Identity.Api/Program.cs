@@ -6,7 +6,6 @@ using Flowza.Identity.Infrastructure;
 using Flowza.Identity.Infrastructure.Persistence;
 using Flowza.Identity.Infrastructure.TokenServer;
 using Flowza.Messaging;
-using Flowza.Persistence;
 using Flowza.ServiceDefaults;
 using Flowza.ServiceDefaults.Http;
 using Flowza.ServiceDefaults.Security;
@@ -56,10 +55,5 @@ if (app.Environment.IsDevelopment())
 // Small, login-protected endpoint that tells which service answered (used by Gateway and tests).
 app.MapGet("/api/v1/info", () => new { service = "identity" });
 
-if (app.Environment.IsDevelopment())
-{
-    // Development only: production applies reviewed SQL scripts (PLT-03, PL4).
-    await app.Services.MigrateDatabaseAsync<IdentityServiceDbContext>();
-}
 
 await app.RunAsync();

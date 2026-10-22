@@ -1,3 +1,4 @@
+using Flowza.Common.Hosting;
 using Flowza.Common.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Configuration;
@@ -65,7 +66,7 @@ public static class ApiSecurityExtensions
         builder.Services.TryAddSingleton(TimeProvider.System);
         builder.Services.AddSingleton<UserDenyList>();
         builder.Services.AddSingleton<IUserDenyList>(provider => provider.GetRequiredService<UserDenyList>());
-        builder.Services.AddHostedService<UserDenyListLoader>();
+        builder.Services.AddSingleton<IStartupStep, UserDenyListLoader>();
 
         // The deny list follows Identity's UserDeactivated / UserActivated events in every service.
         builder.Services.ConfigureWolverine(options => options.Discovery.IncludeAssembly(typeof(UserDenyListHandler).Assembly));

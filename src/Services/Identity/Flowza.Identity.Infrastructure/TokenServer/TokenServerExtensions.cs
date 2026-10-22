@@ -1,4 +1,5 @@
 using System.Security.Cryptography.X509Certificates;
+using Flowza.Common.Hosting;
 using Flowza.Identity.Infrastructure.AspNetIdentity;
 using Flowza.Identity.Infrastructure.Persistence;
 using Flowza.Messaging;
@@ -80,7 +81,7 @@ public static class TokenServerExtensions
 
         builder.Services.Replace(ServiceDescriptor.Scoped<ISessionRevoker, OpenIddictSessionRevoker>());
         builder.Services.Configure<ClientRegistrationOptions>(configuration.GetSection(ClientRegistrationOptions.Section));
-        builder.Services.AddHostedService<ClientRegistrationSeeder>();
+        builder.Services.AddSingleton<IStartupStep, ClientRegistrationSeeder>();
         return builder;
     }
 

@@ -23,7 +23,13 @@ public interface IServiceApp : IAsyncDisposable
     Task<IReadOnlyList<DatabaseScript>> ProductionScriptsAsync();
 }
 
-public sealed class ServiceApp<TMarker, TContext>(string name, string connectionStringName, string testDatabase, string environment = "Development")
+public sealed class ServiceApp<TMarker, TContext>(
+    string name,
+    string connectionStringName,
+    string testDatabase,
+    string environment = "Development",
+    Func<string, string>? connect = null,
+    IReadOnlyDictionary<string, string?>? settings = null)
     : WebApplicationFactory<TMarker>, IServiceApp
     where TMarker : class
     where TContext : DbContext
@@ -51,9 +57,15 @@ public sealed class ServiceApp<TMarker, TContext>(string name, string connection
 
         // Program reads its connection string while the host is being built, so it must arrive as an
         // environment variable (WebApplicationFactory settings are applied too late for that).
-        Environment.SetEnvironmentVariable($"ConnectionStrings__{connectionStringName}", TestSqlServer.ConnectionString(testDatabase));
-        Environment.SetEnvironmentVariable("ConnectionStrings__messaging-db", TestSqlServer.ConnectionString("flowza_test_messaging"));
+        var connectionString = connect ?? TestSqlServer.ConnectionString;
+        Environment.SetEnvironmentVariable($"ConnectionStrings__{connectionStringName}", connectionString(testDatabase));
+        Environment.SetEnvironmentVariable("ConnectionStrings__messaging-db", connectionString("flowza_test_messaging"));
         builder.UseEnvironment(environment);
+        foreach (var (key, value) in settings ?? new Dictionary<string, string?>())
+        {
+            builder.UseSetting(key, value);
+        }
+
         if (environment != "Development")
         {
             // What a real installation sets; log files go to a temporary folder, not into the project.
@@ -105,16 +117,21 @@ public static class ServiceApps
 
     public static string DatabaseOf(string name) => $"flowza_test_{name}";
 
-    public static IServiceApp Create(string name, string environment = "Development") => name switch
+    /// <param name="connect">How to reach a test database (default: directly; T034 tests go through a <see cref="TcpRelay"/>).</param>
+    public static IServiceApp Create(
+        string name,
+        string environment = "Development",
+        Func<string, string>? connect = null,
+        IReadOnlyDictionary<string, string?>? settings = null) => name switch
     {
         "identity" => new ServiceApp<Flowza.Identity.Api.ApiAssembly, Flowza.Identity.Infrastructure.Persistence.IdentityServiceDbContext>(
-            name, "identity-db", "flowza_test_identity", environment),
+            name, "identity-db", "flowza_test_identity", environment, connect, settings),
         "design" => new ServiceApp<Flowza.Design.Api.ApiAssembly, Flowza.Design.Infrastructure.Persistence.DesignDbContext>(
-            name, "design-db", "flowza_test_design", environment),
+            name, "design-db", "flowza_test_design", environment, connect, settings),
         "runtime" => new ServiceApp<Flowza.Runtime.Api.ApiAssembly, Flowza.Runtime.Infrastructure.Persistence.RuntimeDbContext>(
-            name, "runtime-db", "flowza_test_runtime", environment),
+            name, "runtime-db", "flowza_test_runtime", environment, connect, settings),
         "worker" => new ServiceApp<Flowza.Worker.ApiAssembly, Flowza.Worker.Persistence.WorkerDbContext>(
-            name, "worker-db", "flowza_test_worker", environment),
+            name, "worker-db", "flowza_test_worker", environment, connect, settings),
         _ => throw new ArgumentOutOfRangeException(nameof(name), name, "Unknown service."),
     };
 }

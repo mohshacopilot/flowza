@@ -55,6 +55,7 @@ RabbitMQ code, package and tests were removed ([ADR-0005](../../docs/decisions/0
 | T029 Playwright end-to-end | ✅ green locally and in CI 2026-10-22 (run 39767905954) | 15f2ed5, 26ecbd6, 13436bd |
 | T030 Setup guide, checklist, production items a–d | ✅ built; owner signs the checklist after a fresh-PC run | 5c08608 |
 | T033 Production database scripts with Wolverine's tables | ✅ | 7066449 |
+| T034 Start while the database is unreachable | ✅ | (next commit) |
 | T031 CI workflow + Dependabot | ✅ first GitHub run green 2026-10-22 | 7db9946 |
 
 **Notes from Phase 0 (decisions taken while building, within the approved plan):**
@@ -202,6 +203,29 @@ keep rolling refresh tokens and the `/connect/**` route):**
   refresh, Identity unreachable and remote sign-out (all three fail with their fix undone), plus unit tests of the
   decorator and the end-session rule.
 - Not changed (owner): rolling refresh tokens in Identity, the `/connect/**` route. Findings 3 and 7 are in T030.
+
+**Notes from T034 (start while the database is unreachable, 2026-10-22, decisions within the approved plan; no new package):**
+- **What failed before:** Wolverine's start checks its tables (since T033 automatic creation is off outside
+  Development) and stopped the host; in Development the migration before `RunAsync` threw; Identity's client
+  registration failed the start; the deny-list loader swallowed its error and left the list empty.
+- **Start-up steps (Strategy registry + Decorator):** `IStartupStep` (`Flowza.Common.Hosting`) with an order:
+  migration (Development, 0) → messaging (100) → deny list and client registrations (200). `StartupStepRunner`
+  (ServiceDefaults) runs them: when the database answers at start, during start as before (a failure still stops the
+  start: a real error); when it does not (first check at most 5 s), the host starts anyway and the steps run in the
+  background as soon as the readiness checks (database, transport) are healthy, retried with a pause of 1 s doubling
+  to at most `Flowza:Startup:MaxRetryDelay` (default 30 s). The readiness check `startup` stays unhealthy until all
+  steps ran and names the step it waits for.
+- **Wolverine** is not started by the host any more: the hosted services `AddWolverine` registers are taken out and
+  started as the "messaging" step (`DeferredHostedServices`). Hosts without the runner (the flowza tool, the messaging
+  test hosts) run the steps during start as before (`StartupStepsDuringStart`).
+- The deny-list loader now fails instead of swallowing, so it is retried: a service that starts during an outage
+  never lets a deactivated user in just because the list was empty (K7).
+- Tests: `StartWithoutDatabaseTests` (all four services, a TCP relay in front of SQL Server, closed at start, opened
+  later: live 200, ready 503 with `startup` unhealthy, then ready by itself and the migration applied; shown to fail
+  with Wolverine started by the host again) and `StartupStepRunnerTests` (order, failure at a normal start, waiting,
+  retry, stop in reverse, no steps). Checked by hand too: the Worker started in Production and in Development with an
+  unreachable database (live 200, ready 503). End-to-end suite green.
+- The guide tells installers to point the load balancer's health probe at `/health/ready`.
 
 **Notes from T033 (production database scripts, 2026-10-22, decisions within the approved plan; no new package):**
 - **How the DBA gets them:** each service writes its own scripts when started with `--database-scripts <folder>`
@@ -521,7 +545,7 @@ Decisions taken while building (within the approved plan; see [src/Web/README.md
 | PLT-03-AC2 | T009, T033 | ✅ EF Core script runs twice (T009); every service writes complete scripts for its database and for `flowza_messaging`, including Wolverine's tables, they run twice, a service starts in Production on databases prepared only by them, and outside Development nothing creates tables (T033, `PLT_03_AC2_*`, `PL4_*`) |
 | PLT-04-AC1 | T009 | ✅ SqlServer (RabbitMq removed 2026-10-22) |
 | PLT-04-AC2 | T009 | ✅ SqlServer (RabbitMq removed 2026-10-22) |
-| PLT-05-AC1 | T007 | ✅ |
+| PLT-05-AC1 | T007, T034 | ✅ also the edge case "starts while its database is unreachable": live, not ready, ready by itself once the database is back, for all four services (T034, `PLT_05_*`) |
 | PLT-05-AC2 | T009, T024 | ✅ across services via messaging (T009); error screens show the reference code (T024, `PLT_05_AC2_*`) |
 | PLT-05-AC3 | T009 | ✅ |
 | PLT-06-AC1 | T030 (manual) | 🟡 guide (README) and checklist ([checklists/setup.md](checklists/setup.md)) ready; waits for a run on a fresh PC and the owner's signature |

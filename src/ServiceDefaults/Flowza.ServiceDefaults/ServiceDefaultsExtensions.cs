@@ -1,5 +1,7 @@
 using System.Globalization;
 using System.Text.Json.Serialization;
+using Flowza.Common.Hosting;
+using Flowza.ServiceDefaults.Hosting;
 using Flowza.ServiceDefaults.Http;
 using Flowza.ServiceDefaults.Logging;
 using Microsoft.AspNetCore.Builder;
@@ -46,7 +48,13 @@ public static class ServiceDefaultsExtensions
         builder.AddFlowzaTelemetry();
 
         builder.Services.AddHealthChecks()
-            .AddCheck("self", () => HealthCheckResult.Healthy(), [LiveTag]);
+            .AddCheck("self", () => HealthCheckResult.Healthy(), [LiveTag])
+            .AddCheck<StartupStepsHealthCheck>(StartupStepRunner.HealthCheckName);
+
+        // First hosted service: the start-up steps (migration, messaging, …) wait for the database if needed (T034).
+        builder.Services.AddSingleton<StartupStepRunner>();
+        builder.Services.AddHostedService(services => services.GetRequiredService<StartupStepRunner>());
+        builder.Services.AddSingleton<IStartupStepRunner>(services => services.GetRequiredService<StartupStepRunner>());
 
         builder.Services.AddProblemDetails(options => options.CustomizeProblemDetails = context =>
             context.ProblemDetails.Extensions["reference"] = ReferenceCode.For(context.HttpContext));

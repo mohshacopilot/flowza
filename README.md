@@ -87,8 +87,8 @@ End-to-end (the whole platform in a browser, about 3 minutes; stop your running 
 
 ## Install on a server (on-premises)
 
-> **Status:** one task is still open for a complete production installation: a safe start while the database is
-> down (**T034**). Azure (Blob Storage, Key Vault, Service Bus) comes later.
+> **Status:** feature 001's production pieces are in place; the final check of the feature (T032) and a first real
+> installation are still to come. Azure (Blob Storage, Key Vault, Service Bus) comes later.
 
 ### What runs where
 Five programs (Gateway, Identity, Design, Runtime, Worker), each with its own database on SQL Server 2019 or later,
@@ -151,6 +151,11 @@ environment variables or the machine's secret store, **never** in files that go 
 
 The Gateway **refuses to start** without a key folder or with unprotected keys outside Development; Identity
 refuses without its certificates. Both say which setting is missing.
+
+**If SQL Server is down when a service starts**, the service starts anyway: `/health/live` answers 200 and
+`/health/ready` 503, with the check `startup` saying what it waits for. As soon as the database answers it finishes
+its start (messaging, loading the deny list, …) by itself and becomes ready; no restart is needed. Point the load
+balancer's health probe at `/health/ready`.
 
 ### Several Gateways
 Run them behind the load balancer with **sticky sessions** (the same browser stays on the same Gateway): a token

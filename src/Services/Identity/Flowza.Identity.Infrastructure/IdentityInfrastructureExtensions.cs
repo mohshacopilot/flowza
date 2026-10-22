@@ -39,6 +39,11 @@ public static class IdentityInfrastructureExtensions
 
         builder.Services.AddFlowzaDbContext<IdentityServiceDbContext>(connectionString);
         builder.Services.AddHealthChecks().AddSqlServer(connectionString, name: "database");
+        if (builder.Environment.IsDevelopment())
+        {
+            // Development: the service migrates its own tables, as its first start-up step (PLT-03-AC1, T034).
+            builder.Services.AddMigrationAtStartup<IdentityServiceDbContext>();
+        }
         // Wolverine is also the in-process mediator (T2, S1): it finds the use-case handlers of the application layer.
         // Their ports are resolved from one DI scope per use case (service location), so repository, credentials and
         // unit of work share one DbContext and therefore one transaction.

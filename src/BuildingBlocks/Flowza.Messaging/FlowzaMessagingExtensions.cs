@@ -12,6 +12,7 @@ using Wolverine.ErrorHandling;
 using Wolverine.Persistence;
 using Wolverine.Persistence.Durability;
 using Wolverine.SqlServer;
+using Flowza.Common.Hosting;
 using Flowza.Contracts;
 
 namespace Flowza.Messaging;
@@ -78,7 +79,9 @@ public static class FlowzaMessagingExtensions
         // them with the reviewed scripts (ProductionDatabaseScripts), and the service only checks they are there.
         var createStorage = builder.Environment.IsDevelopment();
 
-        builder.Services.AddWolverine(options =>
+        // T034: Wolverine needs its database to start, so it starts as a start-up step once the database answers
+        // (StartupStepRunner), not with the host; a service then starts while the database is down.
+        DeferredHostedServices.Defer(builder.Services, "messaging", StartupStepOrder.Messaging, () => builder.Services.AddWolverine(options =>
         {
             options.ServiceName = queue;
 
@@ -134,7 +137,7 @@ public static class FlowzaMessagingExtensions
             }
 
             configure?.Invoke(options);
-        });
+        }));
 
         // Readiness reports the transport (so mixed settings across services are visible, ADR-0005) and
         // whether its broker can be reached (PLT-05).

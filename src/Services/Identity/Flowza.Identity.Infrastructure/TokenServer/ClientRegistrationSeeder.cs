@@ -1,6 +1,6 @@
+using Flowza.Common.Hosting;
 using Flowza.ServiceDefaults.Security;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OpenIddict.Abstractions;
@@ -53,9 +53,14 @@ public static class FlowzaClients
 internal sealed partial class ClientRegistrationSeeder(
     IServiceScopeFactory scopeFactory,
     IOptions<ClientRegistrationOptions> options,
-    ILogger<ClientRegistrationSeeder> logger) : IHostedService
+    ILogger<ClientRegistrationSeeder> logger) : IStartupStep
 {
-    public async Task StartAsync(CancellationToken cancellationToken)
+    /// <summary>A start-up step (T034): when the database is down at start it runs once the database answers.</summary>
+    public int Order => StartupStepOrder.Data;
+
+    public string Name => "client registrations";
+
+    public async Task RunAsync(CancellationToken cancellationToken)
     {
         await using var scope = scopeFactory.CreateAsyncScope();
         var manager = scope.ServiceProvider.GetRequiredService<IOpenIddictApplicationManager>();
@@ -66,8 +71,6 @@ internal sealed partial class ClientRegistrationSeeder(
         await RegisterAsync(manager, ServiceDescriptor(FlowzaClients.Runtime, settings.Runtime), cancellationToken);
         await RegisterAsync(manager, ServiceDescriptor(FlowzaClients.Worker, settings.Worker), cancellationToken);
     }
-
-    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
     private static OpenIddictApplicationDescriptor? GatewayDescriptor(GatewayClientOptions gateway)
     {

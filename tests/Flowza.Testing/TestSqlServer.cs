@@ -40,4 +40,22 @@ public static class TestSqlServer
         };
         return builder.ConnectionString;
     }
+
+    /// <summary>The test SQL Server's TCP port on this machine (<c>Sql:Port</c>, default 1433), for <see cref="TcpRelay"/>.</summary>
+    public static int TcpPort => int.TryParse(s_configuration.Value["Sql:Port"], out var port) ? port : 1433;
+
+    /// <summary>
+    /// The same database, reached through a <see cref="TcpRelay"/> on <paramref name="relayPort"/>. Short timeouts and
+    /// no pool blocking, so a test sees the database "come back" as soon as the relay opens.
+    /// </summary>
+    public static string ConnectionStringVia(string database, int relayPort)
+    {
+        var builder = new SqlConnectionStringBuilder(ConnectionString(database))
+        {
+            DataSource = $"tcp:127.0.0.1,{relayPort}",
+            ConnectTimeout = 3,
+            PoolBlockingPeriod = PoolBlockingPeriod.NeverBlock,
+        };
+        return builder.ConnectionString;
+    }
 }

@@ -22,6 +22,11 @@ public static class WorkerInfrastructureExtensions
 
         builder.Services.AddFlowzaDbContext<WorkerDbContext>(connectionString);
         builder.Services.AddHealthChecks().AddSqlServer(connectionString, name: "database");
+        if (builder.Environment.IsDevelopment())
+        {
+            // Development: the service migrates its own tables, as its first start-up step (PLT-03-AC1, T034).
+            builder.Services.AddMigrationAtStartup<WorkerDbContext>();
+        }
         builder.AddFlowzaMessaging("worker", connectionString, MessageRoutes.Default, outboxDbContext: typeof(WorkerDbContext));
         return builder;
     }
