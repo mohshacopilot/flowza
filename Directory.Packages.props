@@ -36,6 +36,14 @@
     <!-- Same version as the Aspire AppHost SDK; runs the web app's Vite dev server as a program (no container). -->
     <PackageVersion Include="Aspire.Hosting.JavaScript" Version="13.6.2" />
   </ItemGroup>
+  <ItemGroup Label="Gateway">
+    <!-- YARP (MIT): approved in plan 001 PA6. -->
+    <PackageVersion Include="Yarp.ReverseProxy" Version="2.3.0" />
+    <!-- Aspire service discovery for YARP's destinations (GW6); same family and version as Microsoft.Extensions.ServiceDiscovery. -->
+    <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery.Yarp" Version="10.11.0" />
+    <!-- First-party ASP.NET Core OpenID Connect handler for the BFF login (plan 001 §9, SE1). -->
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="10.0.13" />
+  </ItemGroup>
   <ItemGroup Label="Messaging">
     <PackageVersion Include="WolverineFx" Version="6.51.2" />
     <PackageVersion Include="WolverineFx.EntityFrameworkCore" Version="6.51.2" />

@@ -45,6 +45,7 @@ RabbitMQ code, package and tests were removed ([ADR-0005](../../docs/decisions/0
 | T023 Web scaffold (web stream, merged 2026-10-22) | ✅ | 0e1526d |
 | T024 Shell | ✅ | 0e87e65 |
 | T025 API client set-up | ✅ (generation from Identity's real document still to do) | dfe38a6 |
+| T020 Gateway YARP + BFF | ✅ | (this commit) |
 | T031 CI workflow + Dependabot | ✅ first GitHub run green 2026-10-22 | 7db9946 |
 
 **Notes from Phase 0 (decisions taken while building, within the approved plan):**
@@ -175,6 +176,34 @@ architecture test that was later replaced by the policy; the code is right, the 
   CI run 39724745438 failed at "Test with coverage" (gate skipped), shown red on the pull request. The pull request was
   closed without merging and the branch deleted. **PLT-09-AC1 ✅.**
 
+**Notes from T020 (Gateway YARP + BFF, 2026-10-22, decisions within the approved plan):**
+- Packages: `Yarp.ReverseProxy` 2.3.0 (PA6), `Microsoft.AspNetCore.Authentication.OpenIdConnect` 10.0.13 (first-party,
+  plan §9 "OpenID Connect handlers") and `Microsoft.Extensions.ServiceDiscovery.Yarp` 10.11.0 (Aspire service discovery
+  for YARP, GW6; same family and version as the approved `Microsoft.Extensions.ServiceDiscovery`).
+- Routes live in the `ReverseProxy` section of `appsettings.json` (destinations `http://identity` etc., resolved by
+  service discovery in development, set as real addresses in production); the web app's catch-all route to Vite is in
+  `appsettings.Development.json` only. **Serving the built web files in production (GW2) is not done yet**: it comes with
+  the production setup (T030).
+- **The browser reaches Identity only through the Gateway** (`/connect/**`, `/account/**`, original Host kept), so the app
+  has one address. The OpenID Connect handler rewrites Identity's authorize and logout addresses to the Gateway's origin;
+  discovery, code exchange and refresh go directly to Identity (back channel). For this, Identity gets a **fixed issuer**
+  (`Identity:Issuer` = its own address, where services check tokens); the AppHost sets it.
+- The AppHost generates the Gateway's client secret at every start (`gateway-client-secret`, secret parameter) and passes
+  it to both sides, plus Identity's redirect addresses for the Gateway, so no developer keeps a secret.
+- Session cookie `flowza-session` (production `__Host-flowza-session`): HTTP-only, SameSite=Strict, Secure outside
+  Development, browser-session (not persistent), 30 minutes sliding; the 12-hour limit counts from the login time stored
+  in the cookie. It is large (it holds the tokens), so ASP.NET Core splits it into chunks, as plan §11 expected.
+- No session → 401 (never a redirect): the web app goes to `/bff/login` itself. API routes require a session at the
+  Gateway; they get the session's access token as `Authorization: Bearer` and **no cookies**; any Authorization header
+  from the browser is dropped. Identity's pages and the web app get the browser's cookies **without** the session cookie.
+- The access token is renewed when less than 2 minutes are left. Identity refusing the refresh (deactivated user,
+  revoked token) ends the session; Identity unreachable keeps it, and the service then refuses the expired token.
+- `/bff/login?returnUrl=` accepts only paths on the Gateway (no open redirect).
+- Not in T020: roles changed after login show in `/bff/user` only after the next login (access tokens get the new roles
+  at the next refresh); the deny-list check in the Gateway itself (services already refuse, T018; full check in T022);
+  forwarded-proto handling in Identity for HTTPS behind the Gateway (production setup).
+- CI no longer ignores exit code 8: the Gateway test project now has tests.
+
 **Web app stream (Phase 3, parallel worktree, 2026-10-21):**
 | Task | Status | Commit |
 |---|---|---|
@@ -284,7 +313,7 @@ Decisions taken while building (within the approved plan; see [src/Web/README.md
 ### Traceability (M1 acceptance criteria → tasks)
 | Criterion | Task(s) | Status |
 |---|---|---|
-| IAM-01-AC1 | T020, T022, T029 | ⬜ |
+| IAM-01-AC1 | T020, T022, T029 | 🟡 login, logout and refusal afterwards through the Gateway (T020, `IAM_01_AC1_*`); end-to-end in T029 |
 | IAM-01-AC2 | T014 | ✅ |
 | IAM-02-AC1 | T015, T024, T026 | 🟡 Users API needs Platform Admin (T015); web navigation by role and 403 page (T024, `IAM_02_AC1_*`); designer APIs arrive with feature 004; screens in T026 |
 | IAM-02-AC2 | T010, T015 | ✅ |
@@ -294,12 +323,12 @@ Decisions taken while building (within the approved plan; see [src/Web/README.md
 | IAM-04-AC3 | T015, T018, T022 | 🟡 Identity refuses at once (T015); deny list in every service, tested on the SQL Server transport (T018, fixed 2026-10-22); Gateway T022 |
 | IAM-04-AC4 | T010, T015 | ✅ |
 | IAM-04-AC5 | T010, T015 | ✅ |
-| IAM-05-AC1 | T007, T022 | 🟡 services (T007); Gateway part in T022 |
+| IAM-05-AC1 | T007, T022 | ✅ services (T007); Gateway refuses anonymous API calls (T020, `IAM_05_AC1_*`) |
 | IAM-06-AC1 | T012 | ✅ |
 | IAM-06-AC3 | T016, T027 | 🟡 API (T016); screen in T027 |
 | IAM-07-AC1 | T012, T029 | 🟡 service + database (T012); end-to-end in T029 |
 | IAM-07-AC2 | T021 | ⬜ |
-| IAM-08-AC1 | T020, T022 | ⬜ |
+| IAM-08-AC1 | T020, T022 | ✅ 30 minutes idle and 12 hours absolute, with a test clock (T020, `IAM_08_AC1_*`) |
 | IAM-L5-AC1 | T017 | ✅ |
 | PLT-02-AC1 | T006, T029 | 🟡 AppHost start verified by hand; end-to-end test in T029 |
 | PLT-03-AC1 | T007 | ✅ |

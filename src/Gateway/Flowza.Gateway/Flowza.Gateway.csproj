@@ -2,4 +2,12 @@
   <ItemGroup>
     <ProjectReference Include="..\..\ServiceDefaults\Flowza.ServiceDefaults\Flowza.ServiceDefaults.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Yarp.ReverseProxy" />
+    <PackageReference Include="Microsoft.Extensions.ServiceDiscovery.Yarp" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Flowza.Gateway.IntegrationTests" />
+  </ItemGroup>
 </Project>

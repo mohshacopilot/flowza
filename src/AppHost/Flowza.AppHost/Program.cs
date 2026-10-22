@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using Aspire.Hosting.ApplicationModel;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
@@ -70,13 +71,29 @@ var web = builder.AddViteApp("web", "../../Web")
         endpoint.IsProxied = false;
     });
 
-builder.AddProject<Projects.Flowza_Gateway>("gateway")
+// The Gateway logs users in as an OpenID Connect client of Identity (T020, SE1). Its client secret is new on every
+// start, so no developer has to keep one; Identity updates the client registration at start-up.
+var gatewaySecretValue = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+var gatewaySecret = builder.AddParameter("gateway-client-secret", () => gatewaySecretValue, secret: true);
+
+var gateway = builder.AddProject<Projects.Flowza_Gateway>("gateway")
     .WithReference(web)
     .WithReference(identity)
     .WithReference(design)
     .WithReference(runtime)
     .WithReference(worker)
+    .WithEnvironment("Gateway__Oidc__ClientSecret", gatewaySecret)
+    .WithEnvironment("Flowza__Identity__Authority", identity.GetEndpoint("http"))
     .WithExternalHttpEndpoints();
+
+// The browser reaches Identity's pages through the Gateway, so tokens get one fixed issuer (Identity's own address,
+// where services check them) and come back to the Gateway's addresses.
+var gatewayEndpoint = gateway.GetEndpoint("http");
+identity
+    .WithEnvironment("Identity__Issuer", identity.GetEndpoint("http"))
+    .WithEnvironment("Identity__Clients__Gateway__Secret", gatewaySecret)
+    .WithEnvironment("Identity__Clients__Gateway__RedirectUris__0", ReferenceExpression.Create($"{gatewayEndpoint}/signin-oidc"))
+    .WithEnvironment("Identity__Clients__Gateway__PostLogoutRedirectUris__0", ReferenceExpression.Create($"{gatewayEndpoint}/signout-callback-oidc"));
 
 // Development mail catcher: every email the platform sends shows up at http://localhost:5000.
 if (configuration.GetValue("Smtp4dev:Enabled", true) && FindSmtp4dev() is { } smtp4dev)

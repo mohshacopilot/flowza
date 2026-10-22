@@ -48,11 +48,9 @@ jobs:
       - name: Build (warnings are errors)
         run: dotnet build Flowza.slnx --no-restore
 
-      # Exit code 8 means "zero tests ran": Flowza.Gateway.IntegrationTests has no tests until T022.
       - name: Test with coverage
         run: >-
           dotnet test --solution Flowza.slnx --no-build
-          --ignore-exit-code 8
           --coverlet --coverlet-output-format cobertura
           --coverlet-include "[Flowza.*.Domain]*"
           --coverlet-include "[Flowza.*.Application]*"
