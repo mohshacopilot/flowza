@@ -10,8 +10,8 @@
 Spec Kit is postponed; we follow the same method by hand (see [CLAUDE.md](../../CLAUDE.md), "Feature specs: manual SDD").
 1. Implement feature 001 task by task from [tasks.md](../../specs/001-platform-foundation/tasks.md), one local commit per task.
    Done: Phase 0, Phase 1 (Identity), Phase 2 (Gateway, T020–T022 + review fixes), T023–T025 (web shell), T031 (CI).
-   Done also: T026–T027 (web screens), T028 (demo-data), T029 (end-to-end, green in CI), T030 (setup guide; checklist to sign), T033 (production database scripts), T034 (start while the database is down). Next: **T032 (verify 001)**,
-   and T032 (verify 001).
+   Done also: T026–T027 (web screens), T028 (demo-data), T029 (end-to-end, green in CI), T030 (setup guide; checklist to sign), T033 (production database scripts), T034 (start while the database is down). Next: **T032 (verify 001)**, the last
+   task of feature 001.
 2. ~~Write the specs for 002 to 006~~ **Done:** all five specs approved on 2026-10-21 (row 21).
 3. Per feature: plan → tasks → analyze → implement, building **Milestone 1** first. Next plan: **002** (`specs/002-org-hierarchy/plan.md`, skill `write-plan`). When 002 is planned, amend spec 001 for 002 C2 (a new user needs a primary unit; the first admin gets the root unit).
 
