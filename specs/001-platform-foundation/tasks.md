@@ -42,7 +42,7 @@ RabbitMQ code, package and tests were removed ([ADR-0005](../../docs/decisions/0
 | T017 Integration events | ✅ | f8d0f72 |
 | T018 Deny list (+ T036 current user) | ✅ | 6a836f8 |
 | T019 Flowza.Cli init-admin | ✅ | 077b3d2 |
-| T031 CI workflow + Dependabot | 🟡 written, first GitHub run pending | 7db9946 |
+| T031 CI workflow + Dependabot | ✅ first GitHub run green 2026-10-22 | 7db9946 |
 
 **Notes from Phase 0 (decisions taken while building, within the approved plan):**
 - Tests run on **Microsoft.Testing.Platform** (xUnit v3 4.x); coverage via **coverlet.MTP** (the coverlet extension for that platform).
@@ -164,8 +164,10 @@ architecture test that was later replaced by the policy; the code is right, the 
 - **Not in this step:** web lint/tests and Playwright (no web app yet, T023–T025, T030) and the licence check (needs a
   licence-scanning tool, which is a new library for the owner to approve).
 - Checked locally: same test and coverage commands (283 tests, 282 passed, 1 skipped; Domain + Application 89.9 %),
-  gate passes at 80 % and fails at 95 % or without a report, scripts and YAML parse. **Not yet verified:** the run on
-  GitHub's Linux machine (needs the push); PLT-09-AC1 is ✅ only after a green run there and a red run for a failure.
+  gate passes at 80 % and fails at 95 % or without a report, scripts and YAML parse.
+- **First GitHub run (2026-10-22, commit 243950f):** green in 2 min 40 s on ubuntu-24.04 with SQL Server 2019
+  (SQL start 29 s, build 21 s, tests 1 min 21 s, gate passed, coverage artifact uploaded). Flowza builds and passes
+  its tests on Linux too. PLT-09-AC1 becomes ✅ once a deliberately failing change is shown as a red run.
 
 ## Phase 0: Foundation (M1)
 | ID | Task | Spec IDs | Done when |
@@ -274,4 +276,4 @@ architecture test that was later replaced by the policy; the code is right, the 
 | PLT-06-AC1 | T030 (manual) | ⬜ |
 | PLT-07-AC1 | T028 + features 002–005 (A1) | ⬜ |
 | PLT-07-AC2 | T028 | ⬜ |
-| PLT-09-AC1 | T031 (A4) | 🟡 Workflow written (build, tests, 80 % gate); needs the first green run on GitHub and one red run |
+| PLT-09-AC1 | T031 (A4) | 🟡 Green run on GitHub (run 39723977514: build, tests, 80 % gate); still to show a failing change reported as red |
