@@ -128,6 +128,11 @@ public sealed class IdentityEventsTests(IdentityApp app) : IAsyncLifetime
         published.ShouldBeEmpty();
     }
 
+    /// <summary>
+    /// The integration events the action <b>published</b>: sent to subscribers, or with no subscriber yet (most events
+    /// wait for the Audit service). Received ones are left out: the service also listens to its own queue, so an event
+    /// of an earlier test (another actor) can arrive during this one.
+    /// </summary>
     private async Task<List<IntegrationEvent>> PublishedWhileAsync(Func<Task> action)
     {
         var session = await app.Services.TrackActivity()
@@ -136,6 +141,7 @@ public sealed class IdentityEventsTests(IdentityApp app) : IAsyncLifetime
             .ExecuteAndWaitAsync((Func<Wolverine.IMessageContext, Task>)(_ => action()));
 
         return [.. session.AllRecordsInOrder()
+            .Where(record => record.MessageEventType is MessageEventType.Sent or MessageEventType.NoRoutes)
             .Select(record => record.Envelope?.Message)
             .OfType<IntegrationEvent>()
             .DistinctBy(e => e.EventId)];
