@@ -51,7 +51,7 @@ RabbitMQ code, package and tests were removed ([ADR-0005](../../docs/decisions/0
 | Phase 2 code review fixes | ✅ | 5b6fc9f |
 | T026 Users admin screens | ✅ checked live on the running platform 2026-10-22 | 731f130, d79e680 |
 | T027 My profile + change password | ✅ checked live 2026-10-22 | d61e8da |
-| T028 Flowza.Cli demo-data | ✅ | (next commit) |
+| T028 Flowza.Cli demo-data | ✅ | f14eb15 |
 | T031 CI workflow + Dependabot | ✅ first GitHub run green 2026-10-22 | 7db9946 |
 
 **Notes from Phase 0 (decisions taken while building, within the approved plan):**
