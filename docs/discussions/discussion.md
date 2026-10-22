@@ -2,14 +2,16 @@
 
 | | |
 |---|---|
-| **Last session** | 2026-10-21, office PC: all module discussions finished; v0.1 scope approved with three milestones |
+| **Last session** | 2026-10-22, office PC: web app stream (T023–T025) and specs 002–006 merged into `main`; Phase 2 (Gateway) started |
 | **Build** | From 2026-10-21 on the **office PC** (`D:\Projects\Workflow`); the owner reviews on weekdays, full days |
-| **Git** | Nothing committed yet (owner's choice) |
+| **Git** | Local commits per task on `main`; public repository https://github.com/mohshacopilot/flowza, pushed only when the owner says so |
 
 ## What to do next
 Spec Kit is postponed; we follow the same method by hand (see [CLAUDE.md](../../CLAUDE.md), "Feature specs: manual SDD").
 1. Implement feature 001 task by task from [tasks.md](../../specs/001-platform-foundation/tasks.md), one local commit per task.
-2. ~~Write the specs for 002 to 006~~ **Done:** all five specs approved on 2026-10-21 (row 19).
+   Done: Phase 0, Phase 1 (Identity), T023–T025 (web shell), T031 (CI). Next: **Phase 2 Gateway (T020–T022)**, then
+   T026–T027 (web screens), T028–T030, T033–T034, and T032 (verify 001).
+2. ~~Write the specs for 002 to 006~~ **Done:** all five specs approved on 2026-10-21 (row 21).
 3. Per feature: plan → tasks → analyze → implement, building **Milestone 1** first. Next plan: **002** (`specs/002-org-hierarchy/plan.md`, skill `write-plan`). When 002 is planned, amend spec 001 for 002 C2 (a new user needs a primary unit; the first admin gets the root unit).
 
 In a new session, say:
@@ -40,7 +42,8 @@ module. Sections marked "design notes" go into `plan.md`, never into `spec.md`.
 | 15 | Plan 001 | ✅ Approved 2026-10-21 (PA1–PA7) | [plan.md](../../specs/001-platform-foundation/plan.md) |
 | 16 | Tasks 001 | ✅ Written and analyzed | [tasks.md](../../specs/001-platform-foundation/tasks.md) |
 | 17 | Build 001 Phase 0 (T001–T009) | ✅ Done 2026-10-21: solution, persistence, service defaults, AppHost, services, messaging on SQL Server + RabbitMQ; 143 tests pass; code review at phase end | [tasks.md](../../specs/001-platform-foundation/tasks.md) "Progress" |
-| 18 | Build 001 Phase 1 (Identity, T010–T019) | ⏳ Next | |
+| 18 | Build 001 Phase 1 (Identity, T010–T019) | ✅ Done 2026-10-21/22, plus T031 CI (green on GitHub) and the web shell T023–T025 (merged 2026-10-22); 283 .NET + 74 web tests pass | [tasks.md](../../specs/001-platform-foundation/tasks.md) "Progress" |
+| 18a | Build 001 Phase 2 (Gateway, T020–T022) | ⏳ In progress from 2026-10-22 | |
 | 19 | RabbitMQ removed from the development PC (owner, 2026-10-22) | ✅ SQL Server transport only on the PC; SQL Server topology fixed so events reach other services | [ADR-0005](../decisions/0005-message-transport-selection.md) amendment 1 |
 | 20 | Transport per deployment (owner, 2026-10-22) | ✅ **On-premises = SQL Server only, cloud = Azure Service Bus; RabbitMQ dropped and its code removed** | [ADR-0005](../decisions/0005-message-transport-selection.md) amendments 2 and 3 |
 | 21 | Specs 002–006 (ORG, EXP, APP + FRM, WF, INB + NTF) | ✅ Approved 2026-10-21; all clarifications answered "a" (002 C1–C9, 003 C1–C11, 004 C1–C13, 005 C1–C12, 006 C1–C18) | [002](../../specs/002-org-hierarchy/spec.md), [003](../../specs/003-expression-language/spec.md), [004](../../specs/004-apps-and-form-builder/spec.md), [005](../../specs/005-workflow-engine/spec.md), [006](../../specs/006-inbox-notifications/spec.md) |
