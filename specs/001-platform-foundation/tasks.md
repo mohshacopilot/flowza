@@ -167,7 +167,10 @@ architecture test that was later replaced by the policy; the code is right, the 
   gate passes at 80 % and fails at 95 % or without a report, scripts and YAML parse.
 - **First GitHub run (2026-10-22, commit 243950f):** green in 2 min 40 s on ubuntu-24.04 with SQL Server 2019
   (SQL start 29 s, build 21 s, tests 1 min 21 s, gate passed, coverage artifact uploaded). Flowza builds and passes
-  its tests on Linux too. PLT-09-AC1 becomes ✅ once a deliberately failing change is shown as a red run.
+  its tests on Linux too.
+- **Red-run check (2026-10-22):** branch `ci/red-run-demo` with one deliberately failing test, opened as pull request #5:
+  CI run 39724745438 failed at "Test with coverage" (gate skipped), shown red on the pull request. The pull request was
+  closed without merging and the branch deleted. **PLT-09-AC1 ✅.**
 
 ## Phase 0: Foundation (M1)
 | ID | Task | Spec IDs | Done when |
@@ -276,4 +279,4 @@ architecture test that was later replaced by the policy; the code is right, the 
 | PLT-06-AC1 | T030 (manual) | ⬜ |
 | PLT-07-AC1 | T028 + features 002–005 (A1) | ⬜ |
 | PLT-07-AC2 | T028 | ⬜ |
-| PLT-09-AC1 | T031 (A4) | 🟡 Green run on GitHub (run 39723977514: build, tests, 80 % gate); still to show a failing change reported as red |
+| PLT-09-AC1 | T031 (A4) | ✅ Green run on GitHub (run 39723977514: build, tests, 80 % gate); a deliberately failing test in pull request #5 was reported red (run 39724745438) and not merged |
