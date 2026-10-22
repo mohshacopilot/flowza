@@ -2,7 +2,7 @@ import { Checkbox, Typography } from 'antd';
 import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SystemRole } from '../../../shared/auth/systemRoles';
-import { roleLabel } from './roleLabel';
+import { roleLabel } from '../../../shared/auth/roleLabel';
 import { assignableRoles } from './userSchema';
 import styles from './users.module.css';
 

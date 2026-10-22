@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next';
-import { SystemRole } from '../../../shared/auth/systemRoles';
+import { SystemRole } from './systemRoles';
 
 const knownRoles = new Set<string>(Object.values(SystemRole));
 

@@ -50,6 +50,7 @@ RabbitMQ code, package and tests were removed ([ADR-0005](../../docs/decisions/0
 | T022 Gateway integration tests | ✅ | a01e964 |
 | Phase 2 code review fixes | ✅ | 5b6fc9f |
 | T026 Users admin screens | ✅ checked live on the running platform 2026-10-22 | 731f130, d79e680 |
+| T027 My profile + change password | ✅ checked live 2026-10-22 | (next commit) |
 | T031 CI workflow + Dependabot | ✅ first GitHub run green 2026-10-22 | 7db9946 |
 
 **Notes from Phase 0 (decisions taken while building, within the approved plan):**
@@ -197,6 +198,16 @@ keep rolling refresh tokens and the `/connect/**` route):**
   refresh, Identity unreachable and remote sign-out (all three fail with their fix undone), plus unit tests of the
   decorator and the end-session rule.
 - Not changed (owner): rolling refresh tokens in Identity, the `/connect/**` route. Findings 3 and 7 are in T030.
+
+**Notes from T027 (my profile + change password, 2026-10-22, decisions within the approved plan):**
+- `/me` shows the user's own details and roles read only (an admin changes them, IAM-04) and a change-password form
+  (current, new, repeat). The browser checks only what it can know (filled in, at least 10 characters, repeat equal,
+  new differs from current); "not common" and "not the username" stay the server's checks (IAM-06-AC1) and are shown
+  at the field. Only current + new password are sent; the form is emptied after a successful change.
+- `TextField` gained `type="password"` (Ant Design's `Input.Password` with its labelled show/hide button);
+  `roleLabel` moved to `shared/auth` (used by the users screens and the profile).
+- Live check (test user `t026.check`): the forced change at login, then a change on My profile; the user's own
+  session stays valid after the change (Identity's own check, no sign-out); the old password is refused at login.
 
 **Notes from T026 (users admin screens, 2026-10-22, decisions within the approved plan):**
 - **Generated client from Identity's real OpenAPI document** (closes T025's open point). Identity's user and me
@@ -401,7 +412,7 @@ Decisions taken while building (within the approved plan; see [src/Web/README.md
 | IAM-04-AC5 | T010, T015, T026 | ✅ activate button for inactive users (T026, `IAM_04_AC5_*`) |
 | IAM-05-AC1 | T007, T022 | ✅ services (T007); Gateway refuses anonymous API calls (T020, `IAM_05_AC1_*`) |
 | IAM-06-AC1 | T012 | ✅ |
-| IAM-06-AC3 | T016, T027 | 🟡 API (T016); screen in T027 |
+| IAM-06-AC3 | T016, T027 | ✅ API (T016); My profile screen with current + new password, server refusals at their field (T027, `IAM_06_AC3_*`); checked live: old password refused, new one logs in |
 | IAM-07-AC1 | T012, T026, T029 | 🟡 service + database (T012); admin unlock on screen (T026, `IAM_07_AC1_*`); end-to-end in T029 |
 | IAM-07-AC2 | T021 | ✅ password submissions limited per network address at the Gateway (`IAM_07_AC2_*`) |
 | IAM-08-AC1 | T020, T022 | ✅ 30 minutes idle and 12 hours absolute, with a test clock (T020, `IAM_08_AC1_*`) |

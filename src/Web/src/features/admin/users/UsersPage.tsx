@@ -8,7 +8,7 @@ import { describeApiError } from '../../../shared/api/errorMessages';
 import { UserStatus, type UserListItem } from '../../../shared/api/generated/identity/model';
 import { useListUsers } from '../../../shared/api/generated/identity/users/users';
 import { ApiErrorAlert } from '../../../shared/components/ApiErrorAlert';
-import { roleLabel } from './roleLabel';
+import { roleLabel } from '../../../shared/auth/roleLabel';
 import { UserStatusTag } from './UserStatusTag';
 import styles from './users.module.css';
 

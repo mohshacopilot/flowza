@@ -113,7 +113,28 @@
   },
   "profile": {
     "title": "My profile",
-    "intro": "Here you will see your profile and change your password."
+    "loading": "Loading your profile…",
+    "detailsSection": "Details",
+    "detailsHelp": "Ask a Platform Admin if any of these details need to change.",
+    "username": "Username",
+    "displayName": "Display name",
+    "email": "Email",
+    "mobile": "Mobile",
+    "noMobile": "Not given",
+    "roles": "System roles",
+    "passwordSection": "Change password",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "newPasswordHelp": "At least 10 characters. Not a common password and not your username.",
+    "confirmPassword": "Repeat the new password",
+    "changePassword": "Change password",
+    "passwordChanged": "Your password was changed. Use the new one from your next login.",
+    "validation": {
+      "currentRequired": "Enter your current password.",
+      "newTooShort": "A password has at least 10 characters.",
+      "confirmMismatch": "The two new passwords are not the same.",
+      "sameAsCurrent": "The new password must be different from the current one."
+    }
   },
   "errors": {
     "page": {
@@ -148,6 +169,12 @@
       "common": {
         "changed_by_someone_else": "Someone else changed this user in the meantime. Reload it and make your change again.",
         "version_required": "The page is out of date. Reload it and try again."
+      },
+      "passwords": {
+        "current_wrong": "The current password is not correct.",
+        "too_short": "A password has at least 10 characters.",
+        "common": "This password is too common. Choose another one.",
+        "same_as_username": "The password must not be your username."
       },
       "users": {
         "username_invalid": "A username has 3–50 characters: letters, digits, '.', '_' or '-'.",

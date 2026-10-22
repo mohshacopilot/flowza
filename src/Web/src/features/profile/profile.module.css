@@ -1,0 +1,12 @@
+.section {
+  margin-bottom: 32px;
+}
+
+.details,
+.form {
+  max-width: 560px;
+}
+
+.details {
+  margin-bottom: 8px;
+}

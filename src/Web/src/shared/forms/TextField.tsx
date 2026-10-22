@@ -9,7 +9,8 @@ interface TextFieldProps<TValues extends FieldValues> {
   extra?: string;
   required?: boolean;
   readOnly?: boolean;
-  type?: 'text' | 'email' | 'tel';
+  /** 'password' hides the value and adds Ant Design's show/hide button. */
+  type?: 'text' | 'email' | 'tel' | 'password';
   autoComplete?: string;
 }
 
@@ -30,6 +31,7 @@ export function TextField<TValues extends FieldValues>({
   const id = useId();
   const errorId = `${id}-error`;
   const extraId = `${id}-extra`;
+  const InputControl = type === 'password' ? Input.Password : Input;
   return (
     <Controller
       control={control}
@@ -47,7 +49,7 @@ export function TextField<TValues extends FieldValues>({
               : {})}
             {...(extra ? { extra: <span id={extraId}>{extra}</span> } : {})}
           >
-            <Input
+            <InputControl
               id={id}
               ref={field.ref}
               name={field.name}
