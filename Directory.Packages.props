@@ -16,7 +16,7 @@
     <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.13" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.13" />
     <!-- Same version EF Core uses; the AppHost builds connection strings with its SqlConnectionStringBuilder. -->
-    <PackageVersion Include="Microsoft.Data.SqlClient" Version="6.1.7" />
+    <PackageVersion Include="Microsoft.Data.SqlClient" Version="7.1.1" />
   </ItemGroup>
   <ItemGroup Label="Observability">
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.20.1" />
