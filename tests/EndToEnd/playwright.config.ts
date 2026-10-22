@@ -14,7 +14,10 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   timeout: 60_000,
   expect: { timeout: 10_000 },
-  reporter: [['list'], ['html', { open: 'never' }]],
+  // In CI the github reporter turns each failure into an annotation on the run (readable without the full log).
+  reporter: process.env.CI
+    ? [['list'], ['github'], ['html', { open: 'never' }]]
+    : [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL: process.env.FLOWZA_E2E_BASE_URL ?? 'http://localhost:5100',
     locale: 'en-US',

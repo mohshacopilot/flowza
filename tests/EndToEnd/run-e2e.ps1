@@ -43,6 +43,39 @@ function Test-Url([string] $url) {
     }
 }
 
+# In GitHub Actions a failure also becomes an annotation on the run, readable without opening the full log.
+function Write-CiError([string] $title, [string] $text) {
+    if (-not $env:GITHUB_ACTIONS) { return }
+    $escaped = $text.Replace('%', '%25').Replace("`r", '%0D').Replace("`n", '%0A')
+    Write-Host "::error title=$title::$escaped"
+}
+
+function Get-FileTail([string] $path, [int] $lines = 40) {
+    if (Test-Path $path) { return ((Get-Content $path -Tail $lines) -join "`n") }
+    return '(no file)'
+}
+
+# What each part of the platform answers now: the readiness answer names the failing check (database, transport).
+function Get-PlatformState {
+    $parts = foreach ($target in @(
+            @{ Name = 'gateway'; Url = "$gatewayUrl/health/ready" },
+            @{ Name = 'identity'; Url = 'http://localhost:5101/health/ready' },
+            @{ Name = 'design'; Url = 'http://localhost:5102/health/ready' },
+            @{ Name = 'runtime'; Url = 'http://localhost:5103/health/ready' },
+            @{ Name = 'worker'; Url = 'http://localhost:5104/health/ready' },
+            @{ Name = 'web'; Url = 'http://localhost:5105/' })) {
+        try {
+            $response = $http.GetAsync($target.Url).GetAwaiter().GetResult()
+            $body = $response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+            if ($body.Length -gt 400) { $body = $body.Substring(0, 400) }
+            "$($target.Name): $([int] $response.StatusCode) $body"
+        } catch {
+            "$($target.Name): no answer"
+        }
+    }
+    return ($parts -join "`n")
+}
+
 function Wait-Url([string] $name, [string] $url, [int[]] $expected, [int] $seconds = 240) {
     $deadline = (Get-Date).AddSeconds($seconds)
     while ((Get-Date) -lt $deadline) {
@@ -66,6 +99,11 @@ if ((Test-Url $gatewayUrl) -ne 0) {
 
 # The tests read the SQL password from FLOWZA_Sql__Password in CI; the AppHost reads Sql:Password.
 if ($env:FLOWZA_Sql__Password -and -not $env:Sql__Password) { $env:Sql__Password = $env:FLOWZA_Sql__Password }
+
+trap {
+    Write-CiError 'End-to-end preparation failed' $_.ToString()
+    break
+}
 
 if (-not $NoBuild) {
     Write-Host '1. Building the solution'
@@ -103,7 +141,13 @@ try {
     } finally {
         Pop-Location
     }
+} catch {
+    Write-CiError 'End-to-end run stopped' ($_.ToString() + "`n`n" + (Get-PlatformState))
+    throw
 } finally {
+    if ($exitCode -ne 0) {
+        Write-CiError 'AppHost output (end)' ((Get-FileTail $log) + "`n--- errors ---`n" + (Get-FileTail "$log.err"))
+    }
     if ($KeepRunning) {
         Write-Host "The platform keeps running on the test databases (process $($appHost.Id)); stop it with Ctrl+C in its window or Stop-Process."
     } else {
