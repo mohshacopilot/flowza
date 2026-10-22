@@ -45,7 +45,7 @@ RabbitMQ code, package and tests were removed ([ADR-0005](../../docs/decisions/0
 | T023 Web scaffold (web stream, merged 2026-10-22) | ✅ | 0e1526d |
 | T024 Shell | ✅ | 0e87e65 |
 | T025 API client set-up | ✅ (generation from Identity's real document still to do) | dfe38a6 |
-| T020 Gateway YARP + BFF | ✅ | (this commit) |
+| T020 Gateway YARP + BFF | ✅ | 1bf4cc3 |
 | T031 CI workflow + Dependabot | ✅ first GitHub run green 2026-10-22 | 7db9946 |
 
 **Notes from Phase 0 (decisions taken while building, within the approved plan):**
