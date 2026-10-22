@@ -1,0 +1,78 @@
+# Flowza CI (T031, PLT-09, tech discussion T9): every push and pull request to main is built and tested on a clean
+# Linux machine against SQL Server 2019 (constitution 6.3), and line coverage of the Domain and Application code must
+# be at least 80 % (constitution 5.6). A red run means the change is not done (DV4).
+# Web lint/tests, end-to-end tests and the licence check join when the web app exists (T023-T025).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  build-and-test:
+    name: Build, test and coverage
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up .NET (version from global.json)
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      # Throwaway SQL Server 2019 with random, masked passwords; sets FLOWZA_Sql__Password for the tests.
+      - name: Start SQL Server 2019 and create the databases
+        run: bash .github/scripts/start-sql-server.sh
+
+      - name: Restore
+        run: |
+          dotnet restore Flowza.slnx
+          dotnet tool restore
+
+      - name: Build (warnings are errors)
+        run: dotnet build Flowza.slnx --no-restore
+
+      # Exit code 8 means "zero tests ran": Flowza.Gateway.IntegrationTests has no tests until T022.
+      - name: Test with coverage
+        run: >-
+          dotnet test --solution Flowza.slnx --no-build
+          --ignore-exit-code 8
+          --coverlet --coverlet-output-format cobertura
+          --coverlet-include "[Flowza.*.Domain]*"
+          --coverlet-include "[Flowza.*.Application]*"
+
+      - name: Coverage report
+        if: ${{ !cancelled() }}
+        run: >-
+          dotnet reportgenerator
+          "-reports:TestResults/*.cobertura*.xml"
+          -targetdir:coverage
+          "-reporttypes:JsonSummary;HtmlSummary;Cobertura"
+
+      - name: Coverage gate (80 % of Domain + Application)
+        shell: pwsh
+        run: ./.github/scripts/check-coverage.ps1 -Summary coverage/Summary.json -Minimum 80
+
+      - name: Upload coverage report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 14

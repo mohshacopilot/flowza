@@ -42,6 +42,7 @@ RabbitMQ code, package and tests were removed ([ADR-0005](../../docs/decisions/0
 | T017 Integration events | ✅ | f8d0f72 |
 | T018 Deny list (+ T036 current user) | ✅ | 6a836f8 |
 | T019 Flowza.Cli init-admin | ✅ | 077b3d2 |
+| T031 CI workflow + Dependabot | 🟡 written, first GitHub run pending | (see T031 notes) |
 
 **Notes from Phase 0 (decisions taken while building, within the approved plan):**
 - Tests run on **Microsoft.Testing.Platform** (xUnit v3 4.x); coverage via **coverlet.MTP** (the coverlet extension for that platform).
@@ -147,6 +148,24 @@ architecture test that was later replaced by the policy; the code is right, the 
 - **Phase 1 verification (2026-10-21):** clean build 0 warnings; `dotnet test --solution`: 288 tests, 287 passed, 1 skipped
   (Azure Service Bus), 0 failed (exit code 8 only because `Flowza.Gateway.IntegrationTests` has no tests yet). Line
   coverage (unit + integration): Identity.Domain 97.1 %, Identity.Application 84.0 % (gate 80 %, constitution 5.6).
+
+**Notes from T031 (CI, 2026-10-22, decisions within the approved plan):**
+- `.github/workflows/ci.yml` on `ubuntu-24.04`: .NET from `global.json` → **SQL Server 2019** container
+  (`.github/scripts/start-sql-server.sh`: random SA and `flowza_app` passwords per run, masked, never stored, so **no
+  GitHub secret is needed**; databases from the same `docs/setup/create-databases.sql`) → restore → build (warnings are
+  errors) → all tests with coverlet (Domain + Application only) → ReportGenerator merge → gate
+  (`.github/scripts/check-coverage.ps1`, ≥ 80 % total line coverage; also fails when nothing was measured) → coverage
+  report uploaded as a build artifact and shown in the run summary.
+- ReportGenerator runs as a local .NET tool (`dotnet-tools.json`, 5.5.11; approved with the tests decision).
+  Its own `minimumCoverageThresholds` setting is not available in this version, hence the small gate script.
+- `--ignore-exit-code 8` because `Flowza.Gateway.IntegrationTests` has no tests until T022; remove it then.
+- Dependabot: NuGet and GitHub Actions weekly, related packages grouped (Wolverine, OpenIddict, OpenTelemetry, …);
+  npm joins with the web app (T023).
+- **Not in this step:** web lint/tests and Playwright (no web app yet, T023–T025, T030) and the licence check (needs a
+  licence-scanning tool, which is a new library for the owner to approve).
+- Checked locally: same test and coverage commands (283 tests, 282 passed, 1 skipped; Domain + Application 89.9 %),
+  gate passes at 80 % and fails at 95 % or without a report, scripts and YAML parse. **Not yet verified:** the run on
+  GitHub's Linux machine (needs the push); PLT-09-AC1 is ✅ only after a green run there and a red run for a failure.
 
 ## Phase 0: Foundation (M1)
 | ID | Task | Spec IDs | Done when |
@@ -255,4 +274,4 @@ architecture test that was later replaced by the policy; the code is right, the 
 | PLT-06-AC1 | T030 (manual) | ⬜ |
 | PLT-07-AC1 | T028 + features 002–005 (A1) | ⬜ |
 | PLT-07-AC2 | T028 | ⬜ |
-| PLT-09-AC1 | T031 (A4) | ⬜ |
+| PLT-09-AC1 | T031 (A4) | 🟡 Workflow written (build, tests, 80 % gate); needs the first green run on GitHub and one red run |

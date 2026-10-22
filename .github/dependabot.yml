@@ -1,0 +1,33 @@
+# Flowza Dependabot (T031, tech discussion T9): weekly pull requests for package and action updates.
+# Every update still needs a green CI run, and new or changed licences must stay permissive (CLAUDE.md licensing rule).
+# npm is added when the web app exists (T023).
+version: 2
+updates:
+  - package-ecosystem: nuget
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 10
+    # Packages that must move together share one pull request (a group takes a package at its first match).
+    groups:
+      wolverine:
+        patterns: ["WolverineFx*"]
+      openiddict:
+        patterns: ["OpenIddict*"]
+      aspire:
+        patterns: ["Aspire.*"]
+      opentelemetry:
+        patterns: ["OpenTelemetry*"]
+      serilog:
+        patterns: ["Serilog*"]
+      test-tools:
+        patterns: ["xunit*", "Shouldly", "coverlet*", "Respawn", "NetArchTest*", "Microsoft.AspNetCore.Mvc.Testing", "Microsoft.AspNetCore.TestHost"]
+      microsoft:
+        patterns: ["Microsoft.*", "System.*"]
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
