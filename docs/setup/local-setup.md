@@ -1,4 +1,8 @@
-# Local setup: SQL Server and RabbitMQ (owner steps O1–O3)
+# Local setup: SQL Server (owner steps O1–O4)
+
+**Since 2026-10-22 the development PC needs no RabbitMQ** (owner decision, [ADR-0005](../decisions/0005-message-transport-selection.md)
+amendment): messages go through SQL Server (`flowza_messaging`). Section 2 is kept only for a PC that wants to run
+the RabbitMQ transport tests locally; otherwise skip it.
 
 One-time setup of the development PC before the services run (see [tasks 001](../../specs/001-platform-foundation/tasks.md)).
 This will later become part of the README (PLT-06).
@@ -38,7 +42,11 @@ makes `flowza_app` the owner (`db_owner`) of each. It is safe to run again.
 
 If you create them by hand instead: same names, compatibility level 150, `flowza_app` as `db_owner` in each.
 
-## 2. RabbitMQ (native Windows install, no Docker)
+## 2. RabbitMQ (optional; native Windows install, no Docker)
+
+If you install it, keep it on this PC only: in `%APPDATA%\RabbitMQ\rabbitmq.conf` set
+`listeners.tcp.local = 127.0.0.1:5672` and `management.tcp.ip = 127.0.0.1`, create your own admin user and delete
+`guest` (`rabbitmqctl delete_user guest`).
 
 ### 2.1 Install Erlang, then RabbitMQ (needs admin rights)
 1. Open RabbitMQ's **"Erlang Version Requirements"** page and note the Erlang/OTP version supported by the
@@ -88,6 +96,9 @@ Run these **yourself** in a terminal (PowerShell or Command Prompt), replacing t
 passwords. Do not paste the passwords into chat.
 ```bat
 dotnet user-secrets set "Sql:Password" "<flowza_app SQL password>" --id flowza-dev
+```
+Only if RabbitMQ is installed (section 2); without this secret the RabbitMQ tests are skipped:
+```bat
 dotnet user-secrets set "RabbitMq:Password" "<flowza_app RabbitMQ password>" --id flowza-dev
 ```
 Check (shows the keys and values on your screen only):
@@ -108,4 +119,4 @@ Open `Flowza.slnx` in Visual Studio 2026, set **Flowza.AppHost** as the startup 
 ## 6. What to tell Claude
 Only these, never passwords:
 - SQL: login name (e.g. `flowza_app`), server `localhost`
-- RabbitMQ: user name (e.g. `flowza_app`), virtual hosts `flowza` and `flowza_test`
+- RabbitMQ (only if installed): user name (e.g. `flowza_app`), virtual hosts `flowza` and `flowza_test`

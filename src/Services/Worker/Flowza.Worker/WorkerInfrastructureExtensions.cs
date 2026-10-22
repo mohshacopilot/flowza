@@ -22,7 +22,7 @@ public static class WorkerInfrastructureExtensions
 
         builder.Services.AddFlowzaDbContext<WorkerDbContext>(connectionString);
         builder.Services.AddHealthChecks().AddSqlServer(connectionString, name: "database");
-        builder.AddFlowzaMessaging("worker", connectionString, MessageRoutes.Default);
+        builder.AddFlowzaMessaging("worker", connectionString, MessageRoutes.Default, outboxDbContext: typeof(WorkerDbContext));
         return builder;
     }
 }

@@ -50,7 +50,8 @@ public static class IdentityInfrastructureExtensions
             {
                 options.Discovery.IncludeAssembly(typeof(Application.AssemblyMarker).Assembly);
                 options.ServiceLocationPolicy = ServiceLocationPolicy.AlwaysAllowed;
-            });
+            },
+            outboxDbContext: typeof(IdentityServiceDbContext));
 
         builder.Services.AddDataProtection().SetApplicationName(DataProtectionApplicationName);
         builder.Services.AddSingleton<IConfigureOptions<KeyManagementOptions>>(provider =>

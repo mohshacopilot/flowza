@@ -22,7 +22,7 @@ public static class RuntimeInfrastructureExtensions
 
         builder.Services.AddFlowzaDbContext<RuntimeDbContext>(connectionString);
         builder.Services.AddHealthChecks().AddSqlServer(connectionString, name: "database");
-        builder.AddFlowzaMessaging("runtime", connectionString, MessageRoutes.Default);
+        builder.AddFlowzaMessaging("runtime", connectionString, MessageRoutes.Default, outboxDbContext: typeof(RuntimeDbContext));
         return builder;
     }
 }

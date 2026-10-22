@@ -41,6 +41,8 @@ module. Sections marked "design notes" go into `plan.md`, never into `spec.md`.
 | 16 | Tasks 001 | ✅ Written and analyzed | [tasks.md](../../specs/001-platform-foundation/tasks.md) |
 | 17 | Build 001 Phase 0 (T001–T009) | ✅ Done 2026-10-21: solution, persistence, service defaults, AppHost, services, messaging on SQL Server + RabbitMQ; 143 tests pass; code review at phase end | [tasks.md](../../specs/001-platform-foundation/tasks.md) "Progress" |
 | 18 | Build 001 Phase 1 (Identity, T010–T019) | ⏳ Next | |
+| 19 | RabbitMQ removed from the development PC (owner, 2026-10-22) | ✅ SQL Server transport only on the PC; SQL Server topology fixed so events reach other services | [ADR-0005](../decisions/0005-message-transport-selection.md) amendment 1 |
+| 20 | Transport per deployment (owner, 2026-10-22) | ✅ **On-premises = SQL Server only, cloud = Azure Service Bus; RabbitMQ dropped.** Open: remove the RabbitMQ code or keep it dormant | [ADR-0005](../decisions/0005-message-transport-selection.md) amendment 2 |
 
 ## 2. Key decisions made today (summary)
 Details and reasons are in each module file and ADR.

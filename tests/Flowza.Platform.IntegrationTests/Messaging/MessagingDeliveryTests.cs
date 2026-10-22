@@ -14,7 +14,8 @@ public sealed class MessagingTestGroup
 
 /// <summary>
 /// PLT-04 on both on-premises transports (ADR-0005): events are saved in the same transaction as the change,
-/// never sent for a cancelled change, wait while the receiver is down, and are handled once per EventId.
+/// never sent for a cancelled change, wait while the receiver is down, and are handled once per EventId. The
+/// RabbitMQ runs are skipped on a PC without RabbitMQ (ADR-0005 amendment); CI runs them.
 /// </summary>
 [Collection(MessagingTestGroup.Name)]
 public sealed class MessagingDeliveryTests : IAsyncLifetime
@@ -38,6 +39,7 @@ public sealed class MessagingDeliveryTests : IAsyncLifetime
     [InlineData("RabbitMq")]
     public async Task PLT_04_AC1_an_event_saved_with_its_change_reaches_the_subscriber(string transport)
     {
+        MessagingHosts.SkipUnlessAvailable(transport);
         _receiver = await MessagingHosts.StartReceiverAsync(transport, Ct);
         _sender = await MessagingHosts.StartSenderAsync(transport, Ct);
         var orderId = Guid.NewGuid();
@@ -53,6 +55,7 @@ public sealed class MessagingDeliveryTests : IAsyncLifetime
     [InlineData("RabbitMq")]
     public async Task PLT_04_AC1_an_event_from_a_failed_change_is_never_delivered(string transport)
     {
+        MessagingHosts.SkipUnlessAvailable(transport);
         _receiver = await MessagingHosts.StartReceiverAsync(transport, Ct);
         _sender = await MessagingHosts.StartSenderAsync(transport, Ct);
         var orderId = Guid.NewGuid();
@@ -71,6 +74,7 @@ public sealed class MessagingDeliveryTests : IAsyncLifetime
     [InlineData("RabbitMq")]
     public async Task PLT_04_AC1_an_event_waits_while_the_subscriber_is_down(string transport)
     {
+        MessagingHosts.SkipUnlessAvailable(transport);
         // The receiver's queue must exist before it goes down (first deployment does this).
         await MessagingHosts.StopAsync(await MessagingHosts.StartReceiverAsync(transport, Ct));
         _sender = await MessagingHosts.StartSenderAsync(transport, Ct, reset: false);
@@ -88,6 +92,7 @@ public sealed class MessagingDeliveryTests : IAsyncLifetime
     [InlineData("RabbitMq")]
     public async Task PLT_04_AC2_the_same_event_published_twice_is_handled_once(string transport)
     {
+        MessagingHosts.SkipUnlessAvailable(transport);
         _receiver = await MessagingHosts.StartReceiverAsync(transport, Ct);
         _sender = await MessagingHosts.StartSenderAsync(transport, Ct);
         var orderId = Guid.NewGuid();
@@ -106,6 +111,7 @@ public sealed class MessagingDeliveryTests : IAsyncLifetime
     [InlineData("RabbitMq")]
     public async Task PLT_05_AC2_the_trace_reference_travels_with_the_event(string transport)
     {
+        MessagingHosts.SkipUnlessAvailable(transport);
         // No test-only listener: only the services' own tracing set-up (Flowza.* and Wolverine sources) records
         // activities, so this fails if Wolverine's tracing is not registered.
         using var source = new ActivitySource("Flowza.Tests");

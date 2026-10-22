@@ -22,7 +22,7 @@ public static class DesignInfrastructureExtensions
 
         builder.Services.AddFlowzaDbContext<DesignDbContext>(connectionString);
         builder.Services.AddHealthChecks().AddSqlServer(connectionString, name: "database");
-        builder.AddFlowzaMessaging("design", connectionString, MessageRoutes.Default);
+        builder.AddFlowzaMessaging("design", connectionString, MessageRoutes.Default, outboxDbContext: typeof(DesignDbContext));
         return builder;
     }
 }

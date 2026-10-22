@@ -47,7 +47,7 @@ public sealed class ServiceApp<TMarker, TContext>(string name, string connection
         // environment variable (WebApplicationFactory settings are applied too late for that).
         Environment.SetEnvironmentVariable($"ConnectionStrings__{connectionStringName}", TestSqlServer.ConnectionString(testDatabase));
         Environment.SetEnvironmentVariable("ConnectionStrings__messaging-db", TestSqlServer.ConnectionString("flowza_test_messaging"));
-        Environment.SetEnvironmentVariable("ConnectionStrings__rabbitmq", TestRabbitMq.ConnectionString());
+        Environment.SetEnvironmentVariable("ConnectionStrings__rabbitmq", TestRabbitMq.ConnectionStringOrNull());
         builder.UseEnvironment("Development");
     }
 

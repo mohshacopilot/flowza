@@ -12,14 +12,20 @@ namespace Flowza.Platform.IntegrationTests.Messaging;
 
 /// <summary>
 /// Two small test services that talk through the real transports: "sender" publishes, "receiver" subscribes.
-/// Both keep their outbox/inbox in <c>flowza_test_worker</c> (own schemas); the SQL Server transport uses
-/// <c>flowza_test_messaging</c>, RabbitMQ the <c>flowza_test</c> virtual host.
+/// Like real services they have <b>different</b> databases (sender <c>flowza_test_worker</c>, receiver
+/// <c>flowza_test_runtime</c>, own schemas), so an event must cross from one service to another (T018 finding); the
+/// SQL Server transport uses <c>flowza_test_messaging</c>, RabbitMQ the <c>flowza_test</c> virtual host.
 /// </summary>
 internal static class MessagingHosts
 {
     public const string Sender = "msgtest_sender";
     public const string Receiver = "msgtest_receiver";
     public const string Database = "flowza_test_worker";
+    public const string ReceiverDatabase = "flowza_test_runtime";
+
+    /// <summary>RabbitMQ is optional on a developer PC (ADR-0005 amendment); its runs are skipped without it.</summary>
+    public static void SkipUnlessAvailable(string transport) =>
+        Assert.SkipWhen(transport == "RabbitMq" && !TestRabbitMq.IsConfigured, TestRabbitMq.SkipReason);
 
     private const string CreateBusinessTableSql = $"""
         IF SCHEMA_ID(N'{MessagingTestDbContext.Schema}') IS NULL EXEC(N'CREATE SCHEMA [{MessagingTestDbContext.Schema}]');
@@ -43,7 +49,8 @@ internal static class MessagingHosts
             connectionString,
             Routes,
             options => options.Discovery.DisableConventionalDiscovery(),
-            MessagingTestDbContext.EnvelopeSchema);
+            MessagingTestDbContext.EnvelopeSchema,
+            typeof(MessagingTestDbContext));
 
         var host = builder.Build();
         await using (var scope = host.Services.CreateAsyncScope())
@@ -61,7 +68,7 @@ internal static class MessagingHosts
         builder.Services.AddSingleton<ReceivedLog>();
         builder.AddFlowzaMessaging(
             Receiver,
-            TestSqlServer.ConnectionString(Database),
+            TestSqlServer.ConnectionString(ReceiverDatabase),
             Routes,
             options =>
             {
@@ -109,7 +116,7 @@ internal static class MessagingHosts
         {
             [FlowzaMessagingExtensions.TransportKey] = transport,
             [$"ConnectionStrings:{FlowzaMessagingExtensions.SqlServerTransportConnectionName}"] = TestSqlServer.ConnectionString("flowza_test_messaging"),
-            [$"ConnectionStrings:{FlowzaMessagingExtensions.RabbitMqConnectionName}"] = TestRabbitMq.ConnectionString(),
+            [$"ConnectionStrings:{FlowzaMessagingExtensions.RabbitMqConnectionName}"] = TestRabbitMq.ConnectionStringOrNull(),
             [$"ConnectionStrings:{FlowzaMessagingExtensions.AzureServiceBusConnectionName}"] = AzureServiceBusConnectionString,
         });
         return builder;

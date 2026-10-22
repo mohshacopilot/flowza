@@ -9,12 +9,15 @@
 ## Before coding: owner's one-time setup
 **Status 2026-10-21:** O1 ✅ (10 databases, compatibility 150, read-committed snapshot, `flowza_app` db_owner; verified)
 · O3 ✅ (RabbitMQ 4.4.0 / Erlang 29, vhosts `flowza` + `flowza_test`, user `flowza_app`; verified) · O2 ✅ (passwords in the `flowza-dev` user secrets via `docs/setup/set-secrets.ps1`) · O4 ✅ (smtp4dev 3.15). Still open for the owner: trust the HTTPS development certificate (`dotnet dev-certs https --trust`).
+**2026-10-22:** the owner **removed RabbitMQ** from the PC (O3 no longer needed); development uses the SQL Server
+transport only. Then decided: **on-premises = SQL Server only, cloud = Azure Service Bus, RabbitMQ dropped**; the
+RabbitMQ tests are skipped unless configured ([ADR-0005](../../docs/decisions/0005-message-transport-selection.md) amendments 1 and 2).
 
 | # | Step | Needed from |
 |---|---|---|
 | O1 | Allow SQL logins, create the SQL login (e.g. `flowza_app`) and run [docs/setup/create-databases.sql](../../docs/setup/create-databases.sql) (steps: [local-setup.md](../../docs/setup/local-setup.md) §1) | T007 |
 | O2 | Store secrets on the PC (commands will be given in T006): SQL login password, RabbitMQ password | T006 |
-| O3 | Install Erlang + RabbitMQ, enable the management plugin, create virtual hosts `flowza` and `flowza_test` and the user `flowza_app` ([local-setup.md](../../docs/setup/local-setup.md) §2). Until then the SQL Server transport is used | T008 (RabbitMQ part) |
+| O3 | *(Optional since 2026-10-22)* Install Erlang + RabbitMQ, enable the management plugin, create virtual hosts `flowza` and `flowza_test` and the user `flowza_app` ([local-setup.md](../../docs/setup/local-setup.md) §2). Only to run the RabbitMQ tests locally | T008 (RabbitMQ part) |
 | O4 | Install smtp4dev: `dotnet tool install -g Rnwood.Smtp4dev` | T006 |
 
 ## Progress
@@ -128,6 +131,11 @@ architecture test that was later replaced by the policy; the code is right, the 
   and the listener fails on `wolverine_<service>.wolverine_incoming_envelopes`.** The Phase 0 messaging tests use one
   database for sender and receiver and do not see it. The deny-list delivery test therefore runs on RabbitMQ; the
   SQL Server topology (ADR-0005) needs a decision by the main session / owner.
+  **Fixed 2026-10-22** (ADR-0005 amendment): with `SqlServer`, `flowza_messaging` is Wolverine's main store (shared
+  queues) and each service's database an ancillary store enrolled with its DbContext (outbox still in the business
+  transaction). The messaging tests now give sender and receiver different databases (they failed before the fix),
+  and the deny-list delivery test runs on SQL Server. Old `queues` tables left in the service databases by the bug are
+  unused and harmless.
 - T036 (current-user part): `HttpCurrentUser` in ServiceDefaults replaces the system user, so `CreatedBy`/`UpdatedBy`
   and event actors are the logged-in user (tested). The RabbitMQ health-check part of T036 is not done here.
 - T019: `flowza init-admin --email <address> [--username admin] [--display-name ...]` runs the Identity service's own
@@ -188,7 +196,7 @@ architecture test that was later replaced by the policy; the code is right, the 
 | T028 | **Flowza.Cli `demo-data`:** framework + demo users with the documented demo password (C5); refuses non-empty databases. Org data and reference apps are added by features 002–005 | PLT-07 (partly, see analysis A1) | `PLT_07_AC2_*`; demo users load |
 | T029 | **Playwright end-to-end:** login, forced change, admin creates user, reset, lockout, deactivation; axe accessibility checks | IAM-01, IAM-03, IAM-04, IAM-07, PLT-02, NFR-11 | e2e suite green |
 | T030 | **Setup guide** (README) + manual checklist `checklists/setup.md` (lists databases to back up) | PLT-06 | Owner signs the checklist |
-| T031 | **CI:** `.github/workflows/ci.yml` (SQL Server 2019 + RabbitMQ containers, both transports, coverage gate, web tests, e2e, licence check) + Dependabot | PLT-09 | Runs green once the owner creates the repository and allows the push |
+| T031 | **CI:** `.github/workflows/ci.yml` (SQL Server 2019 container, SQL Server transport; no RabbitMQ since 2026-10-22, coverage gate, web tests, e2e, licence check) + Dependabot | PLT-09 | Runs green once the owner creates the repository and allows the push |
 | T032 | **Verify 001:** every M1 acceptance criterion has a passing named test (or signed checklist); coverage ≥ 80%; update this file's status | All M1 IDs | Traceability table below all ✅ |
 
 ## Follow-ups from the Phase 0 review (M1)
@@ -225,7 +233,7 @@ architecture test that was later replaced by the policy; the code is right, the 
 | IAM-03-AC1 | T019, T014, T029 | 🟡 first admin + forced change tested (T019, T014); end-to-end in T029 |
 | IAM-04-AC1 | T015, T026 | 🟡 API (T015); screens in T026 |
 | IAM-04-AC2 | T015, T026 | 🟡 API + forced change (T015, T014); screens in T026 |
-| IAM-04-AC3 | T015, T018, T022 | 🟡 Identity refuses at once (T015); deny list in every service, tested on RabbitMQ (T018); Gateway T022 |
+| IAM-04-AC3 | T015, T018, T022 | 🟡 Identity refuses at once (T015); deny list in every service, tested on the SQL Server transport (T018, fixed 2026-10-22); Gateway T022 |
 | IAM-04-AC4 | T010, T015 | ✅ |
 | IAM-04-AC5 | T010, T015 | ✅ |
 | IAM-05-AC1 | T007, T022 | 🟡 services (T007); Gateway part in T022 |
@@ -238,8 +246,8 @@ architecture test that was later replaced by the policy; the code is right, the 
 | PLT-02-AC1 | T006, T029 | 🟡 AppHost start verified by hand; end-to-end test in T029 |
 | PLT-03-AC1 | T007 | ✅ |
 | PLT-03-AC2 | T009 | ✅ |
-| PLT-04-AC1 | T009 | ✅ SqlServer + RabbitMq |
-| PLT-04-AC2 | T009 | ✅ SqlServer + RabbitMq |
+| PLT-04-AC1 | T009 | ✅ SqlServer (RabbitMq dropped 2026-10-22; its tests skipped) |
+| PLT-04-AC2 | T009 | ✅ SqlServer (RabbitMq dropped 2026-10-22; its tests skipped) |
 | PLT-05-AC1 | T007 | ✅ |
 | PLT-05-AC2 | T009, T024 | 🟡 across services via messaging ✅; error screen in T024 |
 | PLT-05-AC3 | T009 | ✅ |

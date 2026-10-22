@@ -5,7 +5,6 @@ using Flowza.Identity.Domain.Users;
 using Flowza.Identity.IntegrationTests.Infrastructure;
 using Flowza.Persistence;
 using Flowza.ServiceDefaults.Security;
-using Flowza.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -33,33 +32,21 @@ public sealed class DenyListAndAuditTests(IdentityApp app) : IAsyncLifetime
     }
 
     /// <remarks>
-    /// Runs on RabbitMQ: with the SQL Server transport, Wolverine keeps each service's queue tables in that service's
-    /// own database, so events cannot reach another service yet (reported to the main session; see tasks.md T018).
+    /// Runs on the SQL Server transport (the default, and the only one on the development PC since 2026-10-22): the
+    /// event goes from Identity's outbox in <c>flowza_test_identity</c> through the shared queue tables in
+    /// <c>flowza_test_messaging</c> (T018 finding, ADR-0005 amendment).
     /// </remarks>
     [Fact]
-    public async Task IAM_04_AC3_the_UserDeactivated_event_reaches_the_services_deny_list_through_RabbitMQ()
+    public async Task IAM_04_AC3_the_UserDeactivated_event_reaches_the_services_deny_list_through_the_message_queue()
     {
-        Environment.SetEnvironmentVariable("Messaging__Transport", "RabbitMq");
-        Environment.SetEnvironmentVariable("ConnectionStrings__rabbitmq", TestRabbitMq.ConnectionString());
-        try
-        {
-            await using var rabbit = new IdentityApp();
-            var (_, admin) = await rabbit.UserWithSessionAsync("rabbit.admin", SystemRole.PlatformAdmin);
-            using var _ = admin;
-            var user = await rabbit.CreateUserAsync("deny.me");
-            var denyList = rabbit.Services.GetRequiredService<IUserDenyList>();
+        var user = await app.CreateUserAsync("deny.me");
+        var denyList = app.Services.GetRequiredService<IUserDenyList>();
 
-            await admin.Client.PostAsync(new Uri($"/api/v1/users/{user.Id}/deactivate", UriKind.Relative), null, Ct);
-            (await WaitUntilAsync(() => denyList.IsDenied(user.Id))).ShouldBeTrue("UserDeactivated should arrive through the identity queue");
+        await _admin.Client.PostAsync(new Uri($"/api/v1/users/{user.Id}/deactivate", UriKind.Relative), null, Ct);
+        (await WaitUntilAsync(() => denyList.IsDenied(user.Id))).ShouldBeTrue("UserDeactivated should arrive through the identity queue");
 
-            await admin.Client.PostAsync(new Uri($"/api/v1/users/{user.Id}/activate", UriKind.Relative), null, Ct);
-            (await WaitUntilAsync(() => !denyList.IsDenied(user.Id))).ShouldBeTrue("UserActivated should arrive too");
-        }
-        finally
-        {
-            Environment.SetEnvironmentVariable("Messaging__Transport", null);
-            Environment.SetEnvironmentVariable("ConnectionStrings__rabbitmq", null);
-        }
+        await _admin.Client.PostAsync(new Uri($"/api/v1/users/{user.Id}/activate", UriKind.Relative), null, Ct);
+        (await WaitUntilAsync(() => !denyList.IsDenied(user.Id))).ShouldBeTrue("UserActivated should arrive too");
     }
 
     [Fact]

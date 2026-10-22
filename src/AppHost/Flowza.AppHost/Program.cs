@@ -3,7 +3,8 @@ using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 
 // Flowza local orchestration (PLT-02, task T006). Starts every service, the Gateway and smtp4dev on Windows
-// without containers; SQL Server and RabbitMQ are the PC's own installations (tech discussion T9, DV1).
+// without containers; SQL Server is the PC's own installation (tech discussion T9, DV1). Messages go through SQL Server
+// (flowza_messaging); RabbitMQ is used only if Messaging:Transport says so (ADR-0005 amendment, 2026-10-22).
 // Passwords come from the "flowza-dev" user secrets (docs/setup/set-secrets.ps1); other values from appsettings.json.
 var builder = DistributedApplication.CreateBuilder(args);
 var configuration = builder.Configuration;

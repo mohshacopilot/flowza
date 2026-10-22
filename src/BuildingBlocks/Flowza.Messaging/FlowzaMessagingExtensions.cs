@@ -55,13 +55,15 @@ public static class FlowzaMessagingExtensions
     /// <param name="routes">Which services receive which events.</param>
     /// <param name="configure">Extra Wolverine settings (e.g. handler discovery in tests).</param>
     /// <param name="envelopeSchema">Schema of the outbox/inbox tables; only tests change it.</param>
+    /// <param name="outboxDbContext">The service's DbContext, whose saves carry the outbox (null: the service has none).</param>
     public static TBuilder AddFlowzaMessaging<TBuilder>(
         this TBuilder builder,
         string serviceName,
         string serviceDatabaseConnectionString,
         MessageRoutes routes,
         Action<WolverineOptions>? configure = null,
-        string envelopeSchema = EnvelopeSchema)
+        string envelopeSchema = EnvelopeSchema,
+        Type? outboxDbContext = null)
         where TBuilder : IHostApplicationBuilder
     {
         ArgumentNullException.ThrowIfNull(builder);
@@ -77,8 +79,22 @@ public static class FlowzaMessagingExtensions
             options.ServiceName = queue;
 
             // Outbox and inbox live in the service's own database, so a business change and its events are
-            // saved in one transaction (constitution 3.3).
-            options.PersistMessagesWithSqlServer(serviceDatabaseConnectionString, envelopeSchema, MessageStoreRole.Main);
+            // saved in one transaction (constitution 3.3). Wolverine keeps SQL Server queue tables in the database of
+            // its main store, so with that transport the shared messaging database is the main store (see
+            // ConfigureSqlServer) and the service's database an ancillary store enrolled with the service's DbContext
+            // (ADR-0005 amendment); the other transports use the service's database as the main store.
+            if (transport == MessageTransport.SqlServer)
+            {
+                var serviceStore = options.PersistMessagesWithSqlServer(serviceDatabaseConnectionString, envelopeSchema, MessageStoreRole.Ancillary);
+                if (outboxDbContext is not null)
+                {
+                    serviceStore.Enroll(outboxDbContext);
+                }
+            }
+            else
+            {
+                options.PersistMessagesWithSqlServer(serviceDatabaseConnectionString, envelopeSchema, MessageStoreRole.Main);
+            }
             options.UseEntityFrameworkCoreTransactions();
             options.Policies.AutoApplyTransactions();
             options.Policies.UseDurableOutboxOnAllSendingEndpoints();
@@ -147,12 +163,14 @@ public static class FlowzaMessagingExtensions
 
     private static void ConfigureSqlServer(WolverineOptions options, IConfiguration configuration, string queue, MessageRoutes routes)
     {
-        // Queues are tables in the shared flowza_messaging database; it holds no business data (ADR-0004).
+        // Queues are tables in the shared flowza_messaging database; it holds no business data (ADR-0004). It is the
+        // main store, because Wolverine creates the queue tables in the main store's database: as an ancillary store
+        // every service got its own copy of the queues in its own database and events never left it (T018 finding).
         options.UseSqlServerPersistenceAndTransport(
                 Required(configuration, SqlServerTransportConnectionName),
                 $"wolverine_{queue}",
                 "queues",
-                MessageStoreRole.Ancillary)
+                MessageStoreRole.Main)
             .AutoProvision();
 
         options.ListenToSqlServerQueue(queue);

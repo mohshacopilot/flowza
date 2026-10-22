@@ -177,7 +177,10 @@ Failed logins for **unknown** usernames publish nothing (no personal data); they
   `AzureServiceBus`, ADR-0005; one strategy class per transport, chosen once at start-up, no automatic
   fallback; an unreachable broker makes the service "not ready"), sets up
   Wolverine with the EF Core outbox, durable inbox, the MS4 retry policy and dead-letter queues, and RabbitMQ
-  conventional routing (MS5).
+  conventional routing (MS5). **SQL Server topology (ADR-0005 amendment, 2026-10-22):** Wolverine's main store is
+  `flowza_messaging` (shared queue tables in schema `queues`, the service's envelope tables in `wolverine_<service>`);
+  the service's own database is an ancillary store enrolled with its DbContext, so outbox and inbox entries still
+  commit with the business change. Other transports keep the service's database as the main store.
 - **Flowza.Persistence:** a base `DbContext` convention set: audit columns (`CreatedAt/By`, `UpdatedAt/By`)
   via a SaveChanges interceptor using `TimeProvider` and the current user; soft-delete query filter; `RowVersion`
   on aggregates; time-ordered GUID value generator in SQL Server order (D3); UTC converters.
@@ -209,7 +212,8 @@ Failed logins for **unknown** usernames publish nothing (no personal data); they
 
 ## 11. Local development and configuration
 - AppHost reads from its **user secrets**: `ConnectionStrings:Sql` parts (server `.`, SQL login, password),
-  `RabbitMq` (host, user, password); passes each service its own connection string (`flowza_<service>`).
+  `RabbitMq` (host, user, password; only when `Messaging:Transport=RabbitMq`); passes each service its own
+  connection string (`flowza_<service>`). The development PC uses `SqlServer` (no RabbitMQ since 2026-10-22).
 - smtp4dev and Vite started as programs; Aspire dashboard shows logs, traces, metrics, health.
 - First run: owner runs `docs/setup/create-databases.sql`, sets user secrets, F5 on the AppHost, then
   `flowza init-admin` (or `flowza demo-data` on empty databases).
@@ -230,8 +234,9 @@ Failed logins for **unknown** usernames publish nothing (no personal data); they
 | Architecture | NetArchTest | Domain has no EF/ASP.NET; no project references across services; Contracts has no dependencies |
 
 ## 13. CI (`.github/workflows/ci.yml`)
-Linux runner; service containers **SQL Server 2019** and **RabbitMQ**; steps: restore → build (warnings as
-errors) → create test databases → unit + integration tests (both transports) → coverage gate (80% Domain +
+Linux runner; service container **SQL Server 2019** (no RabbitMQ: on-premises = SQL Server only, cloud = Azure
+Service Bus, ADR-0005 amendment 2, 2026-10-22); steps: restore → build (warnings as
+errors) → create test databases → unit + integration tests (SQL Server transport) → coverage gate (80% Domain +
 Application) → web lint + Vitest → Playwright end-to-end (headless) → licence check of NuGet and npm
 dependencies. Dependabot weekly. Runs only after the owner allows the push to the public repository (created 2026-10-21).
 
@@ -252,7 +257,7 @@ dependencies. Dependabot weekly. Runs only after the owner allows the push to th
 | Tokens make the Gateway cookie large | Chunked cookies (built in); keep claims minimal (IDs and roles) |
 | Aspire hosting without containers needs care for SQL/RabbitMQ | Use connection-string resources; documented in the setup guide |
 | Wolverine outbox with EF Core in several DbContexts | One DbContext per service; integration tests prove rollback/delivery (PLT-04) |
-| RabbitMQ not installed yet on the PC | SQL Server transport works meanwhile (`Messaging:Transport=SqlServer`) |
+| RabbitMQ dropped (owner, 2026-10-22: on-premises = SQL Server only, cloud = Azure Service Bus) | SQL Server transport everywhere on-premises, including development and CI; RabbitMQ tests skipped unless configured |
 | Visual Studio 2026 + Aspire + Vite debugging | Verified in the first task (solution skeleton) before features |
 
 ## 16. Estimate
