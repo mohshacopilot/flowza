@@ -131,7 +131,7 @@ As a Platform Admin, I set installation-wide business settings on one screen, so
 | PLT-05 | Health ("running" / "ready") per service; one reference across services for each user action; error screens show a reference code; no personal data in logs | M1 |
 | PLT-06 | A setup guide gets a fresh machine running in under 30 minutes; it lists the databases to back up | M1 |
 | PLT-07 | A demo tool loads demo org, users and both reference apps; it refuses to run on databases that have data. Demo users share one documented demo password without forced change (C5) | M1 |
-| PLT-08 | Settings screen: installation name and logo, time zone, currency, locale, password policy, session timeouts; changes apply without restart. Technical settings stay in configuration | M3 |
+| PLT-08 | Settings screen: installation name and logo, time zone, currency, locale, password policy, session timeouts; changes apply without restart. Technical settings stay in configuration, except the mail server (SMTP) settings: the platform stores them and an admin sets them on their own screen in M1 (amended 2026-10-21 with the owner's N6 change; specified in [006](../006-inbox-notifications/spec.md), NTF-07) | M3 |
 | PLT-09 | Every pushed change is built and tested automatically, including the 80% coverage check | M1 |
 
 ## 5. Acceptance criteria
