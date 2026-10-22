@@ -51,6 +51,7 @@ RabbitMQ code, package and tests were removed ([ADR-0005](../../docs/decisions/0
 | Phase 2 code review fixes | ✅ | 5b6fc9f |
 | T026 Users admin screens | ✅ checked live on the running platform 2026-10-22 | 731f130, d79e680 |
 | T027 My profile + change password | ✅ checked live 2026-10-22 | d61e8da |
+| T028 Flowza.Cli demo-data | ✅ | (next commit) |
 | T031 CI workflow + Dependabot | ✅ first GitHub run green 2026-10-22 | 7db9946 |
 
 **Notes from Phase 0 (decisions taken while building, within the approved plan):**
@@ -198,6 +199,22 @@ keep rolling refresh tokens and the `/connect/**` route):**
   refresh, Identity unreachable and remote sign-out (all three fail with their fix undone), plus unit tests of the
   decorator and the end-session rule.
 - Not changed (owner): rolling refresh tokens in Identity, the `/connect/**` route. Findings 3 and 7 are in T030.
+
+**Notes from T028 (`flowza demo-data`, 2026-10-22, decisions within the approved plan):**
+- **Framework (Strategy + registry):** one `IDemoDataSet` per service (`HasDataAsync`, `LoadAsync`); the runner asks
+  every set first and refuses if any database has data (PLT-07-AC2), then loads them in order. Each set is one
+  transaction in its own service; there are no distributed transactions (AR1), so a failure part-way leaves the
+  earlier sets and a second run refuses (start again from empty databases). Feature 001 has one set: Identity's
+  demo users, loaded through Identity's own use case (`LoadDemoUsersCommand`; password policy, events via the
+  outbox). Features 002–005 add their sets (A1).
+- **Demo password (C5):** `Flowza-Demo-2026`, the same for all 8 demo users, no forced change; documented in
+  `docs/setup/local-setup.md` §4.1 and printed by the tool. It follows the password policy (IAM-06).
+  Owner to confirm the value; changing it is one constant (`DemoUsers.Password`) plus the document.
+- Demo users: `demo.admin` (Platform Admin), `demo.designer` (App Designer) and six users for the future org chart
+  and reference apps. Fictional names, `@demo.example` addresses (seed data only, never platform code).
+- "Has data" for Identity = any user, inactive ones too. Users are never deleted, only deactivated (C6), so they
+  carry no soft-delete filter; the soft-delete case does not exist for users.
+- Checked on the development databases: the tool refused there (they already have users) and changed nothing.
 
 **Notes from T027 (my profile + change password, 2026-10-22, decisions within the approved plan):**
 - `/me` shows the user's own details and roles read only (an admin changes them, IAM-04) and a change-password form
@@ -426,6 +443,6 @@ Decisions taken while building (within the approved plan; see [src/Web/README.md
 | PLT-05-AC2 | T009, T024 | ✅ across services via messaging (T009); error screens show the reference code (T024, `PLT_05_AC2_*`) |
 | PLT-05-AC3 | T009 | ✅ |
 | PLT-06-AC1 | T030 (manual) | ⬜ |
-| PLT-07-AC1 | T028 + features 002–005 (A1) | ⬜ |
-| PLT-07-AC2 | T028 | ⬜ |
+| PLT-07-AC1 | T028 + features 002–005 (A1) | 🟡 demo users load into empty databases (T028, `PLT_07_*`); demo org and the two reference apps come with features 002–005 |
+| PLT-07-AC2 | T028 | ✅ refuses, changing nothing, when a database has data, also an inactive user, and on a second run; every service is checked before any is loaded (`PLT_07_AC2_*`) |
 | PLT-09-AC1 | T031 (A4) | ✅ Green run on GitHub (run 39723977514: build, tests, 80 % gate); a deliberately failing test in pull request #5 was reported red (run 39724745438) and not merged |

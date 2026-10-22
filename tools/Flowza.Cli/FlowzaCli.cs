@@ -1,8 +1,10 @@
+using Flowza.Cli.DemoData;
+
 namespace Flowza.Cli;
 
 /// <summary>
 /// The <c>flowza</c> command-line tool (plan 001 PA5): installation steps that must not be web pages. Commands:
-/// <c>init-admin</c> (IAM-03, task T019); <c>demo-data</c> arrives in task T028.
+/// <c>init-admin</c> (IAM-03, task T019) and <c>demo-data</c> (PLT-07, task T028).
 /// </summary>
 public static class FlowzaCli
 {
@@ -38,8 +40,7 @@ public static class FlowzaCli
             case "init-admin":
                 return await InitAdminCommand.RunAsync(options, output, error, settings);
             case "demo-data":
-                await error.WriteLineAsync("demo-data is not available yet (task T028).");
-                return UsageError;
+                return await DemoDataCommand.RunAsync(output, error, settings);
             default:
                 await error.WriteLineAsync($"Unknown command '{args[0]}'.");
                 await WriteUsageAsync(error);
@@ -54,7 +55,8 @@ public static class FlowzaCli
         await writer.WriteLineAsync("Commands:");
         await writer.WriteLineAsync("  init-admin --email <address> [--username admin] [--display-name \"Platform Admin\"]");
         await writer.WriteLineAsync("      Creates the first Platform Admin of a new installation and prints a one-time password.");
-        await writer.WriteLineAsync("  demo-data   (task T028)");
+        await writer.WriteLineAsync("  demo-data");
+        await writer.WriteLineAsync("      Loads the demo users (one documented demo password) into EMPTY databases; refuses otherwise.");
         await writer.WriteLineAsync();
         await writer.WriteLineAsync("The database comes from ConnectionStrings__identity-db (and the message transport settings of the services),");
         await writer.WriteLineAsync("or on a developer PC from the flowza-dev user secrets (docs/setup/set-secrets.ps1).");

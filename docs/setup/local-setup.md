@@ -69,6 +69,29 @@ The web app needs **Node.js 24 LTS** (with npm) on the PC. The AppHost runs `npm
 app's Vite dev server as a program (resource `web`, http://localhost:5105); no Docker. Details and the npm
 scripts: [src/Web/README.md](../../src/Web/README.md).
 
+### 4.1 The first users: an admin, or demo data
+The databases start empty. Choose **one** of these (run in the repository folder; the tool reads the same
+`flowza-dev` user secrets as the AppHost):
+
+- **A real start:** `dotnet run --project tools/Flowza.Cli -- init-admin --email <your address>` creates the first
+  Platform Admin (`admin`) and prints a one-time password that must be changed at the first login.
+- **A demo:** `dotnet run --project tools/Flowza.Cli -- demo-data` loads the demo users. It runs **only on empty
+  databases** and refuses, changing nothing, when any database already has data (PLT-07).
+
+**Demo password (documented on purpose, C5):** every demo user logs in with `Flowza-Demo-2026` and is not asked to
+change it. Demo data is for demos and development only; never load it into a real installation.
+
+| Demo user | System roles |
+|---|---|
+| `demo.admin` | Platform Admin, User |
+| `demo.designer` | App Designer, User |
+| `priya.sharma`, `rahul.verma`, `meena.iyer`, `arjun.nair`, `kavita.rao`, `vikram.singh` | User |
+
+Their places in the demo organization and the two reference apps (HR leave, loan approval) arrive with features
+002–005. To start again from empty databases, delete the `flowza_*` development databases yourself (for example in
+SQL Server Management Studio) and run `docs/setup/create-databases.sql` again; the script creates only missing
+databases and never deletes one.
+
 ## 5. What to tell Claude
 Only these, never passwords:
 - SQL: login name (e.g. `flowza_app`), server `localhost`

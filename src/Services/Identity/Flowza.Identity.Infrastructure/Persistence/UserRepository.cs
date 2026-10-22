@@ -23,6 +23,9 @@ internal sealed class UserRepository(IdentityServiceDbContext context) : IUserRe
     public Task<bool> IsEmailTakenAsync(string normalizedEmail, Guid? exceptUserId, CancellationToken cancellationToken) =>
         context.Users.AnyAsync(u => u.NormalizedEmail == normalizedEmail && u.Id != exceptUserId, cancellationToken);
 
+    // Users are never deleted, only deactivated (C6), so every user ever created is counted.
+    public Task<bool> AnyUserAsync(CancellationToken cancellationToken) => context.Users.AnyAsync(cancellationToken);
+
     public Task<bool> AnyPlatformAdminAsync(CancellationToken cancellationToken)
     {
         var adminRoleId = SystemRole.PlatformAdmin.Id;

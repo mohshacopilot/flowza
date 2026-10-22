@@ -18,6 +18,9 @@ public interface IUserRepository
 
     Task<bool> IsEmailTakenAsync(string normalizedEmail, Guid? exceptUserId, CancellationToken cancellationToken);
 
+    /// <summary>Whether the database holds any user at all, inactive ones included (demo data, PLT-07-AC2).</summary>
+    Task<bool> AnyUserAsync(CancellationToken cancellationToken);
+
     /// <summary>Whether any user (active or not) holds Platform Admin, for the first-admin set-up (IAM-03).</summary>
     Task<bool> AnyPlatformAdminAsync(CancellationToken cancellationToken);
 
