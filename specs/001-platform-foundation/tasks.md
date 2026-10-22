@@ -42,7 +42,7 @@ RabbitMQ code, package and tests were removed ([ADR-0005](../../docs/decisions/0
 | T017 Integration events | ✅ | f8d0f72 |
 | T018 Deny list (+ T036 current user) | ✅ | 6a836f8 |
 | T019 Flowza.Cli init-admin | ✅ | 077b3d2 |
-| T031 CI workflow + Dependabot | 🟡 written, first GitHub run pending | (see T031 notes) |
+| T031 CI workflow + Dependabot | 🟡 written, first GitHub run pending | 7db9946 |
 
 **Notes from Phase 0 (decisions taken while building, within the approved plan):**
 - Tests run on **Microsoft.Testing.Platform** (xUnit v3 4.x); coverage via **coverlet.MTP** (the coverlet extension for that platform).
