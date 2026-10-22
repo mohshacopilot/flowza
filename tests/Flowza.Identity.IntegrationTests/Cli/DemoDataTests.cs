@@ -27,7 +27,7 @@ public sealed class DemoDataTests(IdentityApp app) : IAsyncLifetime
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 
     [Fact]
-    public async Task PLT_07_demo_users_load_into_an_empty_database_with_their_roles()
+    public async Task PLT_07_AC1_demo_users_load_into_an_empty_database_with_their_roles()
     {
         var (exitCode, output, error) = await RunAsync("demo-data");
 
