@@ -87,9 +87,8 @@ End-to-end (the whole platform in a browser, about 3 minutes; stop your running 
 
 ## Install on a server (on-premises)
 
-> **Status:** a complete production installation needs the production database scripts (task **T033**) and a
-> safe start while the database is down (**T034**). This section already lists every setting and decision; the
-> steps are confirmed once those tasks are done. Azure (Blob Storage, Key Vault, Service Bus) comes later.
+> **Status:** one task is still open for a complete production installation: a safe start while the database is
+> down (**T034**). Azure (Blob Storage, Key Vault, Service Bus) comes later.
 
 ### What runs where
 Five programs (Gateway, Identity, Design, Runtime, Worker), each with its own database on SQL Server 2019 or later,
@@ -104,6 +103,28 @@ dotnet publish src/Services/Identity/Flowza.Identity.Api -c Release -o publish/i
 ```
 (and the same for Design, Runtime and Worker). Publishing the Gateway copies the built web app into its `wwwroot`;
 the Gateway serves it (GW2).
+
+### Prepare the databases (the DBA)
+Outside Development no service creates or changes a table; the DBA does, with scripts the services write
+themselves (PLT-03, PL4):
+
+1. Create five empty databases on SQL Server 2019 or later: `flowza_identity`, `flowza_design`, `flowza_runtime`,
+   `flowza_worker`, `flowza_messaging` (compatibility level 150, `READ_COMMITTED_SNAPSHOT ON`; the five
+   `flowza_test_*` databases of `docs/setup/create-databases.sql` are not needed on a server). The services never
+   create tables there, so their login needs read, write and execute rights; until that is tested with such a
+   login, give it `db_owner` as in development.
+2. With the settings below in place, let each published service write its scripts (it does not connect to any
+   database for this, and Identity needs no certificates yet):
+   ```bat
+   dotnet publish\identity\Flowza.Identity.Api.dll --database-scripts scripts
+   dotnet publish\design\Flowza.Design.Api.dll --database-scripts scripts
+   dotnet publish\runtime\Flowza.Runtime.Api.dll --database-scripts scripts
+   dotnet publish\worker\Flowza.Worker.dll --database-scripts scripts
+   ```
+3. Review and run them (SSMS in SQLCMD mode, or `sqlcmd -i`): `<service>.sql` in that service's database, and
+   `<service>.messaging.sql` in `flowza_messaging`. The order between services does not matter; the scripts only add
+   what is missing, so running one twice changes nothing.
+4. After every upgrade: write the scripts with the new version and run them again before starting it.
 
 ### Settings
 Environment variables (`Section__Key`) or `appsettings.Production.json` next to each program; secrets in

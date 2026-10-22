@@ -1,3 +1,4 @@
+using JasperFx;
 using JasperFx.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -73,6 +74,10 @@ public static class FlowzaMessagingExtensions
         var transport = ReadTransport(builder.Configuration);
         var queue = MessageRoutes.QueueName(serviceName);
 
+        // PL4 (T033): only Development creates Wolverine's tables and queues by itself. Everywhere else the DBA creates
+        // them with the reviewed scripts (ProductionDatabaseScripts), and the service only checks they are there.
+        var createStorage = builder.Environment.IsDevelopment();
+
         builder.Services.AddWolverine(options =>
         {
             options.ServiceName = queue;
@@ -94,6 +99,7 @@ public static class FlowzaMessagingExtensions
             {
                 options.PersistMessagesWithSqlServer(serviceDatabaseConnectionString, envelopeSchema, MessageStoreRole.Main);
             }
+            options.AutoBuildMessageStorageOnStartup = createStorage ? AutoCreate.CreateOrUpdate : AutoCreate.None;
             options.UseEntityFrameworkCoreTransactions();
             options.Policies.AutoApplyTransactions();
             options.Policies.UseDurableOutboxOnAllSendingEndpoints();
@@ -120,7 +126,7 @@ public static class FlowzaMessagingExtensions
             switch (transport)
             {
                 case MessageTransport.SqlServer:
-                    ConfigureSqlServer(options, builder.Configuration, queue, routes);
+                    ConfigureSqlServer(options, builder.Configuration, queue, routes, createStorage);
                     break;
                 case MessageTransport.AzureServiceBus:
                     ConfigureAzureServiceBus(options, builder.Configuration, queue, routes);
@@ -154,17 +160,20 @@ public static class FlowzaMessagingExtensions
             : throw new InvalidOperationException(
                 $"Connection string '{connectionName}' is missing for the configured message transport (ADR-0005).");
 
-    private static void ConfigureSqlServer(WolverineOptions options, IConfiguration configuration, string queue, MessageRoutes routes)
+    private static void ConfigureSqlServer(WolverineOptions options, IConfiguration configuration, string queue, MessageRoutes routes, bool createQueues)
     {
         // Queues are tables in the shared flowza_messaging database; it holds no business data (ADR-0004). It is the
         // main store, because Wolverine creates the queue tables in the main store's database: as an ancillary store
         // every service got its own copy of the queues in its own database and events never left it (T018 finding).
-        options.UseSqlServerPersistenceAndTransport(
-                Required(configuration, SqlServerTransportConnectionName),
-                $"wolverine_{queue}",
-                "queues",
-                MessageStoreRole.Main)
-            .AutoProvision();
+        var sqlServer = options.UseSqlServerPersistenceAndTransport(
+            Required(configuration, SqlServerTransportConnectionName),
+            $"wolverine_{queue}",
+            "queues",
+            MessageStoreRole.Main);
+        if (createQueues)
+        {
+            sqlServer.AutoProvision();
+        }
 
         options.ListenToSqlServerQueue(queue);
         foreach (var (type, subscribers) in routes.Subscribers)

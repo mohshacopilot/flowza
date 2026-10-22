@@ -5,6 +5,7 @@ using Flowza.Identity.Api.Users;
 using Flowza.Identity.Infrastructure;
 using Flowza.Identity.Infrastructure.Persistence;
 using Flowza.Identity.Infrastructure.TokenServer;
+using Flowza.Messaging;
 using Flowza.Persistence;
 using Flowza.ServiceDefaults;
 using Flowza.ServiceDefaults.Http;
@@ -28,6 +29,12 @@ builder.AddIdentityLoginSession();
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+
+// `--database-scripts <folder>`: write the production database scripts and stop (PLT-03-AC2, PL4; T033).
+if (await app.TryWriteDatabaseScriptsAsync<IdentityServiceDbContext>("identity"))
+{
+    return;
+}
 
 app.UseFlowzaForwardedHeaders();
 app.UseFlowzaErrorHandling();

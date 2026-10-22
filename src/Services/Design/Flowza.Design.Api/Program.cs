@@ -1,5 +1,6 @@
 using Flowza.Design.Infrastructure.Persistence;
 using Flowza.Design.Infrastructure;
+using Flowza.Messaging;
 using Flowza.Persistence;
 using Flowza.ServiceDefaults;
 using Flowza.ServiceDefaults.Security;
@@ -11,6 +12,12 @@ builder.AddFlowzaApiSecurity();
 builder.AddDesignInfrastructure();
 
 var app = builder.Build();
+
+// `--database-scripts <folder>`: write the production database scripts and stop (PLT-03-AC2, PL4; T033).
+if (await app.TryWriteDatabaseScriptsAsync<DesignDbContext>("design"))
+{
+    return;
+}
 
 app.UseFlowzaErrorHandling();
 app.UseAuthentication();

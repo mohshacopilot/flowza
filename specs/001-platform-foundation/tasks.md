@@ -54,6 +54,7 @@ RabbitMQ code, package and tests were removed ([ADR-0005](../../docs/decisions/0
 | T028 Flowza.Cli demo-data | ✅ | f14eb15 |
 | T029 Playwright end-to-end | ✅ green locally and in CI 2026-10-22 (run 39767905954) | 15f2ed5, 26ecbd6, 13436bd |
 | T030 Setup guide, checklist, production items a–d | ✅ built; owner signs the checklist after a fresh-PC run | 5c08608 |
+| T033 Production database scripts with Wolverine's tables | ✅ | (next commit) |
 | T031 CI workflow + Dependabot | ✅ first GitHub run green 2026-10-22 | 7db9946 |
 
 **Notes from Phase 0 (decisions taken while building, within the approved plan):**
@@ -201,6 +202,31 @@ keep rolling refresh tokens and the `/connect/**` route):**
   refresh, Identity unreachable and remote sign-out (all three fail with their fix undone), plus unit tests of the
   decorator and the end-session rule.
 - Not changed (owner): rolling refresh tokens in Identity, the `/connect/**` route. Findings 3 and 7 are in T030.
+
+**Notes from T033 (production database scripts, 2026-10-22, decisions within the approved plan; no new package):**
+- **How the DBA gets them:** each service writes its own scripts when started with `--database-scripts <folder>`
+  and stops (no database connection; Identity uses throwaway keys for this, a normal start still needs its
+  certificates). With the SQL Server transport a service has tables in two databases, so two files:
+  `<service>.sql` (EF Core's idempotent migration script, then Wolverine's outbox, inbox and deduplication in schema
+  `wolverine`) and `<service>.messaging.sql` (its node tables in `wolverine_<service>` and the queue tables in the
+  shared schema `queues`). Code: `Flowza.Messaging/ProductionDatabaseScripts.cs`, one line in each Program.
+- **Wolverine's own tooling:** its schema library (Weasel) writes the SQL from the stores Wolverine builds, in
+  "create if missing" style (never drop-then-create), so the scripts run twice without harm. The queue table
+  definitions are internal to Wolverine and read by name; a Wolverine update that renames them fails with a clear
+  message, and the tests below fail too.
+- **Outside Development nothing creates tables:** `AutoBuildMessageStorageOnStartup = None` and no `AutoProvision()`
+  of the SQL Server queues (EF migrations already ran in Development only). Azure Service Bus keeps creating its
+  topics and subscriptions (no DBA involved; revisited with the cloud work).
+- **Upgrades:** EF changes are covered by the idempotent migration script; a future Wolverine version that changes
+  an existing table's columns would need a change script (Weasel can compute it against a live database); noted for
+  when Wolverine is updated.
+- Tests (`Flowza.Platform.IntegrationTests/Services/ProductionDatabaseScriptsTests`): every service's scripts on
+  emptied schemas (tables, procedures, types) create all its tables and run twice; Design, Runtime and Worker start
+  in Production on databases prepared only by the scripts (Identity would need its certificates in the machine
+  store); in Production a service creates no table. Both checks (auto-create on, queues left out) were shown to fail.
+  Also run by hand: all four services wrote their scripts in Production with unreachable connection strings.
+- The guide's "Prepare the databases (the DBA)" section uses it. The services' login is documented as needing only
+  read, write and execute; not yet tested with such a login, so the guide still says `db_owner` until then.
 
 **Notes from T030 (setup guide + production items, 2026-10-22; owner decisions the same day):**
 - **Guide:** `README.md` (new): development PC in seven steps with the checklist
@@ -492,7 +518,7 @@ Decisions taken while building (within the approved plan; see [src/Web/README.md
 | IAM-L5-AC1 | T017 | ✅ |
 | PLT-02-AC1 | T006, T029 | ✅ one command (`run-e2e.ps1` → the AppHost) starts every service and the web app on Windows without containers, and the app with its login opens at one address (T029, `PLT_02_AC1_*`). The mail catcher is switched off in that run; with it the AppHost is started by hand (T006) |
 | PLT-03-AC1 | T007 | ✅ |
-| PLT-03-AC2 | T009 | ✅ |
+| PLT-03-AC2 | T009, T033 | ✅ EF Core script runs twice (T009); every service writes complete scripts for its database and for `flowza_messaging`, including Wolverine's tables, they run twice, a service starts in Production on databases prepared only by them, and outside Development nothing creates tables (T033, `PLT_03_AC2_*`, `PL4_*`) |
 | PLT-04-AC1 | T009 | ✅ SqlServer (RabbitMq removed 2026-10-22) |
 | PLT-04-AC2 | T009 | ✅ SqlServer (RabbitMq removed 2026-10-22) |
 | PLT-05-AC1 | T007 | ✅ |

@@ -1,6 +1,7 @@
 using System.Security.Cryptography.X509Certificates;
 using Flowza.Identity.Infrastructure.AspNetIdentity;
 using Flowza.Identity.Infrastructure.Persistence;
+using Flowza.Messaging;
 using Flowza.ServiceDefaults.Security;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -95,6 +96,13 @@ public static class TokenServerExtensions
         {
             // Self-signed certificates kept in the developer's certificate store (T013 "development signing keys").
             options.AddDevelopmentEncryptionCertificate().AddDevelopmentSigningCertificate();
+            return;
+        }
+
+        if (ProductionDatabaseScripts.RequestedFolder(configuration) is not null)
+        {
+            // Only writing the database scripts (T033): nothing is signed, so the DBA needs no certificates for it.
+            options.AddEphemeralEncryptionKey().AddEphemeralSigningKey();
             return;
         }
 
