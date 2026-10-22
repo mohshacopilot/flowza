@@ -48,7 +48,7 @@ RabbitMQ code, package and tests were removed ([ADR-0005](../../docs/decisions/0
 | T020 Gateway YARP + BFF | ✅ | 1bf4cc3 |
 | T021 Gateway protection | ✅ | 69a904a |
 | T022 Gateway integration tests | ✅ | a01e964 |
-| Phase 2 code review fixes | ✅ | (this commit) |
+| Phase 2 code review fixes | ✅ | 5b6fc9f |
 | T031 CI workflow + Dependabot | ✅ first GitHub run green 2026-10-22 | 7db9946 |
 
 **Notes from Phase 0 (decisions taken while building, within the approved plan):**
