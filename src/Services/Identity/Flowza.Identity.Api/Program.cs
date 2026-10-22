@@ -7,11 +7,14 @@ using Flowza.Identity.Infrastructure.Persistence;
 using Flowza.Identity.Infrastructure.TokenServer;
 using Flowza.Persistence;
 using Flowza.ServiceDefaults;
+using Flowza.ServiceDefaults.Http;
 using Flowza.ServiceDefaults.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddFlowzaServiceDefaults();
+// Behind the Gateway (and a load balancer): trust their X-Forwarded headers, so Identity sees https (T030 item b).
+builder.AddFlowzaForwardedHeaders();
 builder.AddIdentityInfrastructure();
 builder.AddIdentityTokenServer();
 
@@ -26,6 +29,7 @@ builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
+app.UseFlowzaForwardedHeaders();
 app.UseFlowzaErrorHandling();
 app.UseIdentityLoginPages();
 app.UseAuthentication();

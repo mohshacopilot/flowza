@@ -53,6 +53,7 @@ RabbitMQ code, package and tests were removed ([ADR-0005](../../docs/decisions/0
 | T027 My profile + change password | ✅ checked live 2026-10-22 | d61e8da |
 | T028 Flowza.Cli demo-data | ✅ | f14eb15 |
 | T029 Playwright end-to-end | ✅ green locally and in CI 2026-10-22 (run 39767905954) | 15f2ed5, 26ecbd6, 13436bd |
+| T030 Setup guide, checklist, production items a–d | ✅ built; owner signs the checklist after a fresh-PC run | (next commit) |
 | T031 CI workflow + Dependabot | ✅ first GitHub run green 2026-10-22 | 7db9946 |
 
 **Notes from Phase 0 (decisions taken while building, within the approved plan):**
@@ -200,6 +201,31 @@ keep rolling refresh tokens and the `/connect/**` route):**
   refresh, Identity unreachable and remote sign-out (all three fail with their fix undone), plus unit tests of the
   decorator and the end-session rule.
 - Not changed (owner): rolling refresh tokens in Identity, the `/connect/**` route. Findings 3 and 7 are in T030.
+
+**Notes from T030 (setup guide + production items, 2026-10-22; owner decisions the same day):**
+- **Guide:** `README.md` (new): development PC in seven steps with the checklist
+  [checklists/setup.md](checklists/setup.md) for PLT-06-AC1 (timed run on a fresh PC, owner signs); "Install on a
+  server" lists every production setting, several Gateways, and what to back up. It says plainly that a complete
+  production installation also needs T033 (database scripts) and T034 (start while the database is down).
+- **(a) Session keys (owner: on-premises now, Azure Blob + Key Vault later with its two packages; refuse to start
+  without keys):** `Gateway:DataProtection` = `KeysFolder` (a file share for several Gateways) + `Protection`
+  `Certificate` (any system, several Gateways) or `Dpapi` (one Windows server). Outside Development a missing folder
+  or unprotected keys stop the Gateway at start-up with a clear message. The certificate is found by the Gateway
+  itself (CurrentUser\My, then LocalMachine\My, with private key): Data Protection's own lookup accepts only
+  certificates the machine trusts, and installations often use a self-signed or internal one (found by the tests).
+- **(b) Proxies:** `ForwardedHeaders:KnownProxies` / `KnownNetworks` / `ForwardLimit` in ServiceDefaults, used by the
+  Gateway (load balancer in front) and Identity (the Gateway in front); first middleware, before HTTPS redirection
+  and HSTS; only listed senders are believed. The Gateway warns at start-up when `AllowedHosts` is `*` outside
+  Development; the guide asks for the host name.
+- **(c) Several Gateways:** sticky sessions and one shared key folder, in the guide.
+- **(d) GW2 (owner: with dotnet publish):** publishing the Gateway copies `src/Web/dist` into its `wwwroot`; outside
+  Development the Gateway serves it: files under /assets cached for a year (hashed names), `index.html` with
+  `no-cache` for every other non-file path, and /api, /bff answer 404 ProblemDetails instead of the app.
+- Tests (`Flowza.Gateway.IntegrationTests/Production`): a Gateway in Production mode with a test certificate:
+  shared keys between two Gateways, keys encrypted on disk, refusal without keys, https and client address only
+  from the known proxy (also for the login rate limit), the web app and its 404s; plus rule unit tests. Both checks
+  (forwarded headers off, /api fallback off) were shown to fail. Identity's forwarded-headers line uses the same
+  tested code; it is not tested on its own.
 
 **Notes from T029 (end-to-end tests, 2026-10-22, decisions within the approved plan; approved libraries only):**
 - **How it runs (TE5):** `tests/EndToEnd/run-e2e.ps1` builds, empties the `flowza_test_*` databases
@@ -472,7 +498,7 @@ Decisions taken while building (within the approved plan; see [src/Web/README.md
 | PLT-05-AC1 | T007 | ✅ |
 | PLT-05-AC2 | T009, T024 | ✅ across services via messaging (T009); error screens show the reference code (T024, `PLT_05_AC2_*`) |
 | PLT-05-AC3 | T009 | ✅ |
-| PLT-06-AC1 | T030 (manual) | ⬜ |
+| PLT-06-AC1 | T030 (manual) | 🟡 guide (README) and checklist ([checklists/setup.md](checklists/setup.md)) ready; waits for a run on a fresh PC and the owner's signature |
 | PLT-07-AC1 | T028 + features 002–005 (A1) | 🟡 demo users load into empty databases (T028, `PLT_07_*`); demo org and the two reference apps come with features 002–005 |
 | PLT-07-AC2 | T028 | ✅ refuses, changing nothing, when a database has data, also an inactive user, and on a second run; every service is checked before any is loaded (`PLT_07_AC2_*`) |
 | PLT-09-AC1 | T031 (A4) | ✅ Green run on GitHub (run 39723977514: build, tests, 80 % gate); a deliberately failing test in pull request #5 was reported red (run 39724745438) and not merged |

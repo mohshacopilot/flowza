@@ -1,7 +1,7 @@
 # Local setup: SQL Server (owner steps O1, O2, O4)
 
 One-time setup of the development PC before the services run (see [tasks 001](../../specs/001-platform-foundation/tasks.md)).
-This will later become part of the README (PLT-06).
+The setup guide in the [README](../../README.md) (PLT-06) links here for the SQL Server steps.
 
 **No message broker is needed.** Messages between the services go through SQL Server (`flowza_messaging`); on-premises
 installations use SQL Server only and the cloud uses Azure Service Bus. RabbitMQ was dropped and its code removed

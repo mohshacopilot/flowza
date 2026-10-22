@@ -35,3 +35,8 @@ Thumbs.db
 *.swp
 # End-to-end run: the AppHost output (tests/EndToEnd/run-e2e.ps1)
 tests/EndToEnd/logs/
+
+# Published programs (README, "Install on a server")
+publish/
+# Daily log files of a service started outside Development (e.g. by tests)
+src/**/logs/

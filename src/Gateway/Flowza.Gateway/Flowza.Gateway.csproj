@@ -10,4 +10,13 @@
   <ItemGroup>
     <InternalsVisibleTo Include="Flowza.Gateway.IntegrationTests" />
   </ItemGroup>
+
+  <!-- GW2 (T030 item d): dotnet publish takes the built web app (npm run build in src/Web) into wwwroot. Only the
+       published Gateway serves it; a normal build and Development (Vite) are not affected. -->
+  <ItemGroup Condition="Exists('$(MSBuildThisFileDirectory)..\..\Web\dist\index.html')">
+    <ResolvedFileToPublish Include="$(MSBuildThisFileDirectory)..\..\Web\dist\**\*">
+      <RelativePath>wwwroot\%(RecursiveDir)%(Filename)%(Extension)</RelativePath>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </ResolvedFileToPublish>
+  </ItemGroup>
 </Project>

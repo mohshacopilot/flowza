@@ -37,8 +37,8 @@ public static class GatewaySessionExtensions
         // HTTP only in development (owner decision SE7 amendment); Secure cookies everywhere else.
         var securePolicy = isDevelopment ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
 
-        // The session cookie is encrypted with Data Protection; the keys stay with the Gateway (no Gateway database).
-        builder.Services.AddDataProtection().SetApplicationName("Flowza.Gateway");
+        // The session cookie is encrypted with Data Protection; where the keys live is set per installation (T030).
+        builder.AddGatewayDataProtection();
 
         builder.Services.TryAddSingleton(TimeProvider.System);
         builder.Services.AddSingleton<OidcTokenRefresher>();

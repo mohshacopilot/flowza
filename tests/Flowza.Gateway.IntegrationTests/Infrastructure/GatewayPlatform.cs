@@ -142,7 +142,7 @@ public sealed class GatewayPlatform : IAsyncLifetime
     }
 
     /// <summary>TestServer has no client address; tests set one per browser with a header (test-only middleware).</summary>
-    private sealed class TestRemoteAddress : IStartupFilter
+    internal sealed class TestRemoteAddress : IStartupFilter
     {
         public const string HeaderName = "X-Test-Remote-Address";
 
