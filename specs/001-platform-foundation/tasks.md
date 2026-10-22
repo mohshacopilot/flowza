@@ -48,6 +48,7 @@ RabbitMQ code, package and tests were removed ([ADR-0005](../../docs/decisions/0
 | T020 Gateway YARP + BFF | ✅ | 1bf4cc3 |
 | T021 Gateway protection | ✅ | 69a904a |
 | T022 Gateway integration tests | ✅ | a01e964 |
+| Phase 2 code review fixes | ✅ | (this commit) |
 | T031 CI workflow + Dependabot | ✅ first GitHub run green 2026-10-22 | 7db9946 |
 
 **Notes from Phase 0 (decisions taken while building, within the approved plan):**
@@ -177,6 +178,24 @@ architecture test that was later replaced by the policy; the code is right, the 
 - **Red-run check (2026-10-22):** branch `ci/red-run-demo` with one deliberately failing test, opened as pull request #5:
   CI run 39724745438 failed at "Test with coverage" (gate skipped), shown red on the pull request. The pull request was
   closed without merging and the branch deleted. **PLT-09-AC1 ✅.**
+
+**Phase 2 code review fixes (2026-10-22; owner: fix 1, 2 Gateway side, 4, 5, 6 and the test gaps; 3 and 7 to T030;
+keep rolling refresh tokens and the `/connect/**` route):**
+- **1 Idle timeout:** ASP.NET Core renews a sliding cookie only after half its lifetime, so sessions ended after about
+  17 idle minutes. The cookie is now re-issued on requests at least 1 minute apart (`CheckSlidingExpiration`).
+- **2 Refresh:** `SingleFlightTokenRefresher` (Decorator around the real refresher): a refresh token is redeemed once;
+  parallel requests share the refresh, and a request that still carries the old token (answer lost or cancelled) gets
+  the same answer for 15 minutes instead of a second redemption, which Identity would treat as replay and revoke the
+  login. The refresh runs with its own 10-second timeout, not the browser's request.
+- **4 + 5 Ending the session:** only a `WWW-Authenticate: Bearer error="invalid_token"` answer ends it (OpenIddict's
+  answer for revoked, deny-listed or invalid tokens), and never when the refresh failed because Identity was
+  unreachable. The logic moved to `Session/SessionEnding.cs`.
+- **6 Remote sign-out:** `/signout-oidc` (front-channel logout, unused) answers 404, so another site cannot clear the
+  session cookie.
+- Tests: the refresh test checks that the new token is forwarded and stored; new tests for early idle, parallel
+  refresh, Identity unreachable and remote sign-out (all three fail with their fix undone), plus unit tests of the
+  decorator and the end-session rule.
+- Not changed (owner): rolling refresh tokens in Identity, the `/connect/**` route. Findings 3 and 7 are in T030.
 
 **Notes from T022 (Gateway integration tests, 2026-10-22):**
 - **Owner decision (amends PA4, plan §5.4):** the Gateway keeps no deny list of its own. A YARP response transform on
@@ -321,7 +340,7 @@ Decisions taken while building (within the approved plan; see [src/Web/README.md
 |---|---|---|---|
 | T028 | **Flowza.Cli `demo-data`:** framework + demo users with the documented demo password (C5); refuses non-empty databases. Org data and reference apps are added by features 002–005 | PLT-07 (partly, see analysis A1) | `PLT_07_AC2_*`; demo users load |
 | T029 | **Playwright end-to-end:** login, forced change, admin creates user, reset, lockout, deactivation; axe accessibility checks | IAM-01, IAM-03, IAM-04, IAM-07, PLT-02, NFR-11 | e2e suite green |
-| T030 | **Setup guide** (README) + manual checklist `checklists/setup.md` (lists databases to back up) | PLT-06 | Owner signs the checklist |
+| T030 | **Setup guide** (README) + manual checklist `checklists/setup.md` (lists databases to back up). **Production setup items from the phase 2 review (owner, 2026-10-22):** (a) the Gateway's Data Protection keys persisted and shared (file share + DPAPI/certificate on-premises, Blob + Key Vault on Azure), so restarts and several Gateways keep sessions; (b) forwarded headers with known proxies before HSTS/HTTPS redirection, a concrete `AllowedHosts`, and forwarded-proto for Identity, so login works behind a TLS-terminating load balancer and rate limits see the client address; (c) several Gateways need sticky sessions (the shared refresh answers are per instance); (d) serve the built web files (GW2) | PLT-06, SE7, GW2–GW3 | Owner signs the checklist |
 | T031 | **CI:** `.github/workflows/ci.yml` (SQL Server 2019 container, SQL Server transport; no RabbitMQ since 2026-10-22, coverage gate, web tests, e2e, licence check) + Dependabot | PLT-09 | Runs green once the owner creates the repository and allows the push |
 | T032 | **Verify 001:** every M1 acceptance criterion has a passing named test (or signed checklist); coverage ≥ 80%; update this file's status | All M1 IDs | Traceability table below all ✅ |
 
@@ -359,7 +378,7 @@ Decisions taken while building (within the approved plan; see [src/Web/README.md
 | IAM-03-AC1 | T019, T014, T029 | 🟡 first admin + forced change tested (T019, T014); end-to-end in T029 |
 | IAM-04-AC1 | T015, T026 | 🟡 API (T015); screens in T026 |
 | IAM-04-AC2 | T015, T026 | 🟡 API + forced change (T015, T014); screens in T026 |
-| IAM-04-AC3 | T015, T018, T022 | ✅ Identity refuses at once (T015); deny list in every service on the SQL Server transport (T018); through the Gateway the next call is refused in under 1 s and the session ends (T022, `IAM_04_AC3_*`) |
+| IAM-04-AC3 | T015, T018, T022 | ✅ Identity refuses at once (T015); deny list in every service on the SQL Server transport (T018); through the Gateway (to Identity's API) the next call is refused in under 1 s and the session ends (T022, `IAM_04_AC3_*`); the deny-list path of Design/Runtime/Worker is tested in T018, not through the Gateway |
 | IAM-04-AC4 | T010, T015 | ✅ |
 | IAM-04-AC5 | T010, T015 | ✅ |
 | IAM-05-AC1 | T007, T022 | ✅ services (T007); Gateway refuses anonymous API calls (T020, `IAM_05_AC1_*`) |

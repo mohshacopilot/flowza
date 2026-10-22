@@ -1,4 +1,3 @@
-using System.Net;
 using System.Net.Http.Headers;
 using Flowza.Gateway.Protection;
 using Flowza.Gateway.Session;
@@ -37,7 +36,7 @@ public static class GatewayProxyExtensions
                 context.AddRequestTransform(forwardToken ? ForwardAccessTokenAsync : RemoveSessionCookie);
                 if (forwardToken)
                 {
-                    context.AddResponseTransform(EndSessionWhenTokenRefusedAsync);
+                    context.AddResponseTransform(SessionEnding.EndWhenTokenRefusedAsync);
                 }
             });
         return builder;
@@ -58,23 +57,6 @@ public static class GatewayProxyExtensions
         }
     }
 
-    /// <summary>
-    /// IAM-04-AC3 (owner decision 2026-10-22, amends PA4): a service refuses a session's token at once when the user
-    /// was deactivated (Identity revokes the tokens; every service keeps its event-fed deny list, T018). The Gateway
-    /// then ends the session too, so the browser is logged out with that same answer and cannot log in again.
-    /// </summary>
-    private static async ValueTask EndSessionWhenTokenRefusedAsync(ResponseTransformContext context)
-    {
-        if (context.ProxyResponse?.StatusCode == HttpStatusCode.Unauthorized
-            && context.HttpContext.User.Identity?.IsAuthenticated == true)
-        {
-            await context.HttpContext.SignOutAsync(GatewaySession.CookieScheme);
-            var logger = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger(typeof(GatewayProxyExtensions));
-            var userId = context.HttpContext.User.FindFirst("sub")?.Value;
-            SessionLog.EndedByService(logger, userId);
-        }
-    }
-
     /// <summary>Identity's pages and the web app keep their own cookies, but never receive the Gateway's session cookie.</summary>
     private static ValueTask RemoveSessionCookie(RequestTransformContext context)
     {
@@ -92,12 +74,6 @@ public static class GatewayProxyExtensions
 
         return ValueTask.CompletedTask;
     }
-}
-
-internal static partial class SessionLog
-{
-    [LoggerMessage(Level = LogLevel.Information, Message = "Session of user {UserId} ended: a service refused its access token")]
-    public static partial void EndedByService(ILogger logger, string? userId);
 }
 
 /// <summary>Removes one cookie, including the chunks ASP.NET Core splits a large cookie into (<c>nameC1</c>, <c>nameC2</c>, …).</summary>

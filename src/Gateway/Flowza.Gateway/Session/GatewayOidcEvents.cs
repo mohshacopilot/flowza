@@ -25,6 +25,18 @@ internal sealed class GatewayOidcEvents(TimeProvider time) : OpenIdConnectEvents
         return base.RedirectToIdentityProviderForSignOut(context);
     }
 
+    /// <summary>
+    /// Flowza does not use front-channel logout. Without this, any site could log a user out by sending the browser to
+    /// <c>/signout-oidc</c> (phase 2 review, finding 6): the handler would clear the session cookie. Answer 404 instead.
+    /// </summary>
+    public override Task RemoteSignOut(RemoteSignOutContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        context.Response.StatusCode = StatusCodes.Status404NotFound;
+        context.HandleResponse();
+        return Task.CompletedTask;
+    }
+
     public override Task TicketReceived(TicketReceivedContext context)
     {
         ArgumentNullException.ThrowIfNull(context);

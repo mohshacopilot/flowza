@@ -41,7 +41,10 @@ public static class GatewaySessionExtensions
         builder.Services.AddDataProtection().SetApplicationName("Flowza.Gateway");
 
         builder.Services.TryAddSingleton(TimeProvider.System);
-        builder.Services.AddSingleton<ITokenRefresher, OidcTokenRefresher>();
+        builder.Services.AddSingleton<OidcTokenRefresher>();
+        builder.Services.AddSingleton<ITokenRefresher>(services => new SingleFlightTokenRefresher(
+            services.GetRequiredService<OidcTokenRefresher>(),
+            services.GetRequiredService<TimeProvider>()));
         builder.Services.AddSingleton<SessionCookieEvents>();
         builder.Services.AddSingleton<GatewayOidcEvents>();
 

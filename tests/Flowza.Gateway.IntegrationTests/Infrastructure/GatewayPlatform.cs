@@ -188,11 +188,18 @@ public sealed class CountingHandler(HttpMessageHandler inner, string path) : Del
 
     public int Count => _count;
 
+    /// <summary>When set, requests to the path get this answer instead of reaching Identity (Identity "down").</summary>
+    public HttpStatusCode? FailWith { get; set; }
+
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         if (request.RequestUri?.AbsolutePath == path)
         {
             Interlocked.Increment(ref _count);
+            if (FailWith is { } status)
+            {
+                return Task.FromResult(new HttpResponseMessage(status) { RequestMessage = request });
+            }
         }
 
         return base.SendAsync(request, cancellationToken);

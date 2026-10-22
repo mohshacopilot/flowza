@@ -94,12 +94,66 @@ public sealed class GatewayLoginTests(GatewayPlatform platform)
         using var _ = await Browser.LogInAsync(browser, user, Home, Ct);
         var afterLogin = platform.TokenCalls.Count;
 
+        (await browser.GetAsync(new Uri("/api/identity/v1/info", UriKind.Relative), Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        var firstToken = platform.Forwarded.Last("/api/v1/info").Headers["Authorization"];
+
         // Access tokens live 15 minutes; with 1 minute left the Gateway renews it before forwarding.
         platform.Clock.Now += TimeSpan.FromMinutes(14);
         using var api = await browser.GetAsync(new Uri("/api/identity/v1/info", UriKind.Relative), Ct);
 
         api.StatusCode.ShouldBe(HttpStatusCode.OK);
         platform.TokenCalls.Count.ShouldBe(afterLogin + 1);
+        platform.Forwarded.Last("/api/v1/info").Headers["Authorization"].ShouldNotBe(firstToken, "the new token is forwarded");
+        api.Headers.GetValues("Set-Cookie").ShouldContain(c => c.StartsWith(GatewaySession.CookieName(isDevelopment: true), StringComparison.Ordinal), "the session keeps the new tokens");
+    }
+
+    [Fact]
+    public async Task SE1_parallel_requests_share_one_refresh_and_the_session_survives()
+    {
+        platform.Clock.Now = DateTimeOffset.UtcNow;
+        var user = await platform.CreateUserAsync();
+        using var browser = platform.CreateBrowser();
+        using var _ = await Browser.LogInAsync(browser, user, Home, Ct);
+        var afterLogin = platform.TokenCalls.Count;
+
+        // A page load after 14 minutes: several calls at once, all with the same (old) refresh token.
+        platform.Clock.Now += TimeSpan.FromMinutes(14);
+        var calls = Enumerable.Range(0, 6).Select(_ => browser.GetAsync(new Uri("/api/identity/v1/info", UriKind.Relative), Ct));
+        var answers = await Task.WhenAll(calls);
+
+        answers.ShouldAllBe(a => a.StatusCode == HttpStatusCode.OK);
+        platform.TokenCalls.Count.ShouldBe(afterLogin + 1, "one refresh for the whole page load");
+
+        // Much later the session still renews normally (no replayed refresh token, no revoked login).
+        platform.Clock.Now += TimeSpan.FromMinutes(14);
+        (await browser.GetAsync(new Uri("/api/identity/v1/info", UriKind.Relative), Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        platform.TokenCalls.Count.ShouldBe(afterLogin + 2);
+        foreach (var answer in answers)
+        {
+            answer.Dispose();
+        }
+    }
+
+    [Fact]
+    public async Task SE1_session_stays_while_identity_cannot_be_reached()
+    {
+        platform.Clock.Now = DateTimeOffset.UtcNow;
+        var user = await platform.CreateUserAsync();
+        using var browser = platform.CreateBrowser();
+        using var _ = await Browser.LogInAsync(browser, user, Home, Ct);
+
+        platform.TokenCalls.FailWith = HttpStatusCode.ServiceUnavailable;
+        try
+        {
+            platform.Clock.Now += TimeSpan.FromMinutes(16);
+            (await browser.GetAsync(new Uri("/bff/user", UriKind.Relative), Ct)).StatusCode.ShouldBe(HttpStatusCode.OK, "refresh failed, session kept");
+        }
+        finally
+        {
+            platform.TokenCalls.FailWith = null;
+        }
+
+        (await browser.GetAsync(new Uri("/api/identity/v1/info", UriKind.Relative), Ct)).StatusCode.ShouldBe(HttpStatusCode.OK, "Identity is back: refreshed and forwarded");
     }
 
     [Fact]
@@ -115,6 +169,39 @@ public sealed class GatewayLoginTests(GatewayPlatform platform)
 
         platform.Clock.Now += TimeSpan.FromMinutes(31);
         (await browser.GetAsync(new Uri("/bff/user", UriKind.Relative), Ct)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task IAM_08_AC1_idle_time_counts_from_the_last_request_also_early_in_the_cookie_life()
+    {
+        platform.Clock.Now = DateTimeOffset.UtcNow;
+        var user = await platform.CreateUserAsync();
+        using var browser = platform.CreateBrowser();
+        using var _ = await Browser.LogInAsync(browser, user, Home, Ct);
+
+        // A request 12 minutes after login, then 29 idle minutes: still logged in (41 minutes after login).
+        platform.Clock.Now += TimeSpan.FromMinutes(12);
+        (await browser.GetAsync(new Uri("/bff/user", UriKind.Relative), Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        platform.Clock.Now += TimeSpan.FromMinutes(29);
+        (await browser.GetAsync(new Uri("/bff/user", UriKind.Relative), Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        platform.Clock.Now += TimeSpan.FromMinutes(31);
+        (await browser.GetAsync(new Uri("/bff/user", UriKind.Relative), Ct)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task IAM_01_AC1_another_site_cannot_log_the_user_out_through_the_remote_sign_out_address()
+    {
+        platform.Clock.Now = DateTimeOffset.UtcNow;
+        var user = await platform.CreateUserAsync();
+        using var browser = platform.CreateBrowser();
+        using var _ = await Browser.LogInAsync(browser, user, Home, Ct);
+
+        using var remote = await browser.GetAsync(new Uri("/signout-oidc", UriKind.Relative), Ct);
+
+        remote.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        remote.Headers.TryGetValues("Set-Cookie", out var cookies).ShouldBeFalse(string.Join(" | ", cookies ?? []));
+        (await browser.GetAsync(new Uri("/bff/user", UriKind.Relative), Ct)).StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
     [Fact]

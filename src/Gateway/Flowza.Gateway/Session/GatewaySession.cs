@@ -18,6 +18,9 @@ public static class GatewaySession
     /// <summary>IAM-08 (C1): the session ends 12 hours after login, even when the user is active.</summary>
     public static readonly TimeSpan AbsoluteLimit = TimeSpan.FromHours(12);
 
+    /// <summary>The sliding cookie is re-issued at most this often (IAM-08 accuracy vs. one Set-Cookie per request).</summary>
+    public static readonly TimeSpan CookieRenewalInterval = TimeSpan.FromMinutes(1);
+
     /// <summary>The access token is renewed when it has less than this left, so a forwarded token never runs out on the way.</summary>
     public static readonly TimeSpan RefreshBefore = TimeSpan.FromMinutes(2);
 
@@ -56,17 +59,26 @@ public static class SessionRules
     public static bool AccessTokenNeedsRefresh(AuthenticationProperties properties, DateTimeOffset now)
     {
         ArgumentNullException.ThrowIfNull(properties);
-        return !DateTimeOffset.TryParse(properties.GetTokenValue(GatewaySession.ExpiresAt), CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var expiresAt)
-            || expiresAt - now <= GatewaySession.RefreshBefore;
+        return !TryGetExpiry(properties, out var expiresAt) || expiresAt - now <= GatewaySession.RefreshBefore;
     }
 
+    /// <summary>True when the access token has run out (or its expiry is unknown).</summary>
+    public static bool IsAccessTokenExpired(AuthenticationProperties properties, DateTimeOffset now)
+    {
+        ArgumentNullException.ThrowIfNull(properties);
+        return !TryGetExpiry(properties, out var expiresAt) || expiresAt <= now;
+    }
+
+    /// <summary>IAM-08: renew the sliding cookie when at least a minute has passed since it was last issued.</summary>
+    public static bool ShouldRenewCookie(TimeSpan elapsedSinceIssued) => elapsedSinceIssued >= GatewaySession.CookieRenewalInterval;
+
     /// <summary>Stores renewed tokens the same way the OpenID Connect handler stored the first ones.</summary>
-    public static void StoreRefreshedTokens(AuthenticationProperties properties, RefreshedTokens tokens, DateTimeOffset now)
+    public static void StoreRefreshedTokens(AuthenticationProperties properties, RefreshedTokens tokens)
     {
         ArgumentNullException.ThrowIfNull(properties);
         ArgumentNullException.ThrowIfNull(tokens);
         properties.UpdateTokenValue(GatewaySession.AccessToken, tokens.AccessToken);
-        properties.UpdateTokenValue(GatewaySession.ExpiresAt, (now + tokens.ExpiresIn).ToString("O", CultureInfo.InvariantCulture));
+        properties.UpdateTokenValue(GatewaySession.ExpiresAt, tokens.ExpiresAt.ToString("O", CultureInfo.InvariantCulture));
         if (tokens.RefreshToken is { Length: > 0 } refreshToken)
         {
             properties.UpdateTokenValue(GatewaySession.RefreshToken, refreshToken);
@@ -77,4 +89,7 @@ public static class SessionRules
             properties.UpdateTokenValue(GatewaySession.IdToken, idToken);
         }
     }
+
+    private static bool TryGetExpiry(AuthenticationProperties properties, out DateTimeOffset expiresAt) =>
+        DateTimeOffset.TryParse(properties.GetTokenValue(GatewaySession.ExpiresAt), CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out expiresAt);
 }

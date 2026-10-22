@@ -6,7 +6,8 @@ using Microsoft.Extensions.Options;
 
 namespace Flowza.Gateway.Session;
 
-public sealed record RefreshedTokens(string AccessToken, string? RefreshToken, string? IdToken, TimeSpan ExpiresIn);
+/// <summary>Tokens from a refresh; <paramref name="ExpiresAt"/> is when the access token runs out (Gateway clock).</summary>
+public sealed record RefreshedTokens(string AccessToken, string? RefreshToken, string? IdToken, DateTimeOffset ExpiresAt);
 
 public enum TokenRefreshStatus
 {
@@ -35,14 +36,22 @@ public interface ITokenRefresher
 /// Calls Identity's token endpoint directly (back channel), with the Gateway's client credentials and the same HTTP
 /// client and discovery document as the OpenID Connect handler.
 /// </summary>
-internal sealed partial class OidcTokenRefresher(IOptionsMonitor<OpenIdConnectOptions> oidcOptions, ILogger<OidcTokenRefresher> logger) : ITokenRefresher
+internal sealed partial class OidcTokenRefresher(
+    IOptionsMonitor<OpenIdConnectOptions> oidcOptions,
+    TimeProvider time,
+    ILogger<OidcTokenRefresher> logger) : ITokenRefresher
 {
+    /// <summary>A refresh that takes longer counts as "Identity unavailable".</summary>
+    public static readonly TimeSpan Timeout = TimeSpan.FromSeconds(10);
+
     public async Task<TokenRefreshOutcome> RefreshAsync(string refreshToken, CancellationToken cancellationToken)
     {
         var options = oidcOptions.Get(GatewaySession.OidcScheme);
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeout.CancelAfter(Timeout);
         try
         {
-            var configuration = await options.ConfigurationManager!.GetConfigurationAsync(cancellationToken);
+            var configuration = await options.ConfigurationManager!.GetConfigurationAsync(timeout.Token);
             using var request = new HttpRequestMessage(HttpMethod.Post, configuration.TokenEndpoint)
             {
                 Content = new FormUrlEncodedContent(new Dictionary<string, string>
@@ -53,7 +62,7 @@ internal sealed partial class OidcTokenRefresher(IOptionsMonitor<OpenIdConnectOp
                     ["client_secret"] = options.ClientSecret!,
                 }),
             };
-            using var response = await options.Backchannel.SendAsync(request, cancellationToken);
+            using var response = await options.Backchannel.SendAsync(request, timeout.Token);
             if (response.StatusCode is HttpStatusCode.BadRequest or HttpStatusCode.Unauthorized)
             {
                 return TokenRefreshOutcome.Rejected;
@@ -65,16 +74,16 @@ internal sealed partial class OidcTokenRefresher(IOptionsMonitor<OpenIdConnectOp
                 return TokenRefreshOutcome.Unavailable;
             }
 
-            var body = await response.Content.ReadFromJsonAsync<TokenResponse>(cancellationToken);
+            var body = await response.Content.ReadFromJsonAsync<TokenResponse>(timeout.Token);
             return body is { AccessToken.Length: > 0, ExpiresIn: > 0 }
                 ? new TokenRefreshOutcome(
                     TokenRefreshStatus.Refreshed,
-                    new RefreshedTokens(body.AccessToken, body.RefreshToken, body.IdToken, TimeSpan.FromSeconds(body.ExpiresIn.Value)))
+                    new RefreshedTokens(body.AccessToken, body.RefreshToken, body.IdToken, time.GetUtcNow().AddSeconds(body.ExpiresIn.Value)))
                 : TokenRefreshOutcome.Unavailable;
         }
-        catch (Exception exception) when (exception is HttpRequestException or InvalidOperationException or TaskCanceledException && !cancellationToken.IsCancellationRequested)
+        catch (Exception exception) when (exception is HttpRequestException or InvalidOperationException or OperationCanceledException && !cancellationToken.IsCancellationRequested)
         {
-            // Identity down or its discovery document unreadable: the request fails cleanly further on.
+            // Identity down, too slow or its discovery document unreadable: the request fails cleanly further on.
             LogUnreachable(logger, exception.GetType().Name);
             return TokenRefreshOutcome.Unavailable;
         }

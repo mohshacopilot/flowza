@@ -43,6 +43,29 @@ public sealed class SessionRulesTests
     public void SE1_unknown_token_expiry_counts_as_expired()
     {
         SessionRules.AccessTokenNeedsRefresh(new AuthenticationProperties(), LoginAt).ShouldBeTrue();
+        SessionRules.IsAccessTokenExpired(new AuthenticationProperties(), LoginAt).ShouldBeTrue();
+    }
+
+    [Theory]
+    [InlineData(1, false)]
+    [InlineData(0, true)]
+    [InlineData(-1, true)]
+    public void SE1_access_token_is_expired_once_its_time_has_come(double minutesLeft, bool expired)
+    {
+        var properties = new AuthenticationProperties();
+        properties.StoreTokens([new AuthenticationToken { Name = "expires_at", Value = LoginAt.AddMinutes(minutesLeft).ToString("O") }]);
+
+        SessionRules.IsAccessTokenExpired(properties, LoginAt).ShouldBe(expired);
+    }
+
+    [Theory]
+    [InlineData(0, false)]
+    [InlineData(59, false)]
+    [InlineData(60, true)]
+    [InlineData(20 * 60, true)]
+    public void IAM_08_AC1_cookie_is_renewed_at_most_once_a_minute(int secondsSinceIssued, bool renew)
+    {
+        SessionRules.ShouldRenewCookie(TimeSpan.FromSeconds(secondsSinceIssued)).ShouldBe(renew);
     }
 
     [Fact]
@@ -57,7 +80,7 @@ public sealed class SessionRulesTests
             new AuthenticationToken { Name = "expires_at", Value = LoginAt.ToString("O") },
         ]);
 
-        SessionRules.StoreRefreshedTokens(properties, new RefreshedTokens("new-access", "new-refresh", null, TimeSpan.FromMinutes(15)), LoginAt);
+        SessionRules.StoreRefreshedTokens(properties, new RefreshedTokens("new-access", "new-refresh", null, LoginAt.AddMinutes(15)));
 
         properties.GetTokenValue("access_token").ShouldBe("new-access");
         properties.GetTokenValue("refresh_token").ShouldBe("new-refresh");

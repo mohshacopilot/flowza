@@ -21,6 +21,22 @@ internal sealed partial class SessionCookieEvents(TimeProvider time, ITokenRefre
         return Task.CompletedTask;
     }
 
+    /// <summary>
+    /// IAM-08: 30 minutes without a request, measured from the last request. ASP.NET Core renews a sliding cookie only
+    /// after half its lifetime, which would end a session after about 17 idle minutes; renewing at most once a minute
+    /// keeps the error under a minute (phase 2 review, finding 1).
+    /// </summary>
+    public override Task CheckSlidingExpiration(CookieSlidingExpirationContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        if (SessionRules.ShouldRenewCookie(context.ElapsedTime))
+        {
+            context.ShouldRenew = true;
+        }
+
+        return Task.CompletedTask;
+    }
+
     public override async Task ValidatePrincipal(CookieValidatePrincipalContext context)
     {
         var now = time.GetUtcNow();
@@ -36,14 +52,23 @@ internal sealed partial class SessionCookieEvents(TimeProvider time, ITokenRefre
         }
 
         var refreshToken = context.Properties.GetTokenValue(GatewaySession.RefreshToken);
-        var outcome = refreshToken is null
-            ? TokenRefreshOutcome.Rejected
-            : await refresher.RefreshAsync(refreshToken, context.HttpContext.RequestAborted);
+        TokenRefreshOutcome outcome;
+        try
+        {
+            outcome = refreshToken is null
+                ? TokenRefreshOutcome.Rejected
+                : await refresher.RefreshAsync(refreshToken, context.HttpContext.RequestAborted);
+        }
+        catch (OperationCanceledException) when (context.HttpContext.RequestAborted.IsCancellationRequested)
+        {
+            // The browser gave up; the refresh itself goes on and its answer waits for the next request (single flight).
+            return;
+        }
 
         switch (outcome.Status)
         {
             case TokenRefreshStatus.Refreshed:
-                SessionRules.StoreRefreshedTokens(context.Properties, outcome.Tokens!, now);
+                SessionRules.StoreRefreshedTokens(context.Properties, outcome.Tokens!);
                 context.ShouldRenew = true;
                 break;
             case TokenRefreshStatus.Rejected:
@@ -52,7 +77,13 @@ internal sealed partial class SessionCookieEvents(TimeProvider time, ITokenRefre
                 break;
             case TokenRefreshStatus.Unavailable:
             default:
-                // Keep the session: the service refuses the old token once it has run out, and the next request retries.
+                // Keep the session; the request goes on with the old token. If that token has run out, the service's
+                // 401 must not end the session either: Identity is down, the user did nothing wrong (review finding 4).
+                if (SessionRules.IsAccessTokenExpired(context.Properties, now))
+                {
+                    SessionEnding.MarkIdentityUnavailable(context.HttpContext);
+                }
+
                 break;
         }
     }
