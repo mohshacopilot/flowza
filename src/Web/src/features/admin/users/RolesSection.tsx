@@ -39,7 +39,7 @@ export function RolesSection({ user }: { user: UserDetails }) {
         {t('users.details.rolesSection')}
       </Typography.Title>
       <ApiErrorAlert error={failure} />
-      <RolesField value={roles} onChange={setRoles} disabled={setUserRoles.isPending} />
+      <RolesField value={roles} onChange={setRoles} disabled={setUserRoles.isPending} hideLegend />
       <Button type="primary" onClick={() => void save()} loading={setUserRoles.isPending}>
         {t('users.details.saveRoles')}
       </Button>

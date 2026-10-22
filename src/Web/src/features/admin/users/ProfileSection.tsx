@@ -66,7 +66,8 @@ export function ProfileSection({ user, onReload }: { user: UserDetails; onReload
       <Form layout="vertical" component={false}>
         <form className={styles.form} noValidate onSubmit={(event) => void onSubmit(event)}>
           <Form.Item label={t('users.fields.username')} htmlFor={usernameId}>
-            <Input id={usernameId} value={user.username} readOnly />
+            {/* Filled look: the username can be read and copied, never changed (IAM-04-AC1). */}
+            <Input id={usernameId} value={user.username} readOnly variant="filled" />
           </Form.Item>
           <TextField
             control={form.control}

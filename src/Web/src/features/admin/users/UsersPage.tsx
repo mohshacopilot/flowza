@@ -138,6 +138,8 @@ export function UsersPage() {
       <Table<UserListItem>
         aria-label={t('users.listLabel')}
         rowKey="id"
+        // On a narrow screen the table scrolls inside itself instead of widening the whole page.
+        scroll={{ x: 'max-content' }}
         columns={columns}
         dataSource={users.data?.items ?? []}
         loading={users.isFetching}

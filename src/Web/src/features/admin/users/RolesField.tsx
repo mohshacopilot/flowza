@@ -11,13 +11,15 @@ interface RolesFieldProps {
   value: readonly string[];
   onChange: (roles: string[]) => void;
   disabled?: boolean;
+  /** When a heading with the same words is right above, the legend is kept for screen readers only. */
+  hideLegend?: boolean;
 }
 
 /**
  * The system roles as check boxes in a fieldset (IAM-02-AC2: several roles per user). User is always chosen and
  * cannot be removed, because every active user has it.
  */
-export function RolesField({ value, onChange, disabled = false }: RolesFieldProps) {
+export function RolesField({ value, onChange, disabled = false, hideLegend = false }: RolesFieldProps) {
   const { t } = useTranslation();
   const helpId = useId();
   const chosen = [...new Set([...value, SystemRole.User])];
@@ -27,7 +29,9 @@ export function RolesField({ value, onChange, disabled = false }: RolesFieldProp
   ];
   return (
     <fieldset className={styles.fieldset} aria-describedby={helpId}>
-      <legend className={styles.legend}>{t('users.fields.roles')}</legend>
+      <legend className={hideLegend ? styles.visuallyHidden : styles.legend}>
+        {t('users.fields.roles')}
+      </legend>
       <Checkbox.Group
         options={options}
         value={chosen}

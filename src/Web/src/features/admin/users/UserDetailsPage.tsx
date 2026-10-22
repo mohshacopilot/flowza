@@ -33,7 +33,7 @@ export function UserDetailsPage() {
   const details = user.data;
   return (
     <>
-      {backLink}
+      <Typography.Paragraph>{backLink}</Typography.Paragraph>
       <Space align="baseline">
         <Typography.Title level={1}>
           {t('users.details.title', { username: details.username })}
