@@ -1,7 +1,8 @@
 /*
- * Identity's own pages (login, change password) in the Classic enterprise look (spec 007 UI-01, C5): a brand panel
- * beside the form. Layout only: every colour, font, spacing and corner comes from design-values.css, which is
- * generated from the web app's design values (UI-02); a test fails if a value is written here instead.
+ * Identity's own pages (login, change password) as mockup B (spec 007 UI-01, C5, amendment 1): a deep teal brand
+ * panel with a workflow picture and highlights beside the form on a card. Layout only: every colour, font, spacing
+ * and corner comes from design-values.css, which is generated from the web app's design values (UI-02); a test
+ * fails if a value is written here instead. The panel uses the navigation's dark values, so it matches the app.
  * Served under /account, so the Gateway routes it here.
  */
 
@@ -14,7 +15,7 @@ body {
   font-size: var(--flowza-font-size-base);
   line-height: 1.5;
   color: var(--flowza-neutral-text);
-  background: var(--flowza-neutral-surface);
+  background: var(--flowza-neutral-page);
 }
 
 .skip-link { position: absolute; left: -10000px; }
@@ -28,23 +29,39 @@ body {
   border-radius: var(--flowza-radius-control);
 }
 
-/* Two equal columns; below the tablet breakpoint (768 px, designValues.json "breakpoints") one column. */
+/* Panel slightly wider than the form side; below the tablet breakpoint (768 px, designValues.json "breakpoints") one column. */
 .account {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
   min-height: 100vh;
 }
 
-/* ---- Brand panel: the installation's mark and name on the brand colour ---- */
+/* ---- Brand panel: deep teal, the installation's mark and name, the picture and the highlights ---- */
 .brand-panel {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--flowza-space-xxl);
   min-width: 0;
+  overflow: hidden;
   padding: var(--flowza-space-xxl);
-  color: var(--flowza-on-brand);
-  background: var(--flowza-brand);
+  color: var(--flowza-navigation-text-active);
+  background: var(--flowza-navigation-background);
 }
+
+/* Decorative circle behind the top corner (mockup B). */
+.brand-panel::before {
+  content: "";
+  position: absolute;
+  top: -120px;
+  right: -120px;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  background: var(--flowza-navigation-raised);
+}
+
+.brand, .brand-story { position: relative; }
 
 .brand {
   display: flex;
@@ -60,9 +77,10 @@ body {
   justify-content: center;
   width: 40px;
   height: 40px;
-  font-size: var(--flowza-font-size-medium);
+  font-size: var(--flowza-font-size-base);
   font-weight: var(--flowza-font-weight-strong);
-  border: 2px solid var(--flowza-on-brand);
+  color: var(--flowza-navigation-background);
+  background: var(--flowza-navigation-accent);
   border-radius: var(--flowza-radius-card);
 }
 
@@ -70,39 +88,105 @@ body {
 .brand-name {
   min-width: 0;
   overflow: hidden;
-  font-size: var(--flowza-font-size-large);
+  font-size: var(--flowza-font-size-medium);
   font-weight: var(--flowza-font-weight-strong);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.product-line {
-  max-width: 24rem;
+.brand-story {
+  max-width: 28rem;
   margin: auto 0;
-  font-size: var(--flowza-font-size-extra-large);
-  font-weight: var(--flowza-font-weight-strong);
 }
 
-/* ---- Form column ---- */
+.workflow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--flowza-space-sm);
+  margin-bottom: var(--flowza-space-xxl);
+}
+
+.workflow-step {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--flowza-space-sm);
+  padding: var(--flowza-space-sm) var(--flowza-space-md);
+  font-size: var(--flowza-font-size-small);
+  font-weight: var(--flowza-font-weight-strong);
+  background: var(--flowza-navigation-raised);
+  border: 1px solid var(--flowza-navigation-line);
+  border-radius: var(--flowza-radius-card);
+}
+
+.workflow-step-done {
+  color: var(--flowza-navigation-background);
+  background: var(--flowza-navigation-accent);
+  border-color: var(--flowza-navigation-accent);
+}
+
+.workflow-line {
+  width: 24px;
+  height: 2px;
+  background: var(--flowza-navigation-accent);
+}
+
+.product-line {
+  margin: 0 0 var(--flowza-space-xl);
+  font-size: var(--flowza-font-size-extra-large);
+  font-weight: var(--flowza-font-weight-strong);
+  line-height: 1.3;
+}
+
+.highlights {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.highlights li {
+  display: flex;
+  align-items: center;
+  gap: var(--flowza-space-sm);
+  margin-bottom: var(--flowza-space-md);
+  color: var(--flowza-navigation-text);
+}
+
+.highlights .tick { flex: none; color: var(--flowza-navigation-accent); }
+
+/* ---- Form column: the form on a card, on the light page ---- */
 .form-column {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--flowza-space-xl);
+  gap: var(--flowza-space-lg);
   min-width: 0;
   padding: var(--flowza-space-xxl) var(--flowza-space-xl);
 }
 
-.form-area { width: 100%; max-width: 22rem; }
+.form-card {
+  width: 100%;
+  max-width: 24rem;
+  padding: var(--flowza-space-xxl);
+  background: var(--flowza-neutral-surface);
+  border: 1px solid var(--flowza-neutral-border);
+  border-radius: var(--flowza-radius-card);
+  box-shadow: var(--flowza-shadow-card);
+}
 
 h1 {
-  margin: 0 0 var(--flowza-space-xl);
+  margin: 0 0 var(--flowza-space-xs);
   font-size: var(--flowza-font-size-extra-large);
   font-weight: var(--flowza-font-weight-strong);
 }
 
-.form-area p { margin: 0 0 var(--flowza-space-lg); }
+.intro {
+  margin: 0 0 var(--flowza-space-xl);
+  color: var(--flowza-brand);
+}
+
+.form-card p { margin-top: 0; }
 
 .field { margin-bottom: var(--flowza-space-lg); }
 
@@ -114,11 +198,12 @@ h1 {
 
 .field input {
   width: 100%;
+  min-height: 40px;
   padding: var(--flowza-space-sm) var(--flowza-space-md);
   font: inherit;
   color: var(--flowza-neutral-text);
   background: var(--flowza-neutral-surface);
-  /* Not the soft neutral border: a field's edge must reach 3 : 1 (WCAG 1.4.11), so it takes the help text colour. */
+  /* Not the mockup's light teal: a field's edge must reach 3 : 1 (WCAG 1.4.11), so it takes the help text colour. */
   border: 1px solid var(--flowza-neutral-text-secondary);
   border-radius: var(--flowza-radius-control);
 }
@@ -131,6 +216,7 @@ h1 {
 
 button {
   width: 100%;
+  min-height: 40px;
   padding: var(--flowza-space-sm) var(--flowza-space-lg);
   font: inherit;
   font-weight: var(--flowza-font-weight-strong);
@@ -141,18 +227,30 @@ button {
   cursor: pointer;
 }
 
-/* Show/hide password (UI-01-AC2), added by account.js after each password field: a quiet text button on the right. */
+/* Show/hide password (UI-01-AC2), added by account.js: an eye icon inside the field, on the right. */
+.password-input { position: relative; display: block; }
+
+/* Room for the 32 px eye button and a little air, so typed text never runs under the icon. */
+.password-input input { padding-right: calc(var(--flowza-space-xxl) + var(--flowza-space-md)); }
+
 .password-toggle {
-  display: block;
-  width: auto;
-  margin: var(--flowza-space-xs) 0 0 auto;
-  padding: var(--flowza-space-xs) var(--flowza-space-sm);
-  font-size: var(--flowza-font-size-small);
+  position: absolute;
+  top: 50%;
+  right: var(--flowza-space-xs);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  min-height: 32px;
+  height: 32px;
+  padding: 0;
   color: var(--flowza-brand);
   background: transparent;
+  border-radius: var(--flowza-radius-control);
+  transform: translateY(-50%);
 }
 
-/* Pressed (password shown): a light background, so the state is visible and not only announced. */
+/* Pressed (password shown): a light background as well as the crossed-out eye, so the state is visible. */
 .password-toggle[aria-pressed="true"] { background: var(--flowza-neutral-page); }
 
 /* Errors in the page's look (UI-01-AC3): the status colours of the design values, AA on their own background. */
@@ -172,15 +270,15 @@ button {
   color: var(--flowza-neutral-text-secondary);
 }
 
-/* ---- Keyboard focus, always visible (UI-06): brand colour on the form side, the on-brand colour on the panel ---- */
+/* ---- Keyboard focus, always visible (UI-06): brand colour on the form side, white on the panel ---- */
 :focus-visible {
   outline: var(--flowza-focus-ring) solid var(--flowza-brand);
   outline-offset: 2px;
 }
 
-.brand-panel :focus-visible { outline-color: var(--flowza-on-brand); }
+.brand-panel :focus-visible { outline-color: var(--flowza-navigation-focus); }
 
-/* ---- Phone: the brand panel becomes a band with mark and name above the form ---- */
+/* ---- Phone: the panel becomes a band with mark and name above the card ---- */
 @media (max-width: 767.98px) {
   .account {
     grid-template-columns: minmax(0, 1fr);
@@ -189,10 +287,14 @@ button {
 
   .brand-panel { padding: var(--flowza-space-lg); }
 
-  .product-line { display: none; }
+  .brand-panel::before { display: none; }
+
+  .brand-story { display: none; }
 
   .form-column {
     justify-content: flex-start;
     padding: var(--flowza-space-xl) var(--flowza-space-lg);
   }
+
+  .form-card { padding: var(--flowza-space-xl); }
 }

@@ -24,6 +24,27 @@
   <data name="Password.Show" xml:space="preserve">
     <value>Show password</value>
   </data>
+  <data name="Layout.Workflow.Form" xml:space="preserve">
+    <value>Form</value>
+  </data>
+  <data name="Layout.Workflow.Approve" xml:space="preserve">
+    <value>Approve</value>
+  </data>
+  <data name="Layout.Workflow.Done" xml:space="preserve">
+    <value>Done</value>
+  </data>
+  <data name="Layout.Highlight.Forms" xml:space="preserve">
+    <value>Forms built without code</value>
+  </data>
+  <data name="Layout.Highlight.Approvals" xml:space="preserve">
+    <value>Approvals that route themselves</value>
+  </data>
+  <data name="Layout.Highlight.Tracking" xml:space="preserve">
+    <value>Every step tracked</value>
+  </data>
+  <data name="Login.Intro" xml:space="preserve">
+    <value>Use your work username</value>
+  </data>
   <data name="Login.Title" xml:space="preserve">
     <value>Log in</value>
   </data>

@@ -33,6 +33,15 @@ describe('Ant Design theme from the design values', () => {
     expect(theme.components?.Menu?.darkItemSelectedColor).toBe(theme.token?.colorTextLightSolid);
   });
 
+  it('UI_06_the_selected_menu_item_is_readable_in_the_light_and_the_dark_menu', () => {
+    const menu = theme.components?.Menu;
+    expect(menu?.itemSelectedBg).toBe(designValues.brand);
+    expect(menu?.darkItemSelectedBg).toBe(designValues.brand);
+    for (const text of [menu?.itemSelectedColor, menu?.darkItemSelectedColor]) {
+      expect(contrastRatio(text ?? '', designValues.brand)).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
   it('UI_06_navigation_texts_reach_4_5_to_1_on_the_dark_navigation', () => {
     const navigation = designValues.navigation;
     for (const text of [navigation.text, navigation.textActive, navigation.groupLabel]) {

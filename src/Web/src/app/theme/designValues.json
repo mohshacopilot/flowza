@@ -1,21 +1,24 @@
 {
   "$description": "The one source of every visual value (spec 007 UI-02, plan 007 section 5.1). The Ant Design theme (antdTheme.ts) and the login pages' CSS (npm run design:css) are made from this file; no screen sets its own colours, fonts or sizes.",
-  "brand": "#1f5fbf",
+  "brand": "#0f6e56",
   "onColour": {
     "light": "#ffffff",
     "dark": "#000000"
   },
   "navigation": {
-    "background": "#14294d",
-    "text": "#c8d3e6",
+    "background": "#04342c",
+    "text": "#9fe1cb",
     "textActive": "#ffffff",
-    "groupLabel": "#8193b3",
-    "focus": "#ffffff"
+    "groupLabel": "#5dcaa5",
+    "focus": "#ffffff",
+    "raised": "#085041",
+    "line": "#1d9e75",
+    "accent": "#5dcaa5"
   },
   "neutral": {
-    "page": "#f3f5f9",
+    "page": "#f1f5f3",
     "surface": "#ffffff",
-    "border": "#e3e8f0",
+    "border": "#d3e3dc",
     "text": "#1b2333",
     "textSecondary": "#5b6577"
   },
@@ -31,7 +34,7 @@
   },
   "space": { "xs": 4, "sm": 8, "md": 12, "lg": 16, "xl": 24, "xxl": 32 },
   "radius": { "control": 6, "card": 8 },
-  "shadow": { "card": "0 1px 2px rgba(20, 41, 77, 0.06), 0 1px 3px rgba(20, 41, 77, 0.10)" },
+  "shadow": { "card": "0 1px 2px rgba(4, 52, 44, 0.06), 0 4px 12px rgba(4, 52, 44, 0.08)" },
   "focusRing": 3,
   "breakpoints": { "tablet": 768, "desktop": 1025 }
 }

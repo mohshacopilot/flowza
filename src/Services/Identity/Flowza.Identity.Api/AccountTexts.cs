@@ -14,10 +14,24 @@ public sealed class AccountTexts
     /// <summary>The small product credit under the form (U3); the installation's own name is on the brand panel.</summary>
     public const string PoweredBy = "Layout.PoweredBy";
 
+    // Spec 007 amendment 1, C8: the labels of the panel's workflow picture and the three highlights (fixed texts).
+    public const string WorkflowForm = "Layout.Workflow.Form";
+    public const string WorkflowApprove = "Layout.Workflow.Approve";
+    public const string WorkflowDone = "Layout.Workflow.Done";
+    public const string HighlightForms = "Layout.Highlight.Forms";
+    public const string HighlightApprovals = "Layout.Highlight.Approvals";
+    public const string HighlightTracking = "Layout.Highlight.Tracking";
+
+    /// <summary>The highlights on the brand panel, in the order shown.</summary>
+    public static IReadOnlyList<string> Highlights { get; } = [HighlightForms, HighlightApprovals, HighlightTracking];
+
     /// <summary>The show/hide button of every password field (UI-01-AC2); a toggle, so its name never changes.</summary>
     public const string ShowPassword = "Password.Show";
 
     public const string LoginTitle = "Login.Title";
+
+    /// <summary>The short line under the login title (C8).</summary>
+    public const string LoginIntro = "Login.Intro";
     public const string LoginUsername = "Login.Username";
     public const string LoginPassword = "Login.Password";
     public const string LoginSubmit = "Login.Submit";
@@ -38,7 +52,8 @@ public sealed class AccountTexts
     /// <summary>Every key above, for the test that checks the resource file has them all.</summary>
     public static IReadOnlyList<string> AllKeys { get; } =
     [
-        SkipToContent, ProductLine, PoweredBy, ShowPassword, LoginTitle, LoginUsername, LoginPassword, LoginSubmit, LoginInvalid, LoginLockedOut,
+        SkipToContent, ProductLine, PoweredBy, ShowPassword, WorkflowForm, WorkflowApprove, WorkflowDone,
+        HighlightForms, HighlightApprovals, HighlightTracking, LoginTitle, LoginIntro, LoginUsername, LoginPassword, LoginSubmit, LoginInvalid, LoginLockedOut,
         ChangePasswordTitle, ChangePasswordIntro, ChangePasswordCurrent, ChangePasswordNew, ChangePasswordConfirm,
         ChangePasswordRules, ChangePasswordSubmit, ChangePasswordMismatch, ErrorSummaryTitle,
     ];

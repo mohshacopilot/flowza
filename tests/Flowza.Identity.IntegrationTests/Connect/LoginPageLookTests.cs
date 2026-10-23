@@ -31,7 +31,28 @@ public sealed class LoginPageLookTests(IdentityApp app) : IAsyncLifetime
         html.ShouldContain("<span class=\"brand-name\" title=\"Flowza\">Flowza</span>");
         html.ShouldContain("<p class=\"product-line\">Requests and approvals in one place</p>");
         html.ShouldContain("<h1>Log in</h1>");
-        html.IndexOf("<form method=\"post\"", StringComparison.Ordinal).ShouldBeGreaterThan(html.IndexOf("class=\"form-column\"", StringComparison.Ordinal));
+        html.ShouldContain("<p class=\"intro\">Use your work username</p>");
+        html.IndexOf("<form method=\"post\"", StringComparison.Ordinal).ShouldBeGreaterThan(html.IndexOf("<main id=\"main\" class=\"form-card\">", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task UI_01_AC1_the_panel_shows_the_workflow_picture_hidden_from_screen_readers_and_three_highlights()
+    {
+        using var browser = app.CreateBrowser();
+
+        var html = await browser.GetStringAsync(s_login, Ct);
+
+        // Mockup B (spec 007 amendment 1, C8). The picture is decorative; the highlights are real text in a list.
+        var picture = Regex.Match(html, "<div class=\"workflow\" aria-hidden=\"true\">(.*?)</div>", RegexOptions.Singleline);
+        picture.Success.ShouldBeTrue("the workflow picture must be hidden from screen readers");
+        var steps = Regex.Replace(picture.Groups[1].Value, "<[^>]+>", " ");
+        Regex.Replace(steps, "\\s+", " ").Trim().ShouldBe("Form Approve Done");
+
+        var highlights = Regex.Match(html, "<ul class=\"highlights\">(.*?)</ul>", RegexOptions.Singleline);
+        highlights.Success.ShouldBeTrue();
+        Regex.Matches(highlights.Groups[1].Value, "<svg class=\"tick\" aria-hidden=\"true\"[^>]*>.*?</svg>([^<]+)</li>", RegexOptions.Singleline)
+            .Select(m => m.Groups[1].Value)
+            .ShouldBe(["Forms built without code", "Approvals that route themselves", "Every step tracked"]);
     }
 
     [Fact]
@@ -46,7 +67,7 @@ public sealed class LoginPageLookTests(IdentityApp app) : IAsyncLifetime
         designValuesLink.ShouldBeGreaterThan(0);
         designValuesLink.ShouldBeLessThan(html.IndexOf("href=\"/account/assets/account.css?v=", StringComparison.Ordinal));
         designValues.StatusCode.ShouldBe(HttpStatusCode.OK);
-        (await designValues.Content.ReadAsStringAsync(Ct)).ShouldContain("--flowza-brand: #1f5fbf;");
+        (await designValues.Content.ReadAsStringAsync(Ct)).ShouldContain("--flowza-brand: #0f6e56;");
     }
 
     [Fact]
@@ -93,7 +114,7 @@ public sealed class LoginPageLookTests(IdentityApp app) : IAsyncLifetime
         LoginBrowser.AlertText(html).ShouldBe("Username or password is incorrect.");
         ShouldHaveTheSplitLayout(html);
         var alert = html.IndexOf("class=\"errors\" role=\"alert\"", StringComparison.Ordinal);
-        alert.ShouldBeGreaterThan(html.IndexOf("<main id=\"main\" class=\"form-area\">", StringComparison.Ordinal));
+        alert.ShouldBeGreaterThan(html.IndexOf("<main id=\"main\" class=\"form-card\">", StringComparison.Ordinal));
         alert.ShouldBeLessThan(html.IndexOf("<form method=\"post\"", StringComparison.Ordinal));
     }
 

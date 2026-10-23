@@ -60,6 +60,10 @@ export function createAntdTheme(values: DesignValues, options: ThemeOptions = {}
         headerPadding: `0 ${values.space.xl}px`,
       },
       Menu: {
+        // The selected item is the brand colour with the text chosen for it (UI-07), in the light and the dark menu:
+        // Ant Design's own derived tint gives only 2.7 : 1 with the teal brand (found by the axe checks).
+        itemSelectedBg: values.brand,
+        itemSelectedColor: onBrand,
         darkItemBg: values.navigation.background,
         darkSubMenuItemBg: values.navigation.background,
         darkPopupBg: values.navigation.background,

@@ -2,18 +2,21 @@
    src/Web/src/app/theme/designValues.json (spec 007 UI-02). Do not edit by hand: change the design values and
    run the command again; a test fails while this file and the design values differ. */
 :root {
-  --flowza-brand: #1f5fbf;
+  --flowza-brand: #0f6e56;
   --flowza-on-brand: #ffffff;
   --flowza-on-colour-light: #ffffff;
   --flowza-on-colour-dark: #000000;
-  --flowza-navigation-background: #14294d;
-  --flowza-navigation-text: #c8d3e6;
+  --flowza-navigation-background: #04342c;
+  --flowza-navigation-text: #9fe1cb;
   --flowza-navigation-text-active: #ffffff;
-  --flowza-navigation-group-label: #8193b3;
+  --flowza-navigation-group-label: #5dcaa5;
   --flowza-navigation-focus: #ffffff;
-  --flowza-neutral-page: #f3f5f9;
+  --flowza-navigation-raised: #085041;
+  --flowza-navigation-line: #1d9e75;
+  --flowza-navigation-accent: #5dcaa5;
+  --flowza-neutral-page: #f1f5f3;
   --flowza-neutral-surface: #ffffff;
-  --flowza-neutral-border: #e3e8f0;
+  --flowza-neutral-border: #d3e3dc;
   --flowza-neutral-text: #1b2333;
   --flowza-neutral-text-secondary: #5b6577;
   --flowza-status-success-text: #2e7d32;
@@ -41,6 +44,6 @@
   --flowza-space-xxl: 32px;
   --flowza-radius-control: 6px;
   --flowza-radius-card: 8px;
-  --flowza-shadow-card: 0 1px 2px rgba(20, 41, 77, 0.06), 0 1px 3px rgba(20, 41, 77, 0.10);
+  --flowza-shadow-card: 0 1px 2px rgba(4, 52, 44, 0.06), 0 4px 12px rgba(4, 52, 44, 0.08);
   --flowza-focus-ring: 3px;
 }

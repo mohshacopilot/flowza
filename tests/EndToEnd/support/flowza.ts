@@ -98,6 +98,14 @@ export async function confirmAction(page: Page, button: string): Promise<void> {
  * failure message lists each rule and the elements that break it.
  */
 export async function expectNoAccessibilityViolations(page: Page, options: { only?: string } = {}): Promise<void> {
+  // Check the colours people actually read, not a colour halfway through a transition (e.g. a menu item that was
+  // just deselected): wait until no CSS transition or animation is running (finite ones only).
+  await page.waitForFunction(() =>
+    document
+      .getAnimations()
+      .every((animation) => animation.playState !== 'running' || animation.effect?.getTiming().iterations === Infinity),
+  );
+
   // With a dialog open, check only the dialog: the page behind it is covered by the dark mask and not in use.
   let axe = new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']);
   if (options.only) {
