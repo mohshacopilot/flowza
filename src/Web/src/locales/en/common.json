@@ -3,8 +3,8 @@
     "name": "Flowza"
   },
   "shell": {
-    "installationName": "Flowza",
     "homeLink": "{{name}} home page",
+    "homeLinkWithoutName": "Home page",
     "skipToContent": "Skip to main content",
     "mainNavigation": "Main navigation",
     "userMenu": "User menu for {{name}}",

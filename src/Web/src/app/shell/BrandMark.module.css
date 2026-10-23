@@ -1,0 +1,43 @@
+/* Layout only: colours, fonts and radii come from the design values through Ant Design's CSS variables (UI-02). */
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--flowza-margin-sm);
+  min-width: 0;
+  max-width: 320px;
+  color: var(--flowza-color-text);
+}
+
+.mark,
+.markPending {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  font-size: var(--flowza-font-size-sm);
+  font-weight: var(--flowza-font-weight-strong);
+  border-radius: var(--flowza-border-radius);
+}
+
+/* The text colour on the brand is chosen for contrast (UI-07, colorTextLightSolid). */
+.mark {
+  color: var(--flowza-color-text-light-solid);
+  background: var(--flowza-color-primary);
+}
+
+/* While the name loads: the mark's outline only. */
+.markPending {
+  border: 2px solid var(--flowza-color-primary);
+}
+
+/* A long name ends in "…"; the full name is in the link's title and accessible name (UI-08-AC1). */
+.name {
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--flowza-font-size-lg);
+  font-weight: var(--flowza-font-weight-strong);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

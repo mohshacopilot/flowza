@@ -11,6 +11,7 @@ export * from './createdUser';
 export * from './createUserRequest';
 export * from './httpValidationProblemDetails';
 export * from './httpValidationProblemDetailsErrors';
+export * from './installationView';
 export * from './listUsersParams';
 export * from './myProfile';
 export * from './pagedResultOfUserListItem';

@@ -1,10 +1,11 @@
-import { Layout, Typography } from 'antd';
+import { Layout } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { Link, Outlet } from 'react-router';
+import { Outlet } from 'react-router';
 import { ApiError } from '../../shared/api/ApiError';
 import { useCurrentUser } from '../../shared/auth/currentUser';
 import { PageForError } from '../../shared/components/ErrorPages';
 import { AppLoading } from './AppLoading';
+import { BrandMark } from './BrandMark';
 import { SideNavigation } from './SideNavigation';
 import { UserMenu } from './UserMenu';
 import styles from './AppShell.module.css';
@@ -12,7 +13,7 @@ import styles from './AppShell.module.css';
 const isUnauthenticated = (error: unknown): boolean => error instanceof ApiError && error.status === 401;
 
 /**
- * The frame of every screen: header (installation name, user menu), side navigation by role and the page.
+ * The frame of every screen: header (installation mark and name, user menu), side navigation by role and the page.
  * Pages render in <main>; a "skip to main content" link comes first for keyboard users (constitution 12.2).
  */
 export function AppShell() {
@@ -32,18 +33,13 @@ export function AppShell() {
     );
   }
 
-  // The installation name is a placeholder until the settings screen (PLT-08, M3).
-  const installationName = t('shell.installationName');
-
   return (
     <Layout className={styles.shell}>
       <a className={styles.skipLink} href="#main-content">
         {t('shell.skipToContent')}
       </a>
       <Layout.Header className={styles.header}>
-        <Link to="/" className={styles.brand} aria-label={t('shell.homeLink', { name: installationName })}>
-          <Typography.Text strong>{installationName}</Typography.Text>
-        </Link>
+        <BrandMark />
         <UserMenu user={user.data} />
       </Layout.Header>
       <Layout>

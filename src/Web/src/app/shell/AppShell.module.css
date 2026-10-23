@@ -14,10 +14,6 @@
   border-bottom: 1px solid var(--flowza-color-border-secondary);
 }
 
-.brand {
-  font-size: var(--flowza-font-size-lg);
-}
-
 .sider {
   border-right: 1px solid var(--flowza-color-border-secondary);
 }

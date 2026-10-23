@@ -10,6 +10,26 @@
     }
   ],
   "paths": {
+    "/api/v1/installation": {
+      "get": {
+        "tags": [
+          "Installation"
+        ],
+        "operationId": "GetInstallation",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstallationView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/info": {
       "get": {
         "tags": [
@@ -728,6 +748,21 @@
           }
         }
       },
+      "InstallationView": {
+        "required": [
+          "name",
+          "initials"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "initials": {
+            "type": "string"
+          }
+        }
+      },
       "MyProfile": {
         "required": [
           "id",
@@ -1011,6 +1046,9 @@
     }
   },
   "tags": [
+    {
+      "name": "Installation"
+    },
     {
       "name": "Flowza.Identity.Api"
     },

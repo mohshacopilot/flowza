@@ -50,7 +50,8 @@ describe('App shell', () => {
     renderRoutes(routes, '/');
 
     const header = within(await screen.findByRole('banner'));
-    expect(header.getByRole('link', { name: 'Flowza home page' })).toHaveAttribute('href', '/');
+    // The name comes from Identity (UI-08, T006), a moment after the frame.
+    expect(await header.findByRole('link', { name: 'Flowza home page' })).toHaveAttribute('href', '/');
     expect(header.getByRole('button', { name: 'User menu for Asha Admin' })).toBeInTheDocument();
   });
 
