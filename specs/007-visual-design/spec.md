@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | **Approved by the owner, 2026-10-23** (clarifications C1–C7 answered, all "a") |
+| **Status** | Approved by the owner, 2026-10-23 (clarifications C1–C7 answered, all "a"). **Amendment 1 (login page option B, teal; section 12): draft, waiting for the owner's approval** |
 | **Date** | 2026-10-23 |
 | **Module** | UI (visual design of the web application and the login pages) |
 | **Scope IDs** | UI-01 to UI-10 (new; added to the [v0.1 scope](../v0.1-scope.md) section 3.10) |
@@ -17,8 +17,9 @@
 ## 1. Summary
 The platform works, but its pages look plain, and the login page does not even look like the rest of the
 application. This feature gives the whole product one calm, professional look, the **Classic enterprise** direction
-chosen by the owner (U1): a split login page with a brand panel, and an application frame with a dark side
-navigation, a clear header and content on light cards.
+chosen by the owner (U1): a split login page with a deep teal brand panel (the installation's name, a small
+workflow picture and what the product does) beside a form on a card, and an application frame with a dark side
+navigation in the same deep teal, a clear header and content on light cards (amendment 1).
 
 **Why it matters:** the login page is the first thing an organization sees when it evaluates the product, and staff
 use the application every working day. Doing it now, before features 002–006, means the many new screens (org
@@ -37,8 +38,10 @@ All stories are **P1** (built before 002, counted in Milestone 1).
 
 ### US1: A branded login page (P1, UI-01, UI-08)
 As a user, I sign in on a page that shows my organization's name, so that I know I am in the right place.
-1. **Given** the login page on a desktop, **then** the left half is a brand panel with the installation's initials
-   mark (or logo, from M3), its name and a short line about the product; the right half holds the sign-in form.
+1. **Given** the login page on a desktop, **then** the left half is a deep teal brand panel with the installation's
+   initials mark (or logo, from M3) and its name, a small picture of a request going through its steps
+   (form → approve → done), the product line as a headline and three short highlights of what the product does
+   (C1, C8); the right half shows the sign-in form on a white card with a short line under its title (C8).
 2. **Then** the page shows a small "Powered by Flowza" (U3).
 3. **Then** the password field has a button to show or hide the typed password.
 4. **Given** a wrong username or password, **then** the error appears above the form in the same look, and the
@@ -48,8 +51,9 @@ As a user, I sign in on a page that shows my organization's name, so that I know
 
 ### US2: A familiar frame for daily work (P1, UI-03, UI-04)
 As a user, I find my way through the application the same way on every screen.
-1. **Then** every screen has a dark side navigation with the installation's mark and name at the top, the items
-   the user may use, and an "Administration" group that only Platform Admins see.
+1. **Then** every screen has a dark side navigation, in the same deep teal as the login panel (amendment 1), with the
+   installation's mark and name at the top, the items the user may use, and an "Administration" group that only
+   Platform Admins see.
 2. **Then** the current item is highlighted in the brand colour.
 3. **Then** the header shows the page title and the user menu (initials avatar and display name; profile and log out).
 4. **When** the user collapses the side navigation, **then** it shows icons only, each icon still has its name
@@ -59,7 +63,8 @@ As a user, I find my way through the application the same way on every screen.
 As a user away from my desk, I can open the application on a phone and use it.
 1. **Given** a screen 375 px wide, **then** no page scrolls sideways.
 2. **Then** the side navigation is replaced by a menu button that opens it; it closes when an item is chosen.
-3. **Then** the login page shows the brand panel as a short band above the form.
+3. **Then** the login page shows the brand panel as a short band (mark and name) above the form; the picture, the
+   headline and the highlights are left out at this width.
 
 ### US4: Readable and usable by everyone (P1, UI-06, UI-07)
 As a user with low vision or who works with the keyboard, I can read and use every screen.
@@ -83,9 +88,9 @@ As the owner, I want an unintended change to the look to be caught automatically
 ## 4. Requirements
 | ID | Requirement | Milestone |
 |---|---|---|
-| UI-01 | **Login and change-password pages** in the Classic enterprise look: brand panel (initials mark or logo, installation name, a short product line) beside the form; "Powered by Flowza"; show/hide password; errors in the same look; same design values as the application | M1 |
-| UI-02 | **One set of design values** (brand colour `#1f5fbf`, neutral and status colours, font, text sizes, spacing, corners, shadows) is the only source of styling for the application **and** the login pages; system fonts (U5) | M1 |
-| UI-03 | **Application frame:** dark side navigation (mark and name on top, items by role, "Administration" group for Platform Admins, current item highlighted), header with page title and user menu, content on a light background with cards | M1 |
+| UI-01 | **Login and change-password pages** in the Classic enterprise look, as in mockup B (amendment 1): a deep teal brand panel (initials mark or logo, installation name, a small workflow picture, the product line as a headline, three short highlights) beside the form on a white card; "Powered by Flowza"; show/hide password; errors in the same look; same design values as the application | M1 |
+| UI-02 | **One set of design values** (brand colour teal `#0F6E56` (amendment 1; was `#1f5fbf`), neutral and status colours, font, text sizes, spacing, corners, shadows) is the only source of styling for the application **and** the login pages; system fonts (U5) | M1 |
+| UI-03 | **Application frame:** dark side navigation in the deep teal of the login panel (mark and name on top, items by role, "Administration" group for Platform Admins, current item highlighted), header with page title and user menu, content on a light background with cards | M1 |
 | UI-04 | The side navigation **collapses to icons**; every icon keeps its name for hover and screen readers; the choice is remembered per browser. Without a remembered choice it starts open on a desktop (C3) and collapsed at tablet width, 768–1024 px (C4) | M1 |
 | UI-05 | **Phone width:** at 375 px no page scrolls sideways; the side navigation becomes a menu button; the login page stacks the brand panel above the form. Amends NFR-06 ("usable on a tablet") to include phones for these screens | M1 |
 | UI-06 | **Accessibility:** WCAG 2.1 AA contrast and an always visible keyboard focus on every screen, including the dark navigation and the brand panel | M1 |
@@ -99,7 +104,7 @@ Every criterion gets at least one automated test whose name contains its ID (con
 
 | ID | Criterion |
 |---|---|
-| UI-01-AC1 | The login page shows the brand panel (mark, installation name, product line), the form and "Powered by Flowza"; a screenshot at desktop width matches the approved look |
+| UI-01-AC1 | The login page shows the brand panel (mark, installation name, workflow picture, product line, three highlights), the form on a card and "Powered by Flowza"; the picture is decorative and not read out by screen readers; a screenshot at desktop width matches the approved look |
 | UI-01-AC2 | The show/hide button switches the password between hidden and visible and is usable with the keyboard |
 | UI-01-AC3 | A failed login shows the general error message in the page's look; the change-password page has the same look as the login page |
 | UI-02-AC1 | An automatic check finds no colour, font or size values in screens or pages outside the one set of design values |
@@ -153,7 +158,8 @@ labels).
 | The look of new screens of 002–006 | Each feature follows this look; its screens are specified there |
 | The email layout | Feature 006 (NTF N1: fixed clean layout); it uses the same brand values |
 | Right-to-left languages | Later (v0.1 is English only) |
-| Illustrations, animations, per-user themes | Not planned |
+| Illustrations beyond the one small workflow picture on the login panel (amendment 1), animations, per-user themes | Not planned |
+| Highlights or a picture chosen per installation | Not planned; the highlights are fixed texts (C8) and the picture is the same for everyone |
 
 ## 10. Clarifications (answered by the owner, 2026-10-23)
 | # | Question | Answer |
@@ -165,6 +171,7 @@ labels).
 | C5 | Change-password page (also the forced change at first login) | **Same split layout as the login page** |
 | C6 | How the initials mark is made | **First letters of the first two words** of the installation name, in capitals; a one-word name gives its first two letters |
 | C7 | Where the installation name comes from before M3 | **A value set at installation** (default "Flowza"); M3 moves it to the Settings screen (PLT-08) |
+| C8 | (Amendment 1) The highlights, the picture's labels and the line under the form title | **Fixed texts from the translation files**, like C1: "Forms built without code", "Approvals that route themselves", "Every step tracked"; picture labels "Form", "Approve", "Done"; under the title "Use your work username". Not editable in v0.1 |
 
 ## 11. Spec quality checklist (Claude checks before asking for approval)
 - [x] Every requirement has an ID, a milestone and at least one acceptance criterion
@@ -173,3 +180,10 @@ labels).
 - [x] Out-of-scope items are listed so nobody builds them by mistake
 - [x] All clarifications answered (C1–C7)
 - [x] Approved by the owner (2026-10-23)
+- [x] Amendment 1: requirements, criteria, out of scope and C8 updated; colours checked for contrast (section 12)
+- [ ] Amendment 1 approved by the owner
+
+## 12. Amendments
+| # | Date | What changed | Why |
+|---|---|---|---|
+| 1 | 2026-10-23 | **Login page as mockup B** (owner's choice from three options): deep teal brand panel with the mark and name, a small workflow picture, the product line as a headline and three highlights; the form on a white card with a short line under its title. **Brand colour teal `#0F6E56`** (was `#1f5fbf`); the side navigation uses the same deep teal as the login panel. Changed: summary, US1, US2, US3, UI-01, UI-02, UI-03, UI-01-AC1, out of scope, C8. Discussion: [ui-design.md 4b](../../docs/discussions/ui-design.md) | After T005 the owner saw the built login page and found it too plain and empty, the form too small, and the colours and layout not right. Contrast was checked first: white on the teal 6.2 : 1, light text on the deep teal 9–12 : 1 |

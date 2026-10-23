@@ -26,6 +26,10 @@ Spec Kit is postponed; we follow the same method by hand (see [CLAUDE.md](../../
    [Plan 007](../../specs/007-visual-design/plan.md) **approved** 2026-10-23 (PA1–PA6).
    [Tasks 007](../../specs/007-visual-design/tasks.md) written and analyzed (T001–T014): **next: build 007 from T001**
    (skill `implement-task`), **then plan 002**. T012 needs the owner's push OK for the screenshot baselines. UI-01 to UI-10 are in the v0.1 scope (M1).
+   **Built so far:** T001–T005 (committed locally, not pushed). At the T005 look the owner was not happy with the
+   login page and picked **mockup B** (deep teal panel with a workflow picture and highlights, form on a card, brand
+   teal `#0F6E56`; [ui-design.md 4b](ui-design.md)). **Next: the owner approves spec 007 amendment 1, then Claude
+   updates plan 007 and tasks (rework of T004's layout and the colour values), then continues with T006.**
 2. ~~Write the specs for 002 to 006~~ **Done:** all five specs approved on 2026-10-21 (row 21).
 3. Per feature: plan → tasks → analyze → implement, building **Milestone 1** first. Next plan: **002** (`specs/002-org-hierarchy/plan.md`, skill `write-plan`). When 002 is planned, amend spec 001 for 002 C2 (a new user needs a primary unit; the first admin gets the root unit).
 

@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Decided by the owner (U1–U12, all "a"; direction **A, Classic enterprise**), 2026-10-23 |
+| **Status** | Decided by the owner (U1–U12, all "a"; direction **A, Classic enterprise**), 2026-10-23. **Revised the same day after the owner saw the built login page (section 4b): login option B, teal** |
 | **Feeds** | A small feature spec `specs/007-visual-design/spec.md` (sections 1–6) and its `plan.md` (section 7) |
 | **Scope IDs** | New, proposed: UI-01 to UI-07 (section 5); added to [specs/v0.1-scope.md](../../specs/v0.1-scope.md) once approved |
 | **Related** | [PLT](platform.md) (PLT-08 Settings screen: installation name, logo, from M3), [IAM](identity-and-access.md) (login page), constitution Article 12 (usable by everyone), tech discussion T10 (Ant Design theme tokens) |
@@ -106,6 +106,42 @@ Answer like the other discussions ("U1 - a"). Recommended answers are marked ★
 | U10 | An **initials mark** from the installation name until the logo can be uploaded (M3) |
 | U11 | A small feature **`007-visual-design`, built before 002** |
 | U12 | **Automatic screenshot tests** at desktop and phone width, plus the existing axe checks |
+
+### 4b. Revision after seeing the built login page (owner, 2026-10-23)
+After T005 the owner looked at the running login page (split layout, flat blue panel, small form) and was **not
+happy**: too plain and empty, the form too small, the colours and the layout not right. Claude showed three richer
+login mockups (A: centred card on an indigo pattern; **B: split page with an illustration and highlights, deep teal
+and white**; C: navy banner with an amber accent and an overlapping form card). **The owner picked B.**
+
+| # | Revised decision (replaces the row in 4a) |
+|---|---|
+| U1 | Still the Classic enterprise family (split login, dark side navigation), but the login page follows **mockup B**: the brand panel is **deep teal** and carries the mark and name, a **small workflow picture** (Form → Approve → Done), the product line as a headline and **three short highlights**; the form sits **on a white card** on a light page, with a short line under the title. The dark side navigation of the app uses the **same deep teal** as the login panel, so both parts look like one product |
+| U4 | Brand colour becomes **teal `#0F6E56`** (was blue `#1f5fbf`). Still: from M3 the admin may change it (PLT-08), and any brand colour must stay readable (UI-07) |
+
+Mockup B, desktop:
+```
+┌──────────── deep teal panel ─────────────┬──────────── light page ────────────────┐
+│ [SB] State Bank of Example                │                                        │
+│                                           │   ┌──────────────────────────────┐     │
+│ [Form] ── [Approve] ── [✓ Done]           │   │ Log in                       │     │
+│                                           │   │ Use your work username       │     │
+│ Requests and approvals in one place       │   │ Username [                 ] │     │
+│ ✓ Forms built without code                │   │ Password [              👁 ] │     │
+│ ✓ Approvals that route themselves         │   │ [          Log in          ] │     │
+│ ✓ Every step tracked                      │   └──────────────────────────────┘     │
+│                                           │          Powered by Flowza             │
+└───────────────────────────────────────────┴────────────────────────────────────────┘
+phone: a deep teal band with mark and name above the form card; picture, headline and highlights hidden
+```
+
+Contrast checked before writing the spec (WCAG 2.1): white on teal `#0F6E56` 6.2 : 1; teal on white 6.2 : 1 and
+on the light page 5.6 : 1; light text on the deep teal panel 9–12 : 1. Two points for the plan: the mockup's light
+teal field borders reach only 1.5 : 1 (a field's edge needs 3 : 1, so the built borders are darker), and the
+selected navigation item (teal on deep teal, 2.2 : 1) keeps its light side bar so it stays visible.
+
+What stays as built: the installation name and initials (T003), the show/hide button and its tests (T005, now
+shown as an eye icon inside the field with the same accessible name), the design-values file and its checks
+(T001, T002). What changes: the colour values, the login layout and its CSS (T004), the plan's login sketch.
 
 ## 5. Draft acceptance criteria (for the spec, after the answers)
 | ID | Requirement (what) | How we check it |
