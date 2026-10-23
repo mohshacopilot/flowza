@@ -21,7 +21,7 @@ Nothing else: no new database, secret, library or program.
 | T002 Login-page CSS generator and the two checks | ✅ | 610bd49 |
 | T003 Installation name and initials (Identity) | ✅ | 4e2f387 |
 | T004 Login and change-password pages, split layout | ✅ | 8c71511 |
-| T005 Show/hide password | ⬜ | |
+| T005 Show/hide password | ✅ | 2a4dcd3 |
 | T006 Installation in the web app, brand mark | ⬜ | |
 | T007 Dark side navigation and its preference | ⬜ | |
 | T008 Header and page titles | ⬜ | |
@@ -71,6 +71,13 @@ Nothing else: no new database, secret, library or program.
   ties it to `breakpoints.tablet`. `account.css` left the T002 allow list (7 files remain, all for T007–T010).
   The T029 end-to-end suite (10 tests, with axe on the login pages) passes unchanged. Not yet checked by eye: the
   owner looks at the login pages after T005.
+- **T005 (2026-10-23):** the task named two texts, "Show password" / "Hide password". The button is a toggle with
+  `aria-pressed`, and the WAI-ARIA rule for toggles is that the name must **not** change with the state (otherwise a
+  screen reader says "Hide password, pressed", which means the opposite). So the name stays "Show password"
+  (`Password.Show`) and only `aria-pressed` changes; a pressed button also gets a light background, so the state is
+  visible. "Hide password" is therefore not used. The translated name reaches the script through
+  `data-show-password-label` on `<body>`. The field goes back to hidden when the form is sent. The end-to-end tests
+  live in `specs/07-visual-design.spec.ts`, which T011 extends with the screenshots.
 
 ## Phase 1: Design values (M1)
 | ID | Task | Spec IDs | Done when |
@@ -126,7 +133,7 @@ Nothing else: no new database, secret, library or program.
 | Criterion | Task(s) | Status |
 |---|---|---|
 | UI-01-AC1 | T004, T011, T012 | 🟡 brand panel (mark, name, product line), form and "Powered by Flowza" rendered (`UI_01_AC1_*`, T004); the desktop screenshot follows in T011/T012 |
-| UI-01-AC2 | T005 | ⬜ |
+| UI-01-AC2 | T005 | ✅ mouse and keyboard (Tab, Space, Enter) switch the field, `aria-pressed` follows, the login still works with the password shown, axe clean (`UI_01_AC2_*`, end-to-end); the script is a file with its translated name (`UI_01_AC2_*`, integration) |
 | UI-01-AC3 | T004, T011, T012 | 🟡 the general error above the form in the page look, and the change-password page in the same layout (`UI_01_AC3_*`, T004); screenshots in T011/T012 |
 | UI-02-AC1 | T002, T010 | 🟡 the scan runs (`UI_02_AC1_*`, T002); `account.css` is clean (T004); 7 files remain on the allow list for T007–T010 |
 | UI-02-AC2 | T001, T002, T004 | ✅ the theme and `design-values.css` come from the same values and agree on brand, on-brand text and font (`UI_02_AC2_*`, T002); the login pages load `design-values.css` before their layout (`UI_02_AC2_*`, T004) |
