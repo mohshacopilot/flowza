@@ -13,6 +13,20 @@ describe('Ant Design theme from the design values', () => {
     expect(theme.token?.borderRadius).toBe(designValues.radius.control);
   });
 
+  it('UI_02_spacing_and_the_code_font_come_from_the_design_values', () => {
+    const { space } = designValues;
+    expect(theme.token).toMatchObject({
+      marginXS: space.sm,
+      margin: space.lg,
+      marginLG: space.xl,
+      marginXL: space.xxl,
+      paddingXS: space.sm,
+      padding: space.lg,
+      paddingLG: space.xl,
+      fontFamilyCode: designValues.font.familyCode,
+    });
+  });
+
   it('UI_02_keeps_the_flowza_css_variables_for_layout_css', () => {
     expect(theme.cssVar).toEqual({ prefix: 'flowza' });
   });

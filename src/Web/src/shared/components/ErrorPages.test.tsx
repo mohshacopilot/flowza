@@ -34,6 +34,18 @@ describe('Error pages', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'No access' })).toBeInTheDocument();
   });
 
+  it.each([
+    [403, 'No access'],
+    [404, 'Page not found'],
+  ])('UI_09_AC1_the_%i_page_shows_an_icon_in_the_brand_colour_not_a_stock_picture', (status, title) => {
+    const { container } = renderInProviders(<PageForError error={new ApiError({ status })} />);
+
+    expect(screen.getByRole('heading', { level: 1, name: title })).toBeInTheDocument();
+    // Status "info" takes the brand colour (colorInfo); Ant Design's 403/404 pictures have colours of their own.
+    expect(container.querySelector('.ant-result-info')).not.toBeNull();
+    expect(container.querySelector('.ant-result-image')).toBeNull();
+  });
+
   it('a_404_from_the_server_shows_the_not_found_page', () => {
     renderInProviders(<PageForError error={new ApiError({ status: 404 })} />);
 

@@ -35,9 +35,11 @@ export function AppShell() {
   }
   if (user.isError) {
     return (
-      <main id="main-content">
-        <PageForError error={user.error} />
-      </main>
+      <Layout className={styles.errorPage}>
+        <Layout.Content id="main-content">
+          <PageForError error={user.error} />
+        </Layout.Content>
+      </Layout>
     );
   }
 

@@ -28,7 +28,7 @@ export function TemporaryPasswordPanel({ password }: { password: string }) {
         type="warning"
         showIcon
         title={t('users.temporaryPassword.onceWarning')}
-        style={{ marginBottom: 16 }}
+        className={styles.alert ?? ''}
       />
       <Form layout="vertical" component={false}>
         <Form.Item label={t('users.temporaryPassword.label')} htmlFor={id}>

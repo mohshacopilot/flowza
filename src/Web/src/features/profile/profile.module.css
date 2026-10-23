@@ -1,12 +1,9 @@
-.section {
-  margin-bottom: 32px;
-}
-
+/* Layout only: spacing comes from the design values through Ant Design's CSS variables (UI-02). */
 .details,
 .form {
   max-width: 560px;
 }
 
 .details {
-  margin-bottom: 8px;
+  margin-bottom: var(--flowza-margin-xs);
 }

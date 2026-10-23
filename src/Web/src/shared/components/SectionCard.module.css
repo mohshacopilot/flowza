@@ -1,0 +1,11 @@
+/* Layout only: sizes come from the design values through Ant Design's CSS variables (UI-02). */
+.section {
+  margin-bottom: var(--flowza-margin-lg);
+}
+
+/* The card's own title style (size, weight), without the browser's heading margins. */
+.title {
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
+}

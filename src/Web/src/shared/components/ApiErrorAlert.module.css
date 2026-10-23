@@ -1,0 +1,4 @@
+/* Layout only: spacing comes from the design values through Ant Design's CSS variables (UI-02). */
+.alert {
+  margin-bottom: var(--flowza-margin);
+}

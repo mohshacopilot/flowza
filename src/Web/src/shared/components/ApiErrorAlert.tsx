@@ -1,6 +1,7 @@
 import { Alert } from 'antd';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import styles from './ApiErrorAlert.module.css';
 
 export interface ShownApiError {
   message: string;
@@ -22,7 +23,7 @@ export function ApiErrorAlert({ error, action }: { error: ShownApiError | undefi
         ? { description: t('errors.page.reference', { reference: error.reference }) }
         : {})}
       {...(action ? { action } : {})}
-      style={{ marginBottom: 16 }}
+      className={styles.alert ?? ''}
     />
   );
 }

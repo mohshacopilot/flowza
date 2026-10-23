@@ -7,14 +7,18 @@ import { StatusPage } from './StatusPage';
 export function ForbiddenPage() {
   const { t } = useTranslation();
   return (
-    <StatusPage status="403" title={t('errors.forbidden.title')} message={t('errors.forbidden.message')} />
+    <StatusPage
+      kind="forbidden"
+      title={t('errors.forbidden.title')}
+      message={t('errors.forbidden.message')}
+    />
   );
 }
 
 export function NotFoundPage() {
   const { t } = useTranslation();
   return (
-    <StatusPage status="404" title={t('errors.notFound.title')} message={t('errors.notFound.message')} />
+    <StatusPage kind="notFound" title={t('errors.notFound.title')} message={t('errors.notFound.message')} />
   );
 }
 
@@ -24,7 +28,7 @@ export function ErrorPage({ error }: { error: unknown }) {
   const reference = referenceOf(error);
   return (
     <StatusPage
-      status="error"
+      kind="error"
       title={t('errors.page.title')}
       message={t('errors.page.message')}
       actions={

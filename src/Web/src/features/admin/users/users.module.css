@@ -1,13 +1,23 @@
+/* Layout only: spacing, fonts and colours come from the design values through CSS variables (UI-02). */
+
+/* Cards on the users screens stand apart by the same space as the sections of a page. */
+.card {
+  margin-bottom: var(--flowza-margin-lg);
+}
+
 .toolbar {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: var(--flowza-margin-sm);
 }
 
 .search {
   flex: 1 1 280px;
   max-width: 420px;
+}
+
+.statusFilter {
+  min-width: 180px;
 }
 
 .toolbarEnd {
@@ -18,16 +28,20 @@
   max-width: 560px;
 }
 
+.alert {
+  margin-bottom: var(--flowza-margin);
+}
+
 /* A fieldset groups the role check boxes under one name for screen readers, without the browser's frame. */
 .fieldset {
   border: 0;
-  margin: 0 0 24px;
+  margin: 0 0 var(--flowza-margin-lg);
   padding: 0;
 }
 
 .legend {
-  margin-bottom: 8px;
-  font-weight: 500;
+  margin-bottom: var(--flowza-margin-xs);
+  font-weight: var(--flowza-font-weight-strong);
 }
 
 /* Read by screen readers, not shown. */
@@ -43,10 +57,7 @@
   border: 0;
 }
 
-.section {
-  margin-bottom: 24px;
-}
-
+/* The temporary password in a font where 0/O and 1/l/I look different. */
 .password {
-  font-family: monospace;
+  font-family: var(--flowza-font-family-code);
 }

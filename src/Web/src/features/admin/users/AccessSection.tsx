@@ -1,5 +1,5 @@
-import { Alert, App, Button, Modal, Space, Typography } from 'antd';
-import { useId, useState } from 'react';
+import { Alert, App, Button, Modal, Space } from 'antd';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { describeApiError } from '../../../shared/api/errorMessages';
 import type { UserDetails } from '../../../shared/api/generated/identity/model';
@@ -10,6 +10,7 @@ import {
   useUnlockUser,
 } from '../../../shared/api/generated/identity/users/users';
 import { ApiErrorAlert, type ShownApiError } from '../../../shared/components/ApiErrorAlert';
+import { SectionCard } from '../../../shared/components/SectionCard';
 import { TemporaryPasswordPanel } from './TemporaryPasswordPanel';
 import { useRefreshUsers } from './useRefreshUsers';
 import styles from './users.module.css';
@@ -22,7 +23,6 @@ import styles from './users.module.css';
 export function AccessSection({ user }: { user: UserDetails }) {
   const { t, i18n } = useTranslation();
   const { message, modal } = App.useApp();
-  const headingId = useId();
   const refreshUsers = useRefreshUsers();
   const [failure, setFailure] = useState<ShownApiError>();
   const [temporaryPassword, setTemporaryPassword] = useState<string>();
@@ -78,17 +78,14 @@ export function AccessSection({ user }: { user: UserDetails }) {
   };
 
   return (
-    <section className={styles.section} aria-labelledby={headingId}>
-      <Typography.Title level={2} id={headingId}>
-        {t('users.details.accessSection')}
-      </Typography.Title>
+    <SectionCard title={t('users.details.accessSection')}>
       <ApiErrorAlert error={failure} />
       {user.status === 'Locked' && (
         <Alert
           type="warning"
           showIcon
           title={t('users.details.lockedMessage')}
-          style={{ marginBottom: 16 }}
+          className={styles.alert ?? ''}
         />
       )}
       <Space wrap>
@@ -144,6 +141,6 @@ export function AccessSection({ user }: { user: UserDetails }) {
       >
         {temporaryPassword !== undefined && <TemporaryPasswordPanel password={temporaryPassword} />}
       </Modal>
-    </section>
+    </SectionCard>
   );
 }

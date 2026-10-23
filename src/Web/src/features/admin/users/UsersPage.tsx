@@ -1,6 +1,6 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { keepPreviousData } from '@tanstack/react-query';
-import { Button, Input, Select, Table, Tag, Typography, type TableColumnsType } from 'antd';
+import { Button, Card, Empty, Input, Select, Table, Tag, Typography, type TableColumnsType } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { describeApiError } from '../../../shared/api/errorMessages';
@@ -92,67 +92,73 @@ export function UsersPage() {
       <Typography.Title level={1}>{t('users.title')}</Typography.Title>
       <Typography.Paragraph>{t('users.intro')}</Typography.Paragraph>
 
-      <div className={styles.toolbar}>
-        {/* Keyed by the address's search: Back/Forward start the box again with that text (review finding 10). */}
-        <Input.Search
-          key={search}
-          className={styles.search}
-          aria-label={t('users.search')}
-          placeholder={t('users.search')}
-          defaultValue={search}
-          onSearch={(value) => {
-            update({ search: value });
-          }}
-          allowClear
-        />
-        <Select<UserStatus | 'all'>
-          style={{ minWidth: 180 }}
-          aria-label={t('users.statusFilter')}
-          value={status ?? 'all'}
-          onChange={(value) => {
-            update({ status: value === 'all' ? undefined : value });
-          }}
-          options={[
-            { value: 'all', label: t('users.allStatuses') },
-            ...statuses.map((s) => ({ value: s, label: t(`users.status.${s}`) })),
-          ]}
-        />
-        <div className={styles.toolbarEnd}>
-          <Button
-            type="primary"
-            icon={<PlusOutlined aria-hidden />}
-            onClick={() => {
-              void navigate('/admin/users/new');
+      <Card variant="borderless" className={styles.card ?? ''}>
+        <div className={styles.toolbar}>
+          {/* Keyed by the address's search: Back/Forward start the box again with that text (review finding 10). */}
+          <Input.Search
+            key={search}
+            className={styles.search}
+            aria-label={t('users.search')}
+            placeholder={t('users.search')}
+            defaultValue={search}
+            onSearch={(value) => {
+              update({ search: value });
             }}
-          >
-            {t('users.newUser')}
-          </Button>
+            allowClear
+          />
+          <Select<UserStatus | 'all'>
+            className={styles.statusFilter ?? ''}
+            aria-label={t('users.statusFilter')}
+            value={status ?? 'all'}
+            onChange={(value) => {
+              update({ status: value === 'all' ? undefined : value });
+            }}
+            options={[
+              { value: 'all', label: t('users.allStatuses') },
+              ...statuses.map((s) => ({ value: s, label: t(`users.status.${s}`) })),
+            ]}
+          />
+          <div className={styles.toolbarEnd}>
+            <Button
+              type="primary"
+              icon={<PlusOutlined aria-hidden />}
+              onClick={() => {
+                void navigate('/admin/users/new');
+              }}
+            >
+              {t('users.newUser')}
+            </Button>
+          </div>
         </div>
-      </div>
+      </Card>
 
       {users.isError && <ApiErrorAlert error={describeApiError(users.error, i18n)} />}
 
-      <Table<UserListItem>
-        aria-label={t('users.listLabel')}
-        rowKey="id"
-        // On a narrow screen the table scrolls inside itself instead of widening the whole page.
-        scroll={{ x: 'max-content' }}
-        columns={columns}
-        dataSource={users.data?.items ?? []}
-        loading={users.isFetching}
-        locale={{ emptyText: t('users.noUsers') }}
-        pagination={{
-          current: page,
-          pageSize,
-          total: Number(users.data?.totalCount ?? 0),
-          showSizeChanger: false,
-          hideOnSinglePage: false,
-          showTotal: (total, [start, end]) => t('users.pageSummary', { start, end, total }),
-          onChange: (next) => {
-            update({ page: next });
-          },
-        }}
-      />
+      <Card variant="borderless" className={styles.card ?? ''}>
+        <Table<UserListItem>
+          aria-label={t('users.listLabel')}
+          rowKey="id"
+          // On a narrow screen the table scrolls inside itself instead of widening the whole page.
+          scroll={{ x: 'max-content' }}
+          columns={columns}
+          dataSource={users.data?.items ?? []}
+          loading={users.isFetching}
+          locale={{
+            emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('users.noUsers')} />,
+          }}
+          pagination={{
+            current: page,
+            pageSize,
+            total: Number(users.data?.totalCount ?? 0),
+            showSizeChanger: false,
+            hideOnSinglePage: false,
+            showTotal: (total, [start, end]) => t('users.pageSummary', { start, end, total }),
+            onChange: (next) => {
+              update({ page: next });
+            },
+          }}
+        />
+      </Card>
     </>
   );
 }

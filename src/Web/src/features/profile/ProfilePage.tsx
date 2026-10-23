@@ -1,11 +1,11 @@
 import { Descriptions, Tag, Typography } from 'antd';
-import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { describeApiError } from '../../shared/api/errorMessages';
 import { useGetMyProfile } from '../../shared/api/generated/identity/me/me';
 import { roleLabel } from '../../shared/auth/roleLabel';
 import { ApiErrorAlert } from '../../shared/components/ApiErrorAlert';
 import { LoadingIndicator } from '../../shared/components/LoadingIndicator';
+import { SectionCard } from '../../shared/components/SectionCard';
 import { ChangePasswordSection } from './ChangePasswordSection';
 import styles from './profile.module.css';
 
@@ -15,16 +15,12 @@ import styles from './profile.module.css';
  */
 export function ProfilePage() {
   const { t, i18n } = useTranslation();
-  const headingId = useId();
   const profile = useGetMyProfile();
 
   return (
     <>
       <Typography.Title level={1}>{t('profile.title')}</Typography.Title>
-      <section className={styles.section} aria-labelledby={headingId}>
-        <Typography.Title level={2} id={headingId}>
-          {t('profile.detailsSection')}
-        </Typography.Title>
+      <SectionCard title={t('profile.detailsSection')}>
         {profile.isPending && <LoadingIndicator label={t('profile.loading')} />}
         {profile.isError && <ApiErrorAlert error={describeApiError(profile.error, i18n)} />}
         {profile.isSuccess && (
@@ -57,7 +53,7 @@ export function ProfilePage() {
             <Typography.Paragraph type="secondary">{t('profile.detailsHelp')}</Typography.Paragraph>
           </>
         )}
-      </section>
+      </SectionCard>
       <ChangePasswordSection />
     </>
   );

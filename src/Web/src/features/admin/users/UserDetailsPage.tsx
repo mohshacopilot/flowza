@@ -9,6 +9,7 @@ import { AccessSection } from './AccessSection';
 import { ProfileSection } from './ProfileSection';
 import { RolesSection } from './RolesSection';
 import { UserStatusTag } from './UserStatusTag';
+import styles from './users.module.css';
 
 /** One user for a Platform Admin: details, system roles and access (IAM-02, IAM-04, IAM-07). */
 export function UserDetailsPage() {
@@ -46,7 +47,7 @@ export function UserDetailsPage() {
           type="info"
           showIcon
           title={t('users.details.mustChangePassword')}
-          style={{ marginBottom: 16 }}
+          className={styles.alert ?? ''}
         />
       )}
       {/* Keyed by the row version: after any change the sections start again from the saved values. */}

@@ -1,9 +1,10 @@
-import { App, Button, Form, Typography } from 'antd';
-import { useId, useState } from 'react';
+import { App, Button, Form } from 'antd';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { useChangeMyPassword } from '../../shared/api/generated/identity/me/me';
 import { ApiErrorAlert, type ShownApiError } from '../../shared/components/ApiErrorAlert';
+import { SectionCard } from '../../shared/components/SectionCard';
 import { applyServerErrors } from '../../shared/forms/serverErrors';
 import { TextField } from '../../shared/forms/TextField';
 import { useZodResolver } from '../../shared/forms/useZodResolver';
@@ -21,7 +22,6 @@ const empty: ChangePasswordValues = { currentPassword: '', newPassword: '', conf
 export function ChangePasswordSection() {
   const { t, i18n } = useTranslation();
   const { message } = App.useApp();
-  const headingId = useId();
   const [failure, setFailure] = useState<ShownApiError>();
   const changePassword = useChangeMyPassword();
   const form = useForm<ChangePasswordValues>({
@@ -41,10 +41,7 @@ export function ChangePasswordSection() {
   });
 
   return (
-    <section className={styles.section} aria-labelledby={headingId}>
-      <Typography.Title level={2} id={headingId}>
-        {t('profile.passwordSection')}
-      </Typography.Title>
+    <SectionCard title={t('profile.passwordSection')}>
       <ApiErrorAlert error={failure} />
       <Form layout="vertical" component={false}>
         <form className={styles.form} noValidate onSubmit={(event) => void onSubmit(event)}>
@@ -78,6 +75,6 @@ export function ChangePasswordSection() {
           </Button>
         </form>
       </Form>
-    </section>
+    </SectionCard>
   );
 }

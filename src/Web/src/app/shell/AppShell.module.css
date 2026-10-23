@@ -5,6 +5,13 @@
 
 .loading {
   min-height: 100vh;
+  background: var(--flowza-color-bg-layout);
+}
+
+/* When the frame itself cannot load (who is logged in?): the error card on the page background (Layout's). */
+.errorPage {
+  min-height: 100vh;
+  padding: var(--flowza-padding-lg);
 }
 
 /* The column beside the navigation may shrink below its content's width: wide tables scroll inside their own box,

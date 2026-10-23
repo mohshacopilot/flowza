@@ -1,4 +1,4 @@
-import { App, Button, Form, Input, Typography } from 'antd';
+import { App, Button, Form, Input } from 'antd';
 import { useId, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -6,6 +6,7 @@ import { ApiError } from '../../../shared/api/ApiError';
 import type { UserDetails } from '../../../shared/api/generated/identity/model';
 import { useUpdateUser } from '../../../shared/api/generated/identity/users/users';
 import { ApiErrorAlert, type ShownApiError } from '../../../shared/components/ApiErrorAlert';
+import { SectionCard } from '../../../shared/components/SectionCard';
 import { applyServerErrors } from '../../../shared/forms/serverErrors';
 import { TextField } from '../../../shared/forms/TextField';
 import { useZodResolver } from '../../../shared/forms/useZodResolver';
@@ -23,7 +24,6 @@ const fields = ['displayName', 'email', 'mobile'] as const;
 export function ProfileSection({ user, onReload }: { user: UserDetails; onReload: () => void }) {
   const { t, i18n } = useTranslation();
   const { message } = App.useApp();
-  const headingId = useId();
   const usernameId = useId();
   const refreshUsers = useRefreshUsers();
   const [failure, setFailure] = useState<ShownApiError & { conflict: boolean }>();
@@ -49,10 +49,7 @@ export function ProfileSection({ user, onReload }: { user: UserDetails; onReload
   });
 
   return (
-    <section className={styles.section} aria-labelledby={headingId}>
-      <Typography.Title level={2} id={headingId}>
-        {t('users.details.profileSection')}
-      </Typography.Title>
+    <SectionCard title={t('users.details.profileSection')}>
       <ApiErrorAlert
         error={failure}
         action={
@@ -88,6 +85,6 @@ export function ProfileSection({ user, onReload }: { user: UserDetails; onReload
           </Button>
         </form>
       </Form>
-    </section>
+    </SectionCard>
   );
 }

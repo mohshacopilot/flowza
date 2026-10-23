@@ -123,19 +123,6 @@ function read(file: string): string {
     : readFileSync(new URL(file, webRoot), 'utf8');
 }
 
-/**
- * Files that still hold their own values, with the task that cleans them. The list only shrinks: it must be empty
- * when T010 is done (tasks 007).
- */
-const stillToClean = new Map<string, string>([
-  ['src/features/admin/users/AccessSection.tsx', 'T010 restyles the user details'],
-  ['src/features/admin/users/TemporaryPasswordPanel.tsx', 'T010 restyles create user'],
-  ['src/features/admin/users/UserDetailsPage.tsx', 'T010 restyles the user details'],
-  ['src/features/admin/users/users.module.css', 'T010 restyles the users screens'],
-  ['src/features/profile/profile.module.css', 'T010 restyles my profile'],
-  ['src/shared/components/ApiErrorAlert.tsx', 'T010 restyles the error states'],
-]);
-
 describe('No stray visual values (UI-02-AC1)', () => {
   it('finds_spacing_and_corners_but_not_layout_sizes_or_zero', () => {
     expect(
@@ -168,21 +155,24 @@ describe('No stray visual values (UI-02-AC1)', () => {
     expect(files.length).toBeGreaterThan(0);
 
     const offenders = files
-      .filter((file) => !stillToClean.has(file))
       .map((file) => ({ file, values: strayValues(read(file)) }))
       .filter(({ values }) => values.length > 0);
 
-    // Take the value from designValues.json (Ant Design token or --flowza-* variable) instead.
+    // No exceptions (the list of files still to clean was emptied by T010). Take the value from designValues.json
+    // (an Ant Design token or a --flowza-* variable) instead.
     expect(offenders).toEqual([]);
   });
 
-  it('UI_02_AC1_files_still_to_clean_are_listed_only_while_they_hold_stray_values', () => {
-    for (const file of stillToClean.keys()) {
-      // A file that is clean (or gone) leaves the list, so the list reaches empty by T010.
-      expect({ file, hasStrayValues: strayValues(read(file)).length > 0 }).toEqual({
-        file,
-        hasStrayValues: true,
-      });
+  it('UI_02_AC1_the_scan_covers_the_screens_the_frame_and_the_login_pages', () => {
+    const files = scannedFiles();
+    for (const expected of [
+      'src/features/admin/users/users.module.css',
+      'src/features/admin/users/UsersPage.tsx',
+      'src/app/shell/AppShell.module.css',
+      'identity/wwwroot/account/assets/account.css',
+      'identity/Pages/Shared/_Layout.cshtml',
+    ]) {
+      expect(files).toContain(expected);
     }
   });
 });

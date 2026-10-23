@@ -1,4 +1,4 @@
-import { Button, Form, Space, Typography } from 'antd';
+import { Button, Card, Form, Space, Typography } from 'antd';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -57,20 +57,22 @@ export function CreateUserPage() {
         <Typography.Paragraph>
           {t('users.create.createdMessage', { username: created.username })}
         </Typography.Paragraph>
-        <div className={styles.form}>
-          <TemporaryPasswordPanel password={created.temporaryPassword} />
-          <Space>
-            <Button
-              type="primary"
-              onClick={() => {
-                void navigate(`/admin/users/${created.id}`, { replace: true });
-              }}
-            >
-              {t('users.temporaryPassword.openUser')}
-            </Button>
-            <Link to="/admin/users">{t('users.backToList')}</Link>
-          </Space>
-        </div>
+        <Card variant="borderless" className={styles.card ?? ''}>
+          <div className={styles.form}>
+            <TemporaryPasswordPanel password={created.temporaryPassword} />
+            <Space>
+              <Button
+                type="primary"
+                onClick={() => {
+                  void navigate(`/admin/users/${created.id}`, { replace: true });
+                }}
+              >
+                {t('users.temporaryPassword.openUser')}
+              </Button>
+              <Link to="/admin/users">{t('users.backToList')}</Link>
+            </Space>
+          </div>
+        </Card>
       </>
     );
   }
@@ -79,42 +81,44 @@ export function CreateUserPage() {
     <>
       <Typography.Title level={1}>{t('users.create.title')}</Typography.Title>
       <ApiErrorAlert error={failure} />
-      <Form layout="vertical" component={false}>
-        <form className={styles.form} noValidate onSubmit={(event) => void onSubmit(event)}>
-          <TextField
-            control={form.control}
-            name="username"
-            label={t('users.fields.username')}
-            extra={t('users.fields.usernameHelp')}
-            required
-          />
-          <TextField
-            control={form.control}
-            name="displayName"
-            label={t('users.fields.displayName')}
-            required
-          />
-          <TextField
-            control={form.control}
-            name="email"
-            type="email"
-            label={t('users.fields.email')}
-            required
-          />
-          <TextField control={form.control} name="mobile" type="tel" label={t('users.fields.mobile')} />
-          <Controller
-            control={form.control}
-            name="roles"
-            render={({ field }) => <RolesField value={field.value} onChange={field.onChange} />}
-          />
-          <Space>
-            <Button type="primary" htmlType="submit" loading={createUser.isPending}>
-              {t('users.create.submit')}
-            </Button>
-            <Link to="/admin/users">{t('users.create.cancel')}</Link>
-          </Space>
-        </form>
-      </Form>
+      <Card variant="borderless" className={styles.card ?? ''}>
+        <Form layout="vertical" component={false}>
+          <form className={styles.form} noValidate onSubmit={(event) => void onSubmit(event)}>
+            <TextField
+              control={form.control}
+              name="username"
+              label={t('users.fields.username')}
+              extra={t('users.fields.usernameHelp')}
+              required
+            />
+            <TextField
+              control={form.control}
+              name="displayName"
+              label={t('users.fields.displayName')}
+              required
+            />
+            <TextField
+              control={form.control}
+              name="email"
+              type="email"
+              label={t('users.fields.email')}
+              required
+            />
+            <TextField control={form.control} name="mobile" type="tel" label={t('users.fields.mobile')} />
+            <Controller
+              control={form.control}
+              name="roles"
+              render={({ field }) => <RolesField value={field.value} onChange={field.onChange} />}
+            />
+            <Space>
+              <Button type="primary" htmlType="submit" loading={createUser.isPending}>
+                {t('users.create.submit')}
+              </Button>
+              <Link to="/admin/users">{t('users.create.cancel')}</Link>
+            </Space>
+          </form>
+        </Form>
+      </Card>
     </>
   );
 }
