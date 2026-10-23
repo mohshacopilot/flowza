@@ -20,7 +20,7 @@ Nothing else: no new database, secret, library or program.
 | T001 Design values and Ant Design adapter | ✅ | 8c9af68 |
 | T002 Login-page CSS generator and the two checks | ✅ | 610bd49 |
 | T003 Installation name and initials (Identity) | ✅ | 4e2f387 |
-| T004 Login and change-password pages, split layout | ⬜ | |
+| T004 Login and change-password pages, split layout | ✅ | 8c71511 |
 | T005 Show/hide password | ⬜ | |
 | T006 Installation in the web app, brand mark | ⬜ | |
 | T007 Dark side navigation and its preference | ⬜ | |
@@ -61,6 +61,16 @@ Nothing else: no new database, secret, library or program.
   The endpoint is in Identity's OpenAPI document (`GetInstallation`); the web client is regenerated in T006. The
   AppHost left running for the owner was stopped to free Identity's build output; it is started again for the T005
   look.
+- **T004 (2026-10-23):** the layout reads the brand through `IInstallationBrandSource` itself, so the login pages do
+  not depend on the web app or the Gateway's API routes. The brand panel is the page's `header` (banner landmark),
+  the form column holds `main` and the "Powered by Flowza" `footer`. The text key `Product.Name` was replaced by
+  `Layout.ProductLine` (C1) and `Layout.PoweredBy`; the page title is now "Log in – <installation name>". The
+  mark is an outlined square in the on-brand colour (no tinted fill, so no extra colour value is needed). Field
+  borders use the secondary text colour, not the soft neutral border, so a field's edge reaches 3 : 1 (WCAG 1.4.11).
+  The phone breakpoint (768 px) is written in the media query, because CSS variables cannot be used there; a comment
+  ties it to `breakpoints.tablet`. `account.css` left the T002 allow list (7 files remain, all for T007–T010).
+  The T029 end-to-end suite (10 tests, with axe on the login pages) passes unchanged. Not yet checked by eye: the
+  owner looks at the login pages after T005.
 
 ## Phase 1: Design values (M1)
 | ID | Task | Spec IDs | Done when |
@@ -115,11 +125,11 @@ Nothing else: no new database, secret, library or program.
 ### Traceability (acceptance criteria → tasks)
 | Criterion | Task(s) | Status |
 |---|---|---|
-| UI-01-AC1 | T004, T011, T012 | ⬜ |
+| UI-01-AC1 | T004, T011, T012 | 🟡 brand panel (mark, name, product line), form and "Powered by Flowza" rendered (`UI_01_AC1_*`, T004); the desktop screenshot follows in T011/T012 |
 | UI-01-AC2 | T005 | ⬜ |
-| UI-01-AC3 | T004, T011, T012 | ⬜ |
-| UI-02-AC1 | T002, T010 | 🟡 the scan runs (`UI_02_AC1_*`, T002) with an allow list of 8 files; it must be empty after T004, T007–T009 and T010 |
-| UI-02-AC2 | T001, T002, T004 | 🟡 the theme and `design-values.css` come from the same values and agree on brand, on-brand text and font (`UI_02_AC2_*`, T002); the login pages load the file from T004 |
+| UI-01-AC3 | T004, T011, T012 | 🟡 the general error above the form in the page look, and the change-password page in the same layout (`UI_01_AC3_*`, T004); screenshots in T011/T012 |
+| UI-02-AC1 | T002, T010 | 🟡 the scan runs (`UI_02_AC1_*`, T002); `account.css` is clean (T004); 7 files remain on the allow list for T007–T010 |
+| UI-02-AC2 | T001, T002, T004 | ✅ the theme and `design-values.css` come from the same values and agree on brand, on-brand text and font (`UI_02_AC2_*`, T002); the login pages load `design-values.css` before their layout (`UI_02_AC2_*`, T004) |
 | UI-03-AC1 | T007, T011 | ⬜ |
 | UI-03-AC2 | T008 | ⬜ |
 | UI-04-AC1 | T007, T011 | ⬜ |
@@ -129,7 +139,7 @@ Nothing else: no new database, secret, library or program.
 | UI-06-AC1 | T004, T009, T011 | ⬜ |
 | UI-06-AC2 | T004, T011 | ⬜ |
 | UI-07-AC1 | T001 (A1) | ✅ 22 brand colours and all 256 greys reach ≥ 4.5 : 1; the theme picks the text colour (`UI_07_AC1_*`) |
-| UI-08-AC1 | T003, T004, T006 (A3) | 🟡 initials rule proven (`UI_08_AC1_*`: two, many, one word, one letter, spaces, Hindi, Tamil, accents; T003); shortening with "…" and the full name on hover follow on the login page (T004) and in the frame (T006) |
-| UI-08-AC2 | T003, T004, T006 | 🟡 configured name and initials, default "Flowza"/"FL", anonymous → 401 (`UI_08_AC2_*`, T003); shown on the login page in T004 and in the frame in T006 |
+| UI-08-AC1 | T003, T004, T006 (A3) | 🟡 initials rule proven (`UI_08_AC1_*`: two, many, one word, one letter, spaces, Hindi, Tamil, accents; T003); on the login page a 100-character name is shortened by CSS and kept whole in `title` and the text (`UI_08_AC1_*`, T004); the frame follows in T006 |
+| UI-08-AC2 | T003, T004, T006 | 🟡 configured name and initials, default "Flowza"/"FL", anonymous → 401 (`UI_08_AC2_*`, T003); the login page shows the configured name and initials (`UI_08_AC2_*`, T004); the frame follows in T006 |
 | UI-09-AC1 | T010, T011, T012 | ⬜ |
 | UI-10-AC1 | T012 (A2) | ⬜ |
