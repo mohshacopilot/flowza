@@ -56,7 +56,7 @@ RabbitMQ code, package and tests were removed ([ADR-0005](../../docs/decisions/0
 | T030 Setup guide, checklist, production items a–d | ✅ built; owner signs the checklist after a fresh-PC run | 5c08608 |
 | T033 Production database scripts with Wolverine's tables | ✅ | 7066449 |
 | T034 Start while the database is unreachable | ✅ | 7937972 |
-| T032 Verify 001 | ✅ 2026-10-23: CI green (run 39779982843 before the fixes), 89.4 % coverage, every M1 criterion has named tests, phase 3–4 review fixed (next commit); open only what needs others: PLT-06 signature (owner), PLT-07-AC1 and IAM-02-AC1 designer part (features 002–005) | 792f2e6, (next commit) |
+| T032 Verify 001 | ✅ 2026-10-23: CI green (run 39779982843 before the fixes), 89.4 % coverage, every M1 criterion has named tests, phase 3–4 review fixed (3aba18a); open only what needs others: PLT-06 signature (owner), PLT-07-AC1 and IAM-02-AC1 designer part (features 002–005) | 792f2e6, 3aba18a |
 | T031 CI workflow + Dependabot | ✅ first GitHub run green 2026-10-22 | 7db9946 |
 
 **Notes from Phase 0 (decisions taken while building, within the approved plan):**
