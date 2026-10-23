@@ -17,9 +17,9 @@ export function createTestQueryClient(): QueryClient {
  * so menus and popups would stay "hidden" to Testing Library. The inner App makes App.useApp() (messages,
  * confirm dialogs) use the settings without animations too.
  */
-export function TestProviders({ children }: { children: ReactNode }) {
+export function TestProviders({ children, queryClient }: { children: ReactNode; queryClient?: QueryClient }) {
   return (
-    <AppProviders queryClient={createTestQueryClient()}>
+    <AppProviders queryClient={queryClient ?? createTestQueryClient()}>
       <ConfigProvider theme={{ token: { motion: false } }}>
         <AntApp>{children}</AntApp>
       </ConfigProvider>
@@ -27,12 +27,19 @@ export function TestProviders({ children }: { children: ReactNode }) {
   );
 }
 
-export function renderWithProviders(ui: ReactNode): RenderResult {
-  return render(<TestProviders>{ui}</TestProviders>);
+export function renderWithProviders(ui: ReactNode, queryClient?: QueryClient): RenderResult {
+  return render(<TestProviders {...(queryClient ? { queryClient } : {})}>{ui}</TestProviders>);
 }
 
-/** Renders a route table at a URL with the real providers. */
-export function renderRoutes(routes: RouteObject[], url = '/'): RenderResult {
+/**
+ * Renders a route table at a URL with the real providers. Returns the router too (to go back in history) and uses
+ * the given query client when a test wants to look into the cache.
+ */
+export function renderRoutes(
+  routes: RouteObject[],
+  url = '/',
+  queryClient?: QueryClient,
+): RenderResult & { router: ReturnType<typeof createMemoryRouter> } {
   const router = createMemoryRouter(routes, { initialEntries: [url] });
-  return renderWithProviders(<RouterProvider router={router} />);
+  return { ...renderWithProviders(<RouterProvider router={router} />, queryClient), router };
 }

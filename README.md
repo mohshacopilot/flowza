@@ -68,7 +68,9 @@ prints a one-time password for `admin`, to be changed at the first login; or
 ```bat
 dotnet run --project tools/Flowza.Cli -- demo-data
 ```
-loads the demo users (password `Flowza-Demo-2026`, documented on purpose; empty databases only).
+loads the demo users (password `Flowza-Demo-2026`, documented on purpose; empty databases on a development PC only:
+`dotnet run` sets `DOTNET_ENVIRONMENT=Development` through the tool's launch profile, and the tool refuses anything
+else, so a real installation can never get the demo password).
 
 Open http://localhost:5100 and log in. **Done.**
 
@@ -137,7 +139,7 @@ environment variables or the machine's secret store, **never** in files that go 
 | all | `Messaging__Transport` | `SqlServer` |
 | all | `Flowza__Identity__Authority` | Identity's address as the services reach it |
 | Identity | `Identity__Issuer` | Identity's fixed public address (the same for every service) |
-| Identity | `Identity__Certificates__SigningThumbprint`, `…EncryptionThumbprint` | Two certificates in LocalMachine\My (token signing and encryption) |
+| Identity | `Identity__Certificates__SigningThumbprint`, `…EncryptionThumbprint` | Two certificates in LocalMachine\My (token signing and encryption); the encryption certificate also protects Identity's own login keys in its database |
 | Identity | `Identity__Clients__Gateway__Secret`, `…RedirectUris__0`, `…PostLogoutRedirectUris__0` | The Gateway's client secret and `https://<host>/signin-oidc`, `https://<host>/signout-callback-oidc` |
 | Identity | `ForwardedHeaders__KnownProxies__0` (…`__1`) | The Gateway's address(es), so Identity sees https; set `ForwardedHeaders__ForwardLimit` to 2 when a load balancer sits in front of the Gateway |
 | Gateway | `Gateway__Oidc__ClientSecret` | The same secret as Identity's `Gateway__Secret` |
@@ -154,8 +156,17 @@ refuses without its certificates. Both say which setting is missing.
 
 **If SQL Server is down when a service starts**, the service starts anyway: `/health/live` answers 200 and
 `/health/ready` 503, with the check `startup` saying what it waits for. As soon as the database answers it finishes
-its start (messaging, loading the deny list, …) by itself and becomes ready; no restart is needed. Point the load
-balancer's health probe at `/health/ready`.
+its start (messaging, loading the deny list, …) by itself and becomes ready; no restart is needed. The load balancer
+sees only the Gateway: point its health probe at the Gateway's `/health/ready`. The services behind the Gateway report
+their own state on their `/health/ready`; watch those with your monitoring, as the Gateway does not check them before
+forwarding a request. If a part of the start fails after it has begun (for example the messaging), the service stops
+with exit code 1 instead of running half-started: let the service manager (Windows service recovery, systemd)
+restart it on failure.
+
+### Renewing a certificate
+Install the new certificate, change the thumbprint setting, and **keep the old certificate installed for 90 days**:
+keys it protected (sessions, Identity's login keys) stay readable while it is in the store, and they are replaced
+within 90 days. Removing it earlier logs users out. (Token signing certificates follow OpenIddict's own rollover.)
 
 ### Several Gateways
 Run them behind the load balancer with **sticky sessions** (the same browser stays on the same Gateway): a token

@@ -33,6 +33,7 @@ switch (args.FirstOrDefault())
             ["ConnectionStrings:identity-db"] = TestSqlServer.ConnectionString("flowza_test_identity"),
             ["ConnectionStrings:messaging-db"] = TestSqlServer.ConnectionString("flowza_test_messaging"),
             ["Messaging:Transport"] = "SqlServer",
+            ["DOTNET_ENVIRONMENT"] = "Development", // the demo tool refuses anything else (C5)
         };
         return await FlowzaCli.RunAsync(["demo-data"], Console.Out, Console.Error, settings);
 

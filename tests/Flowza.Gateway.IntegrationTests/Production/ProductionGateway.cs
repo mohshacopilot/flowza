@@ -1,6 +1,5 @@
-using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
 using Flowza.Gateway.IntegrationTests.Infrastructure;
+using Flowza.Testing;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -53,31 +52,20 @@ public sealed class ProductionGateway(IReadOnlyDictionary<string, string?> setti
 }
 
 /// <summary>
-/// A self-signed certificate in the current user's store for the tests' key protection, removed afterwards; a key
-/// folder and a web root with a small built app, both temporary.
+/// Two test certificates (the current one and one "from before a renewal", finding 6) for the key protection, a key
+/// folder and a web root with a small built app, all temporary.
 /// </summary>
 public sealed class ProductionGatewayFiles : IDisposable
 {
     public const string IndexMarker = "flowza-test-index";
     public const string AssetName = "index-AbC123.js";
 
-    private readonly X509Certificate2 _certificate;
+    private readonly TestCertificate _certificate = new("Flowza Gateway test keys");
+    private readonly TestCertificate _renewed = new("Flowza Gateway test keys (renewed)");
     private readonly List<string> _keyFolders = [];
 
     public ProductionGatewayFiles()
     {
-        using var key = RSA.Create(2048);
-        var request = new CertificateRequest("CN=Flowza Gateway test keys", key, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
-        using var created = request.CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(1));
-        // Through PKCS#12 so the private key is stored with the certificate (Data Protection finds it in the store).
-        _certificate = X509CertificateLoader.LoadPkcs12(
-            created.Export(X509ContentType.Pkcs12),
-            password: null,
-            X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.UserKeySet);
-        using var store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
-        store.Open(OpenFlags.ReadWrite);
-        store.Add(_certificate);
-
         WebRoot = Directory.CreateTempSubdirectory("flowza-gw-web-").FullName;
         File.WriteAllText(Path.Combine(WebRoot, "index.html"), $"<!doctype html><html><body><div id=\"root\"></div><!-- {IndexMarker} --></body></html>");
         Directory.CreateDirectory(Path.Combine(WebRoot, "assets"));
@@ -85,6 +73,9 @@ public sealed class ProductionGatewayFiles : IDisposable
     }
 
     public string Thumbprint => _certificate.Thumbprint;
+
+    /// <summary>The certificate that replaces <see cref="Thumbprint"/> at a renewal.</summary>
+    public string RenewedThumbprint => _renewed.Thumbprint;
 
     public string WebRoot { get; }
 
@@ -124,13 +115,8 @@ public sealed class ProductionGatewayFiles : IDisposable
 
     public void Dispose()
     {
-        using (var store = new X509Store(StoreName.My, StoreLocation.CurrentUser))
-        {
-            store.Open(OpenFlags.ReadWrite);
-            store.Remove(_certificate);
-        }
-
         _certificate.Dispose();
+        _renewed.Dispose();
         Directory.Delete(WebRoot, recursive: true);
         foreach (var folder in _keyFolders)
         {

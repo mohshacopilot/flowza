@@ -14,10 +14,23 @@ public interface IStartupStep
     /// <summary>A short name for logs and the readiness answer, e.g. "messaging".</summary>
     string Name { get; }
 
-    /// <summary>Does the work; an exception means "not yet", and the step is run again later.</summary>
+    /// <summary>
+    /// Does the work; an exception means "not yet", and the step is run again later, unless
+    /// <see cref="CanRetry"/> is false by then.
+    /// </summary>
     Task RunAsync(CancellationToken cancellationToken);
 
-    /// <summary>Undoes what <see cref="RunAsync"/> started (e.g. stops the messaging) when the service stops.</summary>
+    /// <summary>
+    /// Whether a failed <see cref="RunAsync"/> may be run again. A step that cannot be safely restarted after it
+    /// got part-way (Wolverine's start) says false; the service then stops, so it starts again cleanly, instead of
+    /// reporting ready with the step half done (phase 3–4 review, finding 1).
+    /// </summary>
+    bool CanRetry => true;
+
+    /// <summary>
+    /// Undoes what <see cref="RunAsync"/> started (e.g. stops the messaging) when the service stops; also after a
+    /// failed or cancelled run, so whatever it started part-way is stopped too.
+    /// </summary>
     Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }
 

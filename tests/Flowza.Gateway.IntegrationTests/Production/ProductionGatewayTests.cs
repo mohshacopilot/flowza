@@ -27,6 +27,29 @@ public sealed class ProductionGatewayTests(ProductionGatewayFiles files)
         Should.Throw<CryptographicException>(() => Protector(elsewhere).Unprotect(cookie));
     }
 
+    // Review finding 6: after a certificate renewal the sessions protected with the old certificate stay valid while
+    // the old certificate stays installed (the setup guide says to keep it until its keys have expired).
+    [Fact]
+    public async Task T030_a_after_a_certificate_renewal_sessions_stay_valid_while_the_old_certificate_is_installed()
+    {
+        var keys = files.NewKeysFolder();
+        string cookie;
+        using (var old = new Flowza.Testing.TestCertificate("Flowza Gateway test keys (before renewal)"))
+        {
+            await using (var before = new ProductionGateway(files.Settings(keys, ("Gateway:DataProtection:CertificateThumbprint", old.Thumbprint))))
+            {
+                cookie = Protector(before).Protect("session of user 1");
+            }
+
+            await using var renewed = new ProductionGateway(files.Settings(keys, ("Gateway:DataProtection:CertificateThumbprint", files.RenewedThumbprint)));
+            Protector(renewed).Unprotect(cookie).ShouldBe("session of user 1", "nobody is logged out by a renewal");
+        }
+
+        // The old certificate removed too early: its keys can no longer be read.
+        await using var afterRemoval = new ProductionGateway(files.Settings(keys, ("Gateway:DataProtection:CertificateThumbprint", files.RenewedThumbprint)));
+        Should.Throw<CryptographicException>(() => Protector(afterRemoval).Unprotect(cookie));
+    }
+
     [Fact]
     public async Task T030_a_keys_on_disk_are_encrypted_with_the_certificate()
     {
@@ -133,6 +156,21 @@ public sealed class ProductionGatewayTests(ProductionGatewayFiles files)
         using var response = await browser.SendAsync(Get(path, forwardedProto: "https"), Ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await response.Content.ReadAsStringAsync(Ct)).ShouldNotContain(ProductionGatewayFiles.IndexMarker);
+    }
+
+    // Review finding 11 (not a defect: the fallback serves the file only for GET and HEAD); this keeps it that way.
+    [Fact]
+    public async Task GW2_a_post_to_an_unknown_address_is_not_answered_with_the_app()
+    {
+        await using var gateway = new ProductionGateway(files.Settings(files.NewKeysFolder()));
+        using var browser = gateway.CreateBrowser(ProductionGateway.ProxyAddress);
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/admin/users") { Content = new StringContent("x") };
+        request.Headers.Add("X-Forwarded-Proto", "https");
+
+        using var response = await browser.SendAsync(request, Ct);
+
+        response.StatusCode.ShouldBeOneOf(HttpStatusCode.NotFound, HttpStatusCode.MethodNotAllowed);
         (await response.Content.ReadAsStringAsync(Ct)).ShouldNotContain(ProductionGatewayFiles.IndexMarker);
     }
 

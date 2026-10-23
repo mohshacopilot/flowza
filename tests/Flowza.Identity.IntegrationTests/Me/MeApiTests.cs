@@ -62,6 +62,28 @@ public sealed class MeApiTests(IdentityApp app) : IAsyncLifetime
             .EnumerateArray().Select(e => e.GetString()).ShouldContain("passwords.current_wrong");
     }
 
+    // Review finding 7: guessing the current password on the change-password API counts toward the lockout.
+    [Fact]
+    public async Task IAM_07_AC1_five_wrong_current_passwords_on_change_password_lock_the_account()
+    {
+        var (_, session) = await app.UserWithSessionAsync("kiran.l");
+        using var _ = session;
+
+        for (var attempt = 1; attempt <= 5; attempt++)
+        {
+            var wrong = await session.Client.PostAsJsonAsync(s_password, new { currentPassword = $"guess-{attempt}", newPassword = "A-Brand-New-Pass-9" }, Ct);
+            wrong.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        }
+
+        var right = await session.Client.PostAsJsonAsync(s_password, new { currentPassword = IdentityAppUsers.Password, newPassword = "A-Brand-New-Pass-9" }, Ct);
+        right.StatusCode.ShouldBe(HttpStatusCode.Forbidden, "locked: even the right password is refused now");
+        (await right.Content.ReadFromJsonAsync<JsonElement>(Ct)).GetProperty("code").GetString().ShouldBe("passwords.locked_out");
+
+        using var browser = app.CreateBrowser();
+        var login = await LoginBrowser.PostLoginAsync(browser, "kiran.l", IdentityAppUsers.Password, null, Ct);
+        LoginBrowser.AlertText(await login.Content.ReadAsStringAsync(Ct)).ShouldStartWith("This account is locked");
+    }
+
     [Fact]
     public async Task IAM_06_AC1_the_new_password_follows_the_rules_here_too()
     {

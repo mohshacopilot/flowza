@@ -2,6 +2,7 @@ using Flowza.Common.Hosting;
 using Flowza.ServiceDefaults.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Flowza.BuildingBlocks.UnitTests.ServiceDefaults;
@@ -89,10 +90,53 @@ public sealed class StartupStepRunnerTests
         runner.WaitingFor.ShouldBeNull();
     }
 
+    [Fact]
+    public async Task Review_1_a_step_that_failed_part_way_and_cannot_be_retried_stops_the_service_and_never_becomes_ready()
+    {
+        var log = new List<string>();
+        var health = new FakeHealth(healthy: false);
+        var lifetime = new FakeLifetime();
+        using var runner = Runner(health, lifetime, new Step("messaging", 100, log, failures: 1, canRetryAfterFailure: false));
+        var exitCodeBefore = Environment.ExitCode;
+        try
+        {
+            await runner.StartAsync(Ct);
+            health.Healthy = true;
+            await WaitUntilAsync(() => lifetime.StopRequested);
+
+            log.ShouldBe(["fail messaging"], "run once, never again");
+            runner.WaitingFor.ShouldBe("messaging", "never ready with messaging half started");
+            Environment.ExitCode.ShouldBe(1, "the service manager sees a failure and starts the service again");
+        }
+        finally
+        {
+            Environment.ExitCode = exitCodeBefore;
+        }
+    }
+
+    [Fact]
+    public async Task Review_2_stopping_also_stops_a_step_that_failed_part_way()
+    {
+        var log = new List<string>();
+        var health = new FakeHealth(healthy: false);
+        using var runner = Runner(health, new Step("migration", 0, log), new Step("messaging", 100, log, failures: int.MaxValue));
+        await runner.StartAsync(Ct);
+        health.Healthy = true;
+        await WaitUntilAsync(() => log.Contains("fail messaging"));
+
+        await runner.StopAsync(Ct);
+
+        log.ShouldContain("stop messaging", customMessage: "what it started part-way is stopped too");
+        log.IndexOf("stop messaging").ShouldBeLessThan(log.IndexOf("stop migration"), "newest first");
+    }
+
     private static StartupStepRunner Runner(HealthCheckService health, params IStartupStep[] steps) =>
+        Runner(health, new FakeLifetime(), steps);
+
+    private static StartupStepRunner Runner(HealthCheckService health, IHostApplicationLifetime lifetime, params IStartupStep[] steps) =>
         new(steps, health, new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?> { [StartupStepRunner.MaxRetryDelayKey] = "00:00:00.050" })
-            .Build(), NullLogger<StartupStepRunner>.Instance);
+            .Build(), lifetime, NullLogger<StartupStepRunner>.Instance);
 
     private static async Task WaitUntilAsync(Func<bool> condition)
     {
@@ -104,13 +148,16 @@ public sealed class StartupStepRunnerTests
         condition().ShouldBeTrue();
     }
 
-    private sealed class Step(string name, int order, List<string> log, int failures = 0) : IStartupStep
+    private sealed class Step(string name, int order, List<string> log, int failures = 0, bool canRetryAfterFailure = true) : IStartupStep
     {
         private int _failuresLeft = failures;
+        private bool _failed;
 
         public int Order => order;
 
         public string Name => name;
+
+        public bool CanRetry => canRetryAfterFailure || !_failed;
 
         public Task RunAsync(CancellationToken cancellationToken)
         {
@@ -119,6 +166,7 @@ public sealed class StartupStepRunnerTests
                 if (_failuresLeft > 0)
                 {
                     _failuresLeft--;
+                    _failed = true;
                     log.Add($"fail {name}");
                     throw new InvalidOperationException($"{name} failed");
                 }
@@ -138,6 +186,19 @@ public sealed class StartupStepRunnerTests
 
             return Task.CompletedTask;
         }
+    }
+
+    private sealed class FakeLifetime : IHostApplicationLifetime
+    {
+        public bool StopRequested { get; private set; }
+
+        public CancellationToken ApplicationStarted => CancellationToken.None;
+
+        public CancellationToken ApplicationStopping => CancellationToken.None;
+
+        public CancellationToken ApplicationStopped => CancellationToken.None;
+
+        public void StopApplication() => StopRequested = true;
     }
 
     /// <summary>The database and transport checks: healthy or not, as the test says.</summary>

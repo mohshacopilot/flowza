@@ -18,6 +18,7 @@ public sealed class DemoDataTests(IdentityApp app) : IAsyncLifetime
         ["ConnectionStrings:identity-db"] = TestSqlServer.ConnectionString(IdentityApp.Database),
         ["ConnectionStrings:messaging-db"] = TestSqlServer.ConnectionString("flowza_test_messaging"),
         ["Messaging:Transport"] = "SqlServer",
+        ["DOTNET_ENVIRONMENT"] = "Development",
     };
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
@@ -96,6 +97,24 @@ public sealed class DemoDataTests(IdentityApp app) : IAsyncLifetime
         var (exitCode, _, _) = await RunAsync("demo-data");
 
         exitCode.ShouldBe(FlowzaCli.Refused);
+    }
+
+    // C5 (owner, 2026-10-23; review finding 3): an empty production database must never get demo.admin.
+    [Theory]
+    [InlineData("Production")]
+    [InlineData("Staging")]
+    public async Task PLT_07_C5_demo_data_refuses_outside_development_even_on_empty_databases(string environment)
+    {
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+        var settings = new Dictionary<string, string?>(s_settings) { ["DOTNET_ENVIRONMENT"] = environment };
+
+        var exitCode = await FlowzaCli.RunAsync(["demo-data"], output, error, settings);
+
+        exitCode.ShouldBe(FlowzaCli.Refused);
+        error.ToString().ShouldContain("only on a development installation");
+        output.ToString().ShouldNotContain(DemoUsers.Password);
+        (await app.WithDbContextAsync(context => context.Users.CountAsync(Ct))).ShouldBe(0);
     }
 
     [Fact]

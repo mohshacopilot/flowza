@@ -16,6 +16,7 @@ builder.AddFlowzaServiceDefaults();
 // Behind the Gateway (and a load balancer): trust their X-Forwarded headers, so Identity sees https (T030 item b).
 builder.AddFlowzaForwardedHeaders();
 builder.AddIdentityInfrastructure();
+builder.AddIdentityLoginKeyProtection();
 builder.AddIdentityTokenServer();
 
 // Identity checks its own access tokens against its local token server, including whether they were revoked (K7).

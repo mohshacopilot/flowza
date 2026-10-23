@@ -1,7 +1,6 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { keepPreviousData } from '@tanstack/react-query';
 import { Button, Input, Select, Table, Tag, Typography, type TableColumnsType } from 'antd';
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { describeApiError } from '../../../shared/api/errorMessages';
@@ -37,7 +36,6 @@ export function UsersPage() {
   const page = readPage(params.get('page'));
   const search = params.get('search') ?? '';
   const status = readStatus(params.get('status'));
-  const [searchText, setSearchText] = useState(search);
 
   const users = useListUsers(
     { page, size: pageSize, ...(search ? { search } : {}), ...(status ? { status } : {}) },
@@ -95,14 +93,13 @@ export function UsersPage() {
       <Typography.Paragraph>{t('users.intro')}</Typography.Paragraph>
 
       <div className={styles.toolbar}>
+        {/* Keyed by the address's search: Back/Forward start the box again with that text (review finding 10). */}
         <Input.Search
+          key={search}
           className={styles.search}
           aria-label={t('users.search')}
           placeholder={t('users.search')}
-          value={searchText}
-          onChange={(event) => {
-            setSearchText(event.target.value);
-          }}
+          defaultValue={search}
           onSearch={(value) => {
             update({ search: value });
           }}

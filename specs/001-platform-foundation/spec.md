@@ -178,7 +178,7 @@ Every criterion gets at least one automated test whose name contains its ID (con
 - The admin locks themselves out (wrong password 5 times): another admin unlocks them; if they are the only admin, the lock expires after 15 minutes.
 - A user's role is removed while they are logged in: their next action that needs the role is refused.
 - A service starts while its database is unreachable: it reports "not ready" and recovers by itself when the database returns.
-- The demo tool is pointed at a production installation by mistake: it refuses (US12).
+- The demo tool is pointed at a production installation by mistake: it refuses (US12), also while that installation is still empty (C5).
 - An email address is entered in a different letter case for two users: treated as the same address and rejected (C3).
 
 ## 7. Non-functional requirements that apply
@@ -212,7 +212,7 @@ From the [v0.1 scope](../v0.1-scope.md) section 6: NFR-01 (security), NFR-03 (re
 | C2 | First admin's password | **Generated** strong random password at setup, **shown once**, must be changed at first login (no well-known default) |
 | C3 | Email uniqueness | **Required and unique**, ignoring letter case |
 | C4 | Username format | **3–50 characters**: letters, digits, `.` `_` `-`; unique ignoring letter case |
-| C5 | Demo users' passwords | **One documented demo password** for all demo users, no forced change (the demo tool only runs on empty databases) |
+| C5 | Demo users' passwords | **One documented demo password** for all demo users, no forced change (the demo tool only runs on empty databases). **Owner, 2026-10-23 (phase 3–4 review finding 3):** the demo tool also refuses to run outside a development installation, so a new, still empty production database can never get a Platform Admin with the public demo password |
 | C6 | Re-activating users | **Allowed**; history and past actions stay unchanged |
 
 ## 11. Spec quality checklist (Claude checks before asking for approval)

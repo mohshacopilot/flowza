@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | **Phase 0 done (T001–T009), 2026-10-21**; **Phase 1 (T010–T019) done and merged, 2026-10-22**; **Phase 2 (T020–T022) done and reviewed, 2026-10-22**; web shell T023–T025 and CI T031 done; next T026 |
+| **Status** | **Feature 001 done 2026-10-23**: all tasks built (T001–T036), verified (T032) and reviewed (phases 0, 2, 3–4); open only the owner's PLT-06 signature and the items carried to features 002–005 (PLT-07-AC1, IAM-02-AC1 designer part) |
 | **Spec / Plan** | [spec.md](spec.md) · [plan.md](plan.md) |
 | **Rules** | One task at a time, in order. Each task ends with: builds without warnings, its tests pass, a local commit (`feat|chore|test(scope): … (IDs)`). `[P]` = can run in parallel with the previous task. Nothing is pushed without the owner's OK |
 
@@ -56,7 +56,7 @@ RabbitMQ code, package and tests were removed ([ADR-0005](../../docs/decisions/0
 | T030 Setup guide, checklist, production items a–d | ✅ built; owner signs the checklist after a fresh-PC run | 5c08608 |
 | T033 Production database scripts with Wolverine's tables | ✅ | 7066449 |
 | T034 Start while the database is unreachable | ✅ | 7937972 |
-| T032 Verify 001 | ⏳ checks done 2026-10-22 (CI run 39779982843 green, 89.4 % coverage, every M1 criterion has named tests); **waits for the phase 3–4 review fixes** (below) and the owner's PLT-06 signature | 792f2e6 |
+| T032 Verify 001 | ✅ 2026-10-23: CI green (run 39779982843 before the fixes), 89.4 % coverage, every M1 criterion has named tests, phase 3–4 review fixed (next commit); open only what needs others: PLT-06 signature (owner), PLT-07-AC1 and IAM-02-AC1 designer part (features 002–005) | 792f2e6, (next commit) |
 | T031 CI workflow + Dependabot | ✅ first GitHub run green 2026-10-22 | 7db9946 |
 
 **Notes from Phase 0 (decisions taken while building, within the approved plan):**
@@ -205,7 +205,7 @@ keep rolling refresh tokens and the `/connect/**` route):**
   decorator and the end-session rule.
 - Not changed (owner): rolling refresh tokens in Identity, the `/connect/**` route. Findings 3 and 7 are in T030.
 
-**Phase 3–4 code review (independent reviewer, 2026-10-22, commits e2cb23e..d6ad066) — to fix next (owner: "fix tomorrow"):**
+**Phase 3–4 code review (independent reviewer, 2026-10-22, commits e2cb23e..d6ad066) — fixed 2026-10-23 (outcome per finding below the list):**
 1. **HIGH, T034:** `WolverineRuntime.StartAsync` sets its "started" flag before the parts that touch `flowza_messaging`;
    when that start fails in the background path (e.g. the messaging script was not run, or SQL Server flaps), the
    retry returns at once and the service reports **ready with messaging dead** (no events; deactivated users not
@@ -232,6 +232,47 @@ keep rolling refresh tokens and the `/connect/**` route):**
 11. **LOW, T030:** the built web app answers unknown POSTs with index.html (restrict the fallback to GET/HEAD).
 12. **LOW, T029:** `run-e2e.ps1` stops every `Flowza.*` process on the PC, not only its own.
 Nothing found on translations, accessibility, licences, forwarded headers, privacy in logs.
+
+*Outcomes (2026-10-23):*
+1. **Fixed.** Steps say whether they may be retried (`IStartupStep.CanRetry`). The messaging step first checks that
+   Wolverine's tables exist (`AssertStorageProvisionedAsync`, outside Development) and only then enters Wolverine's
+   start; a failure after that is final: the runner logs it as Critical, sets exit code 1 and stops the service (the
+   service manager restarts it). Tests: `PLT_05_without_its_messaging_tables_a_service_stays_not_ready_until_the_script_has_run`
+   (Production, messaging script missing → never ready, ready by itself once it ran; fails with the old behaviour)
+   and `Review_1_…` (unit).
+2. **Fixed.** Every step that was entered is stopped, newest first, also one that failed part-way; stopping waits for
+   the background start to end and does not stop steps that still run. Test `Review_2_…`.
+3. **Fixed (owner: follow the review).** `flowza demo-data` refuses outside Development (C5 amended in spec.md); the
+   tool's launch profile sets `DOTNET_ENVIRONMENT=Development` for `dotnet run`, a published tool runs as Production
+   and refuses. Test `PLT_07_C5_demo_data_refuses_outside_development_even_on_empty_databases`.
+4. **Fixed.** `PLT_03_AC2_running_the_scripts_again_keeps_the_data` (rows in an EF table, the inbox and a queue survive
+   a second run) and `PLT_03_AC2_the_service_writes_its_scripts_from_the_command_line_without_a_database` (each
+   service's real program in Production, unreachable database, compared with the expected scripts).
+5. **Fixed (wording).** The guide says the load balancer protects only the Gateway and the services' `/health/ready`
+   belong in monitoring; the deny-list comment says only Identity loads its list at start. YARP health checks for the
+   services: not added.
+6. **Not a defect as described; covered.** Reading a key finds its certificate in the store by itself, so after a
+   renewal older keys stay readable while the old certificate stays installed. The guide's new "Renewing a
+   certificate" says to keep it 90 days; test `T030_a_after_a_certificate_renewal_sessions_stay_valid_while_the_old_certificate_is_installed`
+   (also shows that removing it too early ends the sessions). A setting for previous thumbprints was tried and
+   dropped (it changed nothing).
+7. **Fixed.** A wrong current password on change-password counts toward the lockout (saved even though the change
+   fails; `UserLockedOut` event when it locks); a locked account cannot change its password (`passwords.locked_out`,
+   403, translated). Test `IAM_07_AC1_five_wrong_current_passwords_on_change_password_lock_the_account`.
+8. **Fixed.** Outside Development Identity's own Data Protection keys are encrypted with its token encryption
+   certificate (`AddIdentityLoginKeyProtection`, called by Identity's Program only; the flowza tool needs no
+   certificate). Shared helper `KeyCertificates` (ServiceDefaults) also used by the Gateway. Tests
+   `LoginKeyProtectionTests` (keys stored encrypted; refuses to start without the certificate).
+9. **Fixed (test).** The create and reset tests check that the temporary password is not in the query cache.
+10. **Fixed.** The search box is keyed by the address's search, so Back/Forward keep it in step; test
+    `IAM_04_back_and_forward_keep_the_search_box_in_step_with_the_list`.
+11. **Not a defect.** The fallback serves the file only for GET and HEAD (static files), so a POST already got 404;
+    test `GW2_a_post_to_an_unknown_address_is_not_answered_with_the_app` keeps it that way. A code change was tried and
+    dropped (no effect).
+12. **Fixed.** `run-e2e.ps1` stops the AppHost's process tree and only Flowza programs started after the run began.
+    Checked: a full run leaves no Flowza process; not tested with a foreign Flowza process running alongside.
+Each test was shown to fail with the fix undone (1, 2, 4 via the old behaviour where possible, 7, 8, 9, 10, 6's
+removal case).
 
 **Notes from T034 (start while the database is unreachable, 2026-10-22, decisions within the approved plan; no new package):**
 - **What failed before:** Wolverine's start checks its tables (since T033 automatic creation is off outside
@@ -579,5 +620,5 @@ Decisions taken while building (within the approved plan; see [src/Web/README.md
 | PLT-05-AC3 | T009 | ✅ |
 | PLT-06-AC1 | T030 (manual) | 🟡 guide (README) and checklist ([checklists/setup.md](checklists/setup.md)) ready; waits for a run on a fresh PC and the owner's signature |
 | PLT-07-AC1 | T028 + features 002–005 (A1) | 🟡 demo users load into empty databases (T028, `PLT_07_*`); demo org and the two reference apps come with features 002–005 |
-| PLT-07-AC2 | T028 | ✅ refuses, changing nothing, when a database has data, also an inactive user, and on a second run; every service is checked before any is loaded (`PLT_07_AC2_*`) |
+| PLT-07-AC2 | T028 | ✅ refuses, changing nothing, when a database has data, also an inactive user, and on a second run; every service is checked before any is loaded (`PLT_07_AC2_*`); also outside Development, even on empty databases (C5 amended 2026-10-23, `PLT_07_C5_*`) |
 | PLT-09-AC1 | T031 (A4) | ✅ Green run on GitHub (run 39723977514: build, tests, 80 % gate); a deliberately failing test in pull request #5 was reported red (run 39724745438) and not merged |

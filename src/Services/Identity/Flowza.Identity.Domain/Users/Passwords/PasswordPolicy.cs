@@ -70,6 +70,11 @@ public static class PasswordErrors
         "The current password is not correct.",
         new Dictionary<string, string[]> { ["currentPassword"] = ["passwords.current_wrong"] });
 
+    /// <summary>IAM-07: after 5 wrong passwords (at login or when changing it) the account is locked for a while.</summary>
+    public static Error LockedOut { get; } = Error.Forbidden(
+        "passwords.locked_out",
+        "This account is locked after too many wrong passwords. Try again later, or ask an administrator to unlock it.");
+
     public static Error TooShort(int minimumLength) =>
         Error.Validation("passwords.too_short", $"A password has at least {minimumLength} characters.");
 }

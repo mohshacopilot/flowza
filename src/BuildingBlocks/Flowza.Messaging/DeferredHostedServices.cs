@@ -9,25 +9,40 @@ namespace Flowza.Messaging;
 /// Hosted services that need the database to start (Wolverine's runtime checks its tables and registers its node),
 /// run as one start-up step instead of at host start (T034, Decorator). The host then starts even when the database
 /// is down; the step starts them once it answers and stops them, in reverse order, when the service stops.
+/// <para>
+/// Before the first hosted service is entered, a <paramref name="precondition"/> (e.g. "Wolverine's tables exist")
+/// may fail and is retried. Once a hosted service's start has been entered, a failure is final
+/// (<see cref="CanRetry"/> false): Wolverine marks itself started before the parts that can fail, so a second call
+/// would do nothing and the service would look ready with dead messaging (phase 3–4 review, finding 1).
+/// </para>
 /// </summary>
 internal sealed class DeferredHostedServices(
     string name,
     int order,
     IServiceProvider services,
-    IReadOnlyList<ServiceDescriptor> descriptors) : IStartupStep
+    IReadOnlyList<ServiceDescriptor> descriptors,
+    Func<IServiceProvider, CancellationToken, Task>? precondition) : IStartupStep
 {
     private readonly Dictionary<ServiceDescriptor, IHostedService> _created = [];
-    private readonly List<IHostedService> _started = [];
+    private readonly List<IHostedService> _entered = [];
+    private bool _failedAfterEntering;
 
     public int Order { get; } = order;
 
     public string Name { get; } = name;
 
+    public bool CanRetry => !_failedAfterEntering;
+
     /// <summary>
     /// Takes the hosted services registered by <paramref name="register"/> out of the host's start and returns them
-    /// as one start-up step.
+    /// as one start-up step, started once <paramref name="precondition"/> passes.
     /// </summary>
-    public static void Defer(IServiceCollection serviceCollection, string name, int order, Action register)
+    public static void Defer(
+        IServiceCollection serviceCollection,
+        string name,
+        int order,
+        Action register,
+        Func<IServiceProvider, CancellationToken, Task>? precondition = null)
     {
         var before = serviceCollection.Where(d => d.ServiceType == typeof(IHostedService)).ToHashSet();
         register();
@@ -37,30 +52,49 @@ internal sealed class DeferredHostedServices(
             serviceCollection.Remove(descriptor);
         }
 
-        serviceCollection.AddSingleton<IStartupStep>(provider => new DeferredHostedServices(name, order, provider, added));
+        serviceCollection.AddSingleton<IStartupStep>(provider => new DeferredHostedServices(name, order, provider, added, precondition));
         serviceCollection.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, StartupStepsDuringStart>());
     }
 
     public async Task RunAsync(CancellationToken cancellationToken)
     {
+        if (_failedAfterEntering)
+        {
+            throw new InvalidOperationException($"The start-up step '{Name}' failed part-way and cannot be run again; restart the service.");
+        }
+
+        if (_entered.Count == 0 && precondition is not null)
+        {
+            await precondition(services, cancellationToken);
+        }
+
         foreach (var descriptor in descriptors)
         {
             var hosted = Create(descriptor);
-            if (_started.Contains(hosted))
+            if (_entered.Contains(hosted))
             {
                 continue;
             }
 
-            await hosted.StartAsync(cancellationToken);
-            _started.Add(hosted);
+            _entered.Add(hosted);
+            try
+            {
+                await hosted.StartAsync(cancellationToken);
+            }
+            catch
+            {
+                _failedAfterEntering = true;
+                throw;
+            }
         }
     }
 
+    /// <summary>Stops every hosted service whose start was entered, also one that failed part-way, newest first.</summary>
     public async Task StopAsync(CancellationToken cancellationToken)
     {
-        for (var i = _started.Count - 1; i >= 0; i--)
+        for (var i = _entered.Count - 1; i >= 0; i--)
         {
-            await _started[i].StopAsync(cancellationToken);
+            await _entered[i].StopAsync(cancellationToken);
         }
     }
 
@@ -96,8 +130,8 @@ internal sealed class StartupStepsDuringStart(IServiceProvider services) : IHost
 
         foreach (var step in services.GetServices<IStartupStep>().OrderBy(s => s.Order))
         {
+            _ran.Add(step); // before running: a step that fails part-way is stopped too
             await step.RunAsync(cancellationToken);
-            _ran.Add(step);
         }
     }
 

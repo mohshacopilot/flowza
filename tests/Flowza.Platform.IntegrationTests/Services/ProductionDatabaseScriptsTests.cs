@@ -1,7 +1,5 @@
+using System.Diagnostics;
 using System.Net;
-using Flowza.Messaging;
-using Flowza.Testing;
-using Microsoft.Data.SqlClient;
 
 namespace Flowza.Platform.IntegrationTests.Services;
 
@@ -13,7 +11,7 @@ namespace Flowza.Platform.IntegrationTests.Services;
 [Collection(ServiceDatabasesTestGroup.Name)]
 public sealed class ProductionDatabaseScriptsTests
 {
-    private const string MessagingDatabase = "flowza_test_messaging";
+    private const string MessagingDatabase = ServiceScripts.MessagingDatabase;
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
@@ -21,20 +19,102 @@ public sealed class ProductionDatabaseScriptsTests
     [MemberData(nameof(ServiceApps.Names), MemberType = typeof(ServiceApps))]
     public async Task PLT_03_AC2_each_services_scripts_create_all_its_tables_and_can_run_twice(string service)
     {
-        var scripts = await ScriptsOfAsync(service);
+        var scripts = await ServiceScripts.OfAsync(service);
         scripts.Select(s => s.FileName).ShouldBe([$"{service}.sql", $"{service}.messaging.sql"]);
-        await EmptyDatabasesAsync(service);
+        await ServiceScripts.EmptyDatabasesAsync(service, Ct);
 
-        await RunAsync(scripts, service);
-        await RunAsync(scripts, service); // the DBA may run them again: nothing fails, nothing changes
+        await ServiceScripts.RunAsync(scripts, service, Ct);
+        await ServiceScripts.RunAsync(scripts, service, Ct); // the DBA may run them again: nothing fails, nothing changes
 
         var database = ServiceApps.DatabaseOf(service);
-        (await TableExistsAsync(database, "dbo", "__EFMigrationsHistory")).ShouldBeTrue("the service's own tables (EF Core)");
-        (await TableExistsAsync(database, "wolverine", "wolverine_incoming_envelopes")).ShouldBeTrue("the inbox");
-        (await TableExistsAsync(database, "wolverine", "wolverine_outgoing_envelopes")).ShouldBeTrue("the outbox");
-        (await TableExistsAsync(database, "wolverine", "wolverine_deduplication_hashed")).ShouldBeTrue("deduplication (MS3)");
-        (await TableExistsAsync(MessagingDatabase, $"wolverine_{service}", "wolverine_nodes")).ShouldBeTrue("the service's node tables");
-        (await TableExistsAsync(MessagingDatabase, "queues", $"wolverine_queue_{service}")).ShouldBeTrue("the service's own queue");
+        (await ServiceScripts.TableExistsAsync(database, "dbo", "__EFMigrationsHistory", Ct)).ShouldBeTrue("the service's own tables (EF Core)");
+        (await ServiceScripts.TableExistsAsync(database, "wolverine", "wolverine_incoming_envelopes", Ct)).ShouldBeTrue("the inbox");
+        (await ServiceScripts.TableExistsAsync(database, "wolverine", "wolverine_outgoing_envelopes", Ct)).ShouldBeTrue("the outbox");
+        (await ServiceScripts.TableExistsAsync(database, "wolverine", "wolverine_deduplication_hashed", Ct)).ShouldBeTrue("deduplication (MS3)");
+        (await ServiceScripts.TableExistsAsync(MessagingDatabase, $"wolverine_{service}", "wolverine_nodes", Ct)).ShouldBeTrue("the service's node tables");
+        (await ServiceScripts.TableExistsAsync(MessagingDatabase, "queues", $"wolverine_queue_{service}", Ct)).ShouldBeTrue("the service's own queue");
+    }
+
+    // Review finding 4: "runs twice" must also mean "keeps the data": a drop-then-create script would pass the test above.
+    [Theory]
+    [MemberData(nameof(ServiceApps.Names), MemberType = typeof(ServiceApps))]
+    public async Task PLT_03_AC2_running_the_scripts_again_keeps_the_data(string service)
+    {
+        var scripts = await ServiceScripts.OfAsync(service);
+        await ServiceScripts.EmptyDatabasesAsync(service, Ct);
+        await ServiceScripts.RunAsync(scripts, service, Ct);
+        var database = ServiceApps.DatabaseOf(service);
+        var envelope = Guid.NewGuid();
+        var queued = Guid.NewGuid();
+        await ServiceScripts.ExecuteAsync(database, "INSERT INTO [__EFMigrationsHistory] VALUES (N'99999999999999_KeepMe', N'0')", Ct);
+        await ServiceScripts.ExecuteAsync(
+            database,
+            "INSERT INTO wolverine.wolverine_incoming_envelopes (id, status, owner_id, body, message_type, received_at) VALUES (@id, 'Handled', 0, 0x00, 'test', 'test')",
+            Ct,
+            ("@id", envelope));
+        await ServiceScripts.ExecuteAsync(
+            MessagingDatabase,
+            $"INSERT INTO queues.wolverine_queue_{service} (id, body, message_type) VALUES (@id, 0x00, 'test')",
+            Ct,
+            ("@id", queued));
+        try
+        {
+            await ServiceScripts.RunAsync(scripts, service, Ct);
+
+            (await ServiceScripts.CountAsync(database, "SELECT COUNT(*) FROM [__EFMigrationsHistory] WHERE MigrationId = N'99999999999999_KeepMe'", Ct)).ShouldBe(1);
+            (await ServiceScripts.CountAsync(database, "SELECT COUNT(*) FROM wolverine.wolverine_incoming_envelopes WHERE id = @id", Ct, ("@id", envelope))).ShouldBe(1);
+            (await ServiceScripts.CountAsync(MessagingDatabase, $"SELECT COUNT(*) FROM queues.wolverine_queue_{service} WHERE id = @id", Ct, ("@id", queued))).ShouldBe(1);
+        }
+        finally
+        {
+            await ServiceScripts.ExecuteAsync(database, "DELETE FROM [__EFMigrationsHistory] WHERE MigrationId = N'99999999999999_KeepMe'; DELETE FROM wolverine.wolverine_incoming_envelopes WHERE id = @id", Ct, ("@id", envelope));
+            await ServiceScripts.ExecuteAsync(MessagingDatabase, $"DELETE FROM queues.wolverine_queue_{service} WHERE id = @id", Ct, ("@id", queued));
+        }
+    }
+
+    // Review finding 4: the command the DBA really runs (Production, not started, no database, Identity without its
+    // certificates) writes the same scripts as the tests above use.
+    [Theory]
+    [InlineData("identity", "Flowza.Identity.Api")]
+    [InlineData("design", "Flowza.Design.Api")]
+    [InlineData("runtime", "Flowza.Runtime.Api")]
+    [InlineData("worker", "Flowza.Worker")]
+    public async Task PLT_03_AC2_the_service_writes_its_scripts_from_the_command_line_without_a_database(string service, string program)
+    {
+        var expected = await ServiceScripts.OfAsync(service);
+        var folder = Directory.CreateTempSubdirectory("flowza-scripts-").FullName;
+        try
+        {
+            const string nowhere = "Server=tcp:127.0.0.1,1;Database=none;User Id=x;Password=y;TrustServerCertificate=true;Connect Timeout=1";
+            var start = new ProcessStartInfo("dotnet", [Path.Combine(AppContext.BaseDirectory, $"{program}.dll"), "--database-scripts", folder])
+            {
+                WorkingDirectory = folder,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+            };
+            start.Environment["ASPNETCORE_ENVIRONMENT"] = "Production";
+            start.Environment["DOTNET_ENVIRONMENT"] = "Production";
+            start.Environment[$"ConnectionStrings__{service}-db"] = nowhere;
+            start.Environment["ConnectionStrings__messaging-db"] = nowhere;
+            start.Environment["Flowza__Identity__Authority"] = "https://identity.test/";
+            start.Environment["Flowza__Logging__Folder"] = Path.Combine(folder, "logs");
+
+            using var process = Process.Start(start)!;
+            var output = process.StandardOutput.ReadToEndAsync(Ct);
+            var errors = process.StandardError.ReadToEndAsync(Ct);
+            await process.WaitForExitAsync(Ct);
+
+            process.ExitCode.ShouldBe(0, await errors);
+            foreach (var script in expected)
+            {
+                (await output).ShouldContain(script.FileName);
+                (await File.ReadAllTextAsync(Path.Combine(folder, script.FileName), Ct)).ShouldBe(script.Sql, $"{script.FileName} as the DBA gets it");
+            }
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
     }
 
     // Identity is not started in Production here: it also needs its token certificates in the machine's store.
@@ -44,9 +124,9 @@ public sealed class ProductionDatabaseScriptsTests
     [InlineData("worker")]
     public async Task PLT_03_AC2_a_service_starts_in_production_on_databases_prepared_only_by_its_scripts(string service)
     {
-        var scripts = await ScriptsOfAsync(service);
-        await EmptyDatabasesAsync(service);
-        await RunAsync(scripts, service);
+        var scripts = await ServiceScripts.OfAsync(service);
+        await ServiceScripts.EmptyDatabasesAsync(service, Ct);
+        await ServiceScripts.RunAsync(scripts, service, Ct);
 
         await using var app = ServiceApps.Create(service, "Production");
         using var client = app.CreateClient();
@@ -59,8 +139,8 @@ public sealed class ProductionDatabaseScriptsTests
     [Fact]
     public async Task PL4_outside_development_a_service_creates_no_tables_itself()
     {
-        var scripts = await ScriptsOfAsync("worker");
-        await EmptyDatabasesAsync("worker");
+        var scripts = await ServiceScripts.OfAsync("worker");
+        await ServiceScripts.EmptyDatabasesAsync("worker", Ct);
         try
         {
             await using (var app = ServiceApps.Create("worker", "Production"))
@@ -77,60 +157,14 @@ public sealed class ProductionDatabaseScriptsTests
                 }
             }
 
-            (await CountTablesAsync("flowza_test_worker", "dbo")).ShouldBe(0, "no EF Core migration outside Development");
-            (await CountTablesAsync("flowza_test_worker", "wolverine")).ShouldBe(0, "no outbox/inbox tables");
-            (await CountTablesAsync(MessagingDatabase, "wolverine_worker")).ShouldBe(0, "no node tables");
-            (await CountTablesAsync(MessagingDatabase, "queues")).ShouldBe(0, "no queue tables");
+            (await ServiceScripts.CountTablesAsync("flowza_test_worker", "dbo", Ct)).ShouldBe(0, "no EF Core migration outside Development");
+            (await ServiceScripts.CountTablesAsync("flowza_test_worker", "wolverine", Ct)).ShouldBe(0, "no outbox/inbox tables");
+            (await ServiceScripts.CountTablesAsync(MessagingDatabase, "wolverine_worker", Ct)).ShouldBe(0, "no node tables");
+            (await ServiceScripts.CountTablesAsync(MessagingDatabase, "queues", Ct)).ShouldBe(0, "no queue tables");
         }
         finally
         {
-            await RunAsync(scripts, "worker"); // leave the test databases usable for the next tests
+            await ServiceScripts.RunAsync(scripts, "worker", Ct); // leave the test databases usable for the next tests
         }
-    }
-
-    /// <summary>The scripts as the service writes them (from a Development start, which builds the same model).</summary>
-    private static async Task<IReadOnlyList<DatabaseScript>> ScriptsOfAsync(string service)
-    {
-        await using var app = ServiceApps.Create(service);
-        using var _ = app.CreateClient();
-        return await app.ProductionScriptsAsync();
-    }
-
-    /// <summary>The service's database and its part of the messaging database, as the DBA receives them.</summary>
-    private static async Task EmptyDatabasesAsync(string service)
-    {
-        await TestDatabase.EmptySchemasAsync(ServiceApps.DatabaseOf(service), ["dbo", "wolverine"], Ct);
-        await TestDatabase.EmptySchemasAsync(MessagingDatabase, [$"wolverine_{service}", "queues"], Ct);
-    }
-
-    private static async Task RunAsync(IReadOnlyList<DatabaseScript> scripts, string service)
-    {
-        foreach (var script in scripts)
-        {
-            var database = script.Database == "messaging" ? MessagingDatabase : ServiceApps.DatabaseOf(service);
-            await using var connection = new SqlConnection(TestSqlServer.ConnectionString(database));
-            await connection.OpenAsync(Ct);
-            foreach (var batch in SqlBatches.Split(script.Sql))
-            {
-                await using var command = new SqlCommand(batch, connection);
-                await command.ExecuteNonQueryAsync(Ct);
-            }
-        }
-    }
-
-    private static async Task<bool> TableExistsAsync(string database, string schema, string table) =>
-        await ScalarAsync(database, "SELECT COUNT(*) FROM sys.tables t JOIN sys.schemas s ON t.schema_id = s.schema_id WHERE s.name = @schema AND t.name = @table", schema, table) == 1;
-
-    private static Task<int> CountTablesAsync(string database, string schema) =>
-        ScalarAsync(database, "SELECT COUNT(*) FROM sys.tables t JOIN sys.schemas s ON t.schema_id = s.schema_id WHERE s.name = @schema", schema, null);
-
-    private static async Task<int> ScalarAsync(string database, string sql, string schema, string? table)
-    {
-        await using var connection = new SqlConnection(TestSqlServer.ConnectionString(database));
-        await connection.OpenAsync(Ct);
-        await using var command = new SqlCommand(sql, connection);
-        command.Parameters.AddWithValue("@schema", schema);
-        command.Parameters.AddWithValue("@table", (object?)table ?? DBNull.Value);
-        return (int)(await command.ExecuteScalarAsync(Ct))!;
     }
 }

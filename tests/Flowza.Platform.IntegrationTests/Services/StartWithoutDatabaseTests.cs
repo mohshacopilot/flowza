@@ -42,6 +42,44 @@ public sealed class StartWithoutDatabaseTests
         (await app.AppliedMigrationsAsync(Ct)).ShouldBe(app.AllMigrations(), "the migration ran after the database returned");
     }
 
+    // Review finding 1: in Production the DBA ran worker.sql but not worker.messaging.sql. When the database returns
+    // the service must not report ready with dead messaging: it waits at "messaging" (Wolverine's start is not even
+    // entered without its tables) and becomes ready by itself once the missing script has run.
+    [Fact]
+    public async Task PLT_05_without_its_messaging_tables_a_service_stays_not_ready_until_the_script_has_run()
+    {
+        var scripts = await ServiceScripts.OfAsync("worker");
+        await ServiceScripts.EmptyDatabasesAsync("worker", Ct);
+        await ServiceScripts.RunAsync(scripts.Where(s => s.Database != "messaging"), "worker", Ct);
+        try
+        {
+            await using var relay = TcpRelay.ForTestSqlServer();
+            await using var app = ServiceApps.Create(
+                "worker",
+                "Production",
+                connect: database => TestSqlServer.ConnectionStringVia(database, relay.Port),
+                settings: new Dictionary<string, string?> { [StartupStepRunner.MaxRetryDelayKey] = "00:00:01" });
+            using var client = app.CreateClient();
+            relay.IsOpen = true;
+
+            // Long enough for several attempts after the database is back.
+            await Task.Delay(TimeSpan.FromSeconds(6), Ct);
+            using (var waiting = await client.GetAsync(new Uri("/health/ready", UriKind.Relative), Ct))
+            {
+                waiting.StatusCode.ShouldBe(HttpStatusCode.ServiceUnavailable, "never ready while the messaging tables are missing");
+                (await waiting.Content.ReadAsStringAsync(Ct)).ShouldContain("\"startup\":{\"status\":\"Unhealthy\"");
+            }
+
+            await ServiceScripts.RunAsync(scripts.Where(s => s.Database == "messaging"), "worker", Ct); // the DBA catches up
+
+            (await WaitUntilReadyAsync(client, TimeSpan.FromSeconds(60))).ShouldBeTrue("ready by itself, no restart needed");
+        }
+        finally
+        {
+            await ServiceScripts.RunAsync(scripts, "worker", Ct); // leave the test databases complete
+        }
+    }
+
     private static async Task<bool> WaitUntilReadyAsync(HttpClient client, TimeSpan timeout)
     {
         var deadline = DateTime.UtcNow + timeout;

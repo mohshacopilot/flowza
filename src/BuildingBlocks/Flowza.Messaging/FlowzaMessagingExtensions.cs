@@ -11,6 +11,7 @@ using Wolverine.EntityFrameworkCore;
 using Wolverine.ErrorHandling;
 using Wolverine.Persistence;
 using Wolverine.Persistence.Durability;
+using Wolverine.Runtime;
 using Wolverine.SqlServer;
 using Flowza.Common.Hosting;
 using Flowza.Contracts;
@@ -137,7 +138,7 @@ public static class FlowzaMessagingExtensions
             }
 
             configure?.Invoke(options);
-        }));
+        }), createStorage ? null : MessageStorageProvisionedAsync);
 
         // Readiness reports the transport (so mixed settings across services are visible, ADR-0005) and
         // whether its broker can be reached (PLT-05).
@@ -155,6 +156,20 @@ public static class FlowzaMessagingExtensions
         }
 
         return builder;
+    }
+
+    /// <summary>
+    /// Outside Development, before Wolverine's start is entered: its tables exist (created by the DBA's scripts, T033),
+    /// checked the way Wolverine itself checks at start. Missing tables keep the service "not ready" and are checked
+    /// again, so running the missing script is enough; Wolverine's own start is entered only when they exist.
+    /// </summary>
+    private static async Task MessageStorageProvisionedAsync(IServiceProvider services, CancellationToken cancellationToken)
+    {
+        var runtime = services.GetRequiredService<IWolverineRuntime>();
+        foreach (var store in await runtime.Stores.FindAllAsync())
+        {
+            await store.Admin.AssertStorageProvisionedAsync(cancellationToken);
+        }
     }
 
     private static string Required(IConfiguration configuration, string connectionName) =>

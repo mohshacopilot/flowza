@@ -75,7 +75,8 @@ The databases start empty. Choose **one** of these (run in the repository folder
 
 - **A real start:** `dotnet run --project tools/Flowza.Cli -- init-admin --email <your address>` creates the first
   Platform Admin (`admin`) and prints a one-time password that must be changed at the first login.
-- **A demo:** `dotnet run --project tools/Flowza.Cli -- demo-data` loads the demo users. It runs **only on empty
+- **A demo:** `dotnet run --project tools/Flowza.Cli -- demo-data` loads the demo users. It runs **only on a
+  development installation** (the tool's launch profile sets `DOTNET_ENVIRONMENT=Development`) and **only on empty
   databases** and refuses, changing nothing, when any database already has data (PLT-07).
 
 **Demo password (documented on purpose, C5):** every demo user logs in with `Flowza-Demo-2026` and is not asked to

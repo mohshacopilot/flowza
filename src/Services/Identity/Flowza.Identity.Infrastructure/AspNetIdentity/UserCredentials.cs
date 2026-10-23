@@ -35,9 +35,12 @@ internal sealed class UserCredentials(UserManager<User> userManager, PasswordPol
         ArgumentNullException.ThrowIfNull(user);
         if (!await userManager.CheckPasswordAsync(user, currentPassword))
         {
+            // A wrong current password counts like a wrong password at login (IAM-07; review finding 7).
+            Ensure(await userManager.AccessFailedAsync(user));
             return PasswordErrors.CurrentPasswordWrong;
         }
 
+        Ensure(await userManager.ResetAccessFailedCountAsync(user));
         var check = policy.Check(newPassword, user.Username.Value);
         if (check.IsFailure)
         {

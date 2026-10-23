@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { routes } from '../../../app/routes';
 import { currentUserIs, platformAdmin, problem } from '../../../test/handlers';
-import { renderRoutes } from '../../../test/render';
+import { createTestQueryClient, renderRoutes } from '../../../test/render';
 import { server } from '../../../test/server';
 import { ravi, userIs, usersUrl } from './usersTestData';
 
@@ -55,13 +55,23 @@ describe('Create user', () => {
       ),
       userIs(ravi),
     );
-    renderRoutes(routes, '/admin/users/new');
+    const queryClient = createTestQueryClient();
+    renderRoutes(routes, '/admin/users/new', queryClient);
     const user = userEvent.setup();
 
     await fillValidUser(user);
     await user.click(screen.getByRole('button', { name: 'Create user' }));
 
     expect(await screen.findByRole('textbox', { name: 'Temporary password' })).toHaveValue('Tmp-7hQ2-xK9w');
+    // K6 (review finding 9): the password lives only on the screen, not in the query cache.
+    expect(
+      JSON.stringify(
+        queryClient
+          .getMutationCache()
+          .getAll()
+          .map((m) => m.state.data ?? null),
+      ),
+    ).not.toContain('Tmp-7hQ2-xK9w');
     expect(
       screen.getByText(
         'This password is shown only once. Copy it now and give it to the user in a safe way.',

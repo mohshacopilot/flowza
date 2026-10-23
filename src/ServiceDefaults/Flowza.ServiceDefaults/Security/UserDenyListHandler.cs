@@ -56,9 +56,9 @@ public sealed class RejectDeniedUsers(IUserDenyList denyList) : IOpenIddictValid
 }
 
 /// <summary>
-/// Fills the deny list at start-up from the service's <see cref="IUserDenyListSource"/>, if it has one. A start-up
-/// step (T034): when the database is down at start it runs once it answers, so a deactivated user is never let in
-/// just because the service started during an outage; a failure is tried again.
+/// Fills the deny list at start-up from the service's <see cref="IUserDenyListSource"/>, if it has one (only Identity
+/// has one; the other services fill their lists from events). A start-up step (T034): when the database is down at
+/// start it runs once it answers, and a failure is tried again, so Identity never starts with an empty list.
 /// </summary>
 internal sealed class UserDenyListLoader(
     IServiceScopeFactory scopeFactory,

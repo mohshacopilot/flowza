@@ -1,15 +1,16 @@
+import type { QueryClient } from '@tanstack/react-query';
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { routes } from '../../../app/routes';
 import type { UserDetails } from '../../../shared/api/generated/identity/model';
 import { currentUserIs, platformAdmin, problem } from '../../../test/handlers';
-import { renderRoutes } from '../../../test/render';
+import { createTestQueryClient, renderRoutes } from '../../../test/render';
 import { server } from '../../../test/server';
 import { asha, noContent, ravi, userIs, userUrl } from './usersTestData';
 
-const openUser = async (user: UserDetails) => {
-  renderRoutes(routes, `/admin/users/${user.id}`);
+const openUser = async (user: UserDetails, queryClient?: QueryClient) => {
+  renderRoutes(routes, `/admin/users/${user.id}`, queryClient);
   await screen.findByRole('heading', { level: 1, name: `User ${user.username}` });
 };
 
@@ -221,7 +222,8 @@ describe('User details', () => {
   it('IAM_04_AC2_reset_shows_the_temporary_password_once', async () => {
     server.use(userIs({ ...ravi, mustChangePassword: true }));
     const calls = actionAnswers('reset-password', () => HttpResponse.json({ password: 'Tmp-Rz4p-81Lm' }));
-    await openUser(ravi);
+    const queryClient = createTestQueryClient();
+    await openUser(ravi, queryClient);
     const user = userEvent.setup();
 
     expect(screen.getByText('Must change the password at the next login.')).toBeInTheDocument();
@@ -233,6 +235,15 @@ describe('User details', () => {
     const shown = await screen.findByRole('dialog', { name: 'Temporary password for ravi.k' });
     expect(within(shown).getByRole('textbox', { name: 'Temporary password' })).toHaveValue('Tmp-Rz4p-81Lm');
     expect(calls).toEqual([ravi.id]);
+    // K6 (review finding 9): the password lives only in the dialog, not in the query cache.
+    expect(
+      JSON.stringify(
+        queryClient
+          .getMutationCache()
+          .getAll()
+          .map((m) => m.state.data ?? null),
+      ),
+    ).not.toContain('Tmp-Rz4p-81Lm');
 
     await user.click(within(shown).getByRole('button', { name: 'Done' }));
     await vi.waitFor(() => {

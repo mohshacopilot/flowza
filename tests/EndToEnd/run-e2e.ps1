@@ -20,6 +20,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+$runStarted = Get-Date
 $root = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
 $e2e = $PSScriptRoot
 $setupProject = Join-Path $root 'tests/Flowza.EndToEnd.Setup'
@@ -153,9 +154,17 @@ try {
         Write-Host "The platform keeps running on the test databases (process $($appHost.Id)); stop it with Ctrl+C in its window or Stop-Process."
     } else {
         Write-Host '6. Stopping the platform'
-        Stop-Process -Id $appHost.Id -ErrorAction SilentlyContinue
+        # Only what this run started (review finding 12): the AppHost's process tree, then any Flowza program that
+        # started after this run began (Aspire may detach the services); a service someone debugs stays untouched.
+        if ($PSVersionTable.PSEdition -eq 'Core') {
+            try { $appHost.Kill($true) } catch { }
+        } else {
+            & cmd /c "taskkill /PID $($appHost.Id) /T /F >nul 2>&1"
+        }
         $appHost.WaitForExit(30000) | Out-Null
-        Get-Process -Name 'Flowza.*' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+        Get-Process -Name 'Flowza.*' -ErrorAction SilentlyContinue |
+            Where-Object { try { $_.StartTime -ge $runStarted } catch { $false } } |
+            Stop-Process -Force -ErrorAction SilentlyContinue
     }
 }
 

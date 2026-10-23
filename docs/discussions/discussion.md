@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Last session** | 2026-10-22, office PC: feature 001 built (T026–T034), CI green; T032 checks done; phase 3–4 review findings to fix next |
+| **Last session** | 2026-10-23, office PC: phase 3–4 review findings fixed; feature 001 verified (T032); next: push, then plan 002 |
 | **Build** | From 2026-10-21 on the **office PC** (`D:\Projects\Workflow`); the owner reviews on weekdays, full days |
 | **Git** | Local commits per task on `main`; public repository https://github.com/mohshacopilot/flowza, pushed only when the owner says so |
 
@@ -13,11 +13,10 @@ Spec Kit is postponed; we follow the same method by hand (see [CLAUDE.md](../../
    Done also: T026–T027 (web screens), T028 (demo-data), T029 (end-to-end, green in CI), T030 (setup guide; checklist
    to sign), T033 (production database scripts), T034 (start while the database is down). T032 (verify 001): checks
    done 2026-10-22 (CI green, 89.4 % coverage, every M1 criterion has named tests).
-   **Next (start here): fix the 12 findings of the phase 3–4 code review** listed in
-   [tasks.md](../../specs/001-platform-foundation/tasks.md) ("Phase 3–4 code review"); finding 1 (HIGH) first; finding 3
-   needs the owner's choice (recommended: refuse demo-data outside Development). Then re-run all tests, push, check CI,
-   and close T032. The owner still signs [checklists/setup.md](../../specs/001-platform-foundation/checklists/setup.md)
-   (PLT-06-AC1) after a timed run on a fresh PC.
+   Phase 3–4 review: all 12 findings handled 2026-10-23 (10 fixed, 6 and 11 not defects but now tested; outcomes in
+   [tasks.md](../../specs/001-platform-foundation/tasks.md)). **Feature 001 is done** apart from the owner's
+   [setup checklist](../../specs/001-platform-foundation/checklists/setup.md) signature (PLT-06-AC1, timed run on a
+   fresh PC) and the items carried below. **Next: push and check CI**, then plan 002 (step 3).
    **Carried from 001 into later plans:** demo data for the org chart (002) and the two reference apps (004/005)
    extend `flowza demo-data` (PLT-07-AC1, analysis A1); designer screens and APIs refuse users without App Designer
    (IAM-02-AC1, feature 004).
@@ -55,7 +54,7 @@ module. Sections marked "design notes" go into `plan.md`, never into `spec.md`.
 | 18 | Build 001 Phase 1 (Identity, T010–T019) | ✅ Done 2026-10-21/22, plus T031 CI (green on GitHub) and the web shell T023–T025 (merged 2026-10-22); 283 .NET + 74 web tests pass | [tasks.md](../../specs/001-platform-foundation/tasks.md) "Progress" |
 | 18a | Build 001 Phase 2 (Gateway, T020–T022) | ✅ Done 2026-10-22: YARP + BFF, protection, integration tests; code review at phase end, fixes in 5b6fc9f | [tasks.md](../../specs/001-platform-foundation/tasks.md) "Progress" |
 | 18b | Build 001 web screens (T026–T027) | ✅ Done 2026-10-22: users admin screens (731f130, d79e680), my profile + change password (d61e8da); both checked live | [tasks.md](../../specs/001-platform-foundation/tasks.md) "Progress" |
-| 18c | Build 001 Phase 4 (T028–T030, T033–T034) and verify (T032) | ⏳ built and green in CI 2026-10-22; phase 3–4 review: 12 findings to fix (1 HIGH), then close T032 | [tasks.md](../../specs/001-platform-foundation/tasks.md) "Phase 3–4 code review" |
+| 18c | Build 001 Phase 4 (T028–T030, T033–T034) and verify (T032) | ✅ 2026-10-23: built, green in CI, phase 3–4 review handled (12 findings); owner's PLT-06 signature still open | [tasks.md](../../specs/001-platform-foundation/tasks.md) "Phase 3–4 code review" |
 | 19 | RabbitMQ removed from the development PC (owner, 2026-10-22) | ✅ SQL Server transport only on the PC; SQL Server topology fixed so events reach other services | [ADR-0005](../decisions/0005-message-transport-selection.md) amendment 1 |
 | 20 | Transport per deployment (owner, 2026-10-22) | ✅ **On-premises = SQL Server only, cloud = Azure Service Bus; RabbitMQ dropped and its code removed** | [ADR-0005](../decisions/0005-message-transport-selection.md) amendments 2 and 3 |
 | 21 | Specs 002–006 (ORG, EXP, APP + FRM, WF, INB + NTF) | ✅ Approved 2026-10-21; all clarifications answered "a" (002 C1–C9, 003 C1–C11, 004 C1–C13, 005 C1–C12, 006 C1–C18) | [002](../../specs/002-org-hierarchy/spec.md), [003](../../specs/003-expression-language/spec.md), [004](../../specs/004-apps-and-form-builder/spec.md), [005](../../specs/005-workflow-engine/spec.md), [006](../../specs/006-inbox-notifications/spec.md) |

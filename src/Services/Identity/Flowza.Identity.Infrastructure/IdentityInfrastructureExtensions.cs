@@ -6,8 +6,10 @@ using Flowza.Identity.Domain.Users.Passwords;
 using Flowza.Identity.Infrastructure.AspNetIdentity;
 using Flowza.Identity.Infrastructure.Passwords;
 using Flowza.Identity.Infrastructure.Persistence;
+using Flowza.Identity.Infrastructure.TokenServer;
 using Flowza.Messaging;
 using Flowza.Persistence;
+using Flowza.ServiceDefaults.Security;
 using JasperFx.CodeGeneration.Model;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.DataProtection.KeyManagement;
@@ -64,6 +66,38 @@ public static class IdentityInfrastructureExtensions
                 options.XmlRepository = new DatabaseXmlRepository(provider.GetRequiredService<IServiceScopeFactory>())));
 
         builder.Services.AddUserAccounts();
+        return builder;
+    }
+
+    /// <summary>
+    /// Outside Development, Identity's own Data Protection keys (login cookie, anti-forgery) are encrypted in its
+    /// database with its token encryption certificate, which a real installation has anyway (phase 3–4 review
+    /// finding 8): reading the database is then not enough to forge a login. Not when only writing the database
+    /// scripts (no keys are used then).
+    /// </summary>
+    /// <remarks>
+    /// For the Identity web host, which issues the login cookies; the flowza tool uses Identity's infrastructure but no
+    /// cookies, so it needs no certificate for this.
+    /// </remarks>
+    public static TBuilder AddIdentityLoginKeyProtection<TBuilder>(this TBuilder builder)
+        where TBuilder : IHostApplicationBuilder
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+        var configuration = builder.Configuration;
+        if (builder.Environment.IsDevelopment() || ProductionDatabaseScripts.RequestedFolder(configuration) is not null)
+        {
+            return builder;
+        }
+
+        var thumbprint = configuration[TokenServerExtensions.EncryptionThumbprintKey];
+        if (string.IsNullOrWhiteSpace(thumbprint))
+        {
+            throw new InvalidOperationException(
+                $"Set '{TokenServerExtensions.EncryptionThumbprintKey}': outside Development it also protects Identity's login keys.");
+        }
+
+        builder.Services.AddDataProtection()
+            .ProtectKeysWithStoreCertificate(KeyCertificates.Find(thumbprint, TokenServerExtensions.EncryptionThumbprintKey));
         return builder;
     }
 

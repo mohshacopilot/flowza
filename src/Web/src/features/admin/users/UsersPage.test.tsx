@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { act, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { routes } from '../../../app/routes';
@@ -67,6 +67,29 @@ describe('Users list', () => {
     });
     expect(queries.at(-1)?.get('search')).toBe('ravi');
     expect(queries.at(-1)?.get('size')).toBe('25');
+  });
+
+  it('IAM_04_back_and_forward_keep_the_search_box_in_step_with_the_list', async () => {
+    const queries = listAnswers(page([listItem(asha)]));
+    const { router } = renderRoutes(routes, '/admin/users?search=asha');
+    const user = userEvent.setup();
+    const box = () => screen.getByRole('searchbox', { name: 'Search by username, name or email' });
+    await usersTable();
+    expect(box()).toHaveValue('asha');
+
+    await user.clear(box());
+    await user.type(box(), 'ravi{Enter}');
+    await vi.waitFor(() => {
+      expect(queries.at(-1)?.get('search')).toBe('ravi');
+    });
+
+    await act(() => router.navigate(-1)); // the browser's Back button
+
+    // The list for "asha" comes from the cache (no new request); the box must show what the list is filtered by.
+    await vi.waitFor(() => {
+      expect(box()).toHaveValue('asha');
+    });
+    expect(router.state.location.search).toBe('?search=asha');
   });
 
   it('IAM_04_list_pages_through_users_25_at_a_time_with_the_total', async () => {

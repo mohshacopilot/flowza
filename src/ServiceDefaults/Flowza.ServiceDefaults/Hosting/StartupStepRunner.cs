@@ -12,11 +12,14 @@ namespace Flowza.ServiceDefaults.Hosting;
 /// not answer, the service starts anyway: it is live but not ready, and the steps run in the background as soon as
 /// the other readiness checks (database, message transport) are healthy, retried with a growing pause (1 s, 2 s,
 /// 4 s … at most <see cref="MaxRetryDelayKey"/>). The readiness check "startup" reports which step it waits for.
+/// A step that failed part-way and cannot be run again (<see cref="IStartupStep.CanRetry"/>) stops the service with
+/// exit code 1, so the service manager starts it again cleanly; it never reports ready with that step half done.
 /// </summary>
 public sealed partial class StartupStepRunner(
     IEnumerable<IStartupStep> steps,
     HealthCheckService healthChecks,
     IConfiguration configuration,
+    IHostApplicationLifetime lifetime,
     ILogger<StartupStepRunner> logger) : IHostedService, IStartupStepRunner, IDisposable
 {
     public const string HealthCheckName = "startup";
@@ -26,6 +29,7 @@ public sealed partial class StartupStepRunner(
 
     private readonly IStartupStep[] _steps = [.. steps.OrderBy(s => s.Order)];
     private readonly List<IStartupStep> _completed = [];
+    private readonly List<IStartupStep> _entered = [];
     private readonly CancellationTokenSource _stopping = new();
     private Task? _background;
     private volatile string? _waitingFor;
@@ -63,17 +67,20 @@ public sealed partial class StartupStepRunner(
             }
             catch (OperationCanceledException)
             {
-                // stopping
+                // Still running when the host's stop time ran out: do not stop a step while it runs (finding 2).
+                LogStopTimedOut(logger);
+                return;
             }
         }
 
-        IStartupStep[] completed;
+        // Every step that was entered, also one that failed or was cancelled part-way, newest first (finding 2).
+        IStartupStep[] entered;
         lock (_completed)
         {
-            completed = [.. _completed];
+            entered = [.. _entered];
         }
 
-        foreach (var step in completed.Reverse())
+        foreach (var step in entered.Reverse())
         {
             await step.StopAsync(cancellationToken);
         }
@@ -98,6 +105,16 @@ public sealed partial class StartupStepRunner(
             }
             catch (Exception exception) when (exception is not OperationCanceledException || !stopping.IsCancellationRequested)
             {
+                var step = _steps.FirstOrDefault(s => s.Name == _waitingFor);
+                if (step is { CanRetry: false })
+                {
+                    // Finding 1: never report ready with a step half done; a clean restart is the only safe way on.
+                    LogStepFailedFinally(logger, step.Name, exception);
+                    Environment.ExitCode = 1;
+                    lifetime.StopApplication();
+                    return;
+                }
+
                 LogStepFailed(logger, _waitingFor ?? "?", exception);
             }
 
@@ -128,6 +145,14 @@ public sealed partial class StartupStepRunner(
             }
 
             _waitingFor = step.Name;
+            lock (_completed)
+            {
+                if (!_entered.Contains(step))
+                {
+                    _entered.Add(step);
+                }
+            }
+
             await step.RunAsync(cancellationToken);
             lock (_completed)
             {
@@ -165,6 +190,12 @@ public sealed partial class StartupStepRunner(
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Start-up step {Step} failed; it is tried again")]
     private static partial void LogStepFailed(ILogger logger, string step, Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Critical, Message = "Start-up step {Step} failed part-way and cannot be run again; the service stops (exit code 1) so it can be started again cleanly")]
+    private static partial void LogStepFailedFinally(ILogger logger, string step, Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "The service stopped while a start-up step was still running; its steps were not stopped")]
+    private static partial void LogStopTimedOut(ILogger logger);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Start-up completed after the database or message transport returned; the service is ready")]
     private static partial void LogRecovered(ILogger logger);
