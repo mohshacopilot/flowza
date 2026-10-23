@@ -26,7 +26,7 @@ Nothing else: no new database, secret, library or program.
 | T006 Installation in the web app, brand mark | ✅ | e7d11dd |
 | T007 Dark side navigation and its preference | ✅ | 991aa07 |
 | T008 Header and page titles | ✅ | cdbbab2 |
-| T009 Phone frame | ⬜ | |
+| T009 Phone frame | ✅ | 9dfbe33 |
 | T010 Existing screens in the new look | ⬜ | |
 | T011 Visual and accessibility end-to-end tests | ⬜ | |
 | T012 CI look check and screenshot baselines | ⬜ | |
@@ -145,6 +145,30 @@ Nothing else: no new database, secret, library or program.
     C#'s `StringInfo`; the same test cases as Identity's, Hindi and Tamil included), on the brand colour through the
     adapter's `Avatar.colorTextPlaceholder` (Ant Design's grey gave white text only 2.3 : 1). The avatar is
     `aria-hidden`; the button keeps its name "User menu for …" (A8).
+- **T009 (2026-10-23):** decisions inside plan §5.5:
+  - **`useWidthClass()`** ("phone" | "tablet" | "desktop") is the one place that reads the width; `AppShell` (Sider
+    or drawer) and `useNavigationPreference` (collapsed default) use it. Like the T008 fix it asks `matchMedia` on
+    the first render, so a phone never shows the Sider for a moment.
+  - **`NavigationDrawer`:** menu button ("Open navigation", `aria-expanded`, `aria-controls`) in the header before
+    the title; Ant Design `Drawer` from the left, 232 px, named "Navigation", close button "Close navigation", with
+    the same `BrandMark` and `SideNavigation`. It is open **only on the page where it was opened** (state = the
+    path at opening), so any link that changes the page closes it; choosing the current page's item closes it
+    through the menu's click. Ant Design traps focus inside and returns it to the menu button (default
+    `focusTriggerAfterClose`); tests prove both.
+  - **Drawer colours** go in through the Drawer's semantic `styles` (CSS variables only): Ant Design's own drawer
+    rules are more specific than a CSS module class (the first look showed a white drawer). The drawer is rendered
+    outside the frame, so it gets the `--flowza-navigation-*` variables through `rootStyle`.
+  - **Phone header:** less padding, smaller title, the user's name hidden (the avatar stays; the button's name still
+    says who is logged in). **Content padding** 24 px, 16 px on phones; the column beside the navigation may shrink
+    (`min-width: 0`), so the users table scrolls inside its box: at 375 px the page is exactly 375 px wide (look
+    check). **Print** hides the Sider and the header. **Reduced motion:** a test proves `AppProviders` switches
+    Ant Design's motion off when the system asks for it (the hook and adapter already did, T001).
+  - `AppShell.module.css` is clean (variables only) and left the T002 allow list (6 files remain, all for T010).
+  - **Tests:** every component test now runs in a 1280 px window unless it sets another width (`setup.ts`), because
+    the frame depends on the width. Two existing whole-screen tests (create user, user details) became flaky when all
+    26 test files run in parallel on this PC: one passed 5 s (Vitest's limit; it takes 2.4 s alone), one waited
+    longer than `findBy…`'s 1 s for a lazily loaded screen. `testTimeout` is now 15 s and `asyncUtilTimeout` 5 s;
+    no expectation changed. Four full runs in a row then passed.
 
 ## Phase 1: Design values (M1)
 | ID | Task | Spec IDs | Done when |
@@ -203,15 +227,15 @@ Nothing else: no new database, secret, library or program.
 | UI-01-AC1 | T004, T005b, T011, T012 | 🟡 brand panel (mark, name, product line), form card and "Powered by Flowza" (`UI_01_AC1_*`, T004/T005b); workflow picture hidden from screen readers and the three highlights (`UI_01_AC1_*`, T005b); the desktop screenshot follows in T011/T012 |
 | UI-01-AC2 | T005 | ✅ mouse and keyboard (Tab, Space, Enter) switch the field, `aria-pressed` follows, the login still works with the password shown, axe clean (`UI_01_AC2_*`, end-to-end); the script is a file with its translated name (`UI_01_AC2_*`, integration) |
 | UI-01-AC3 | T004, T011, T012 | 🟡 the general error above the form in the page look, and the change-password page in the same layout (`UI_01_AC3_*`, T004); screenshots in T011/T012 |
-| UI-02-AC1 | T002, T010 | 🟡 the scan runs (`UI_02_AC1_*`, T002); `account.css` is clean (T004); 7 files remain on the allow list for T007–T010 |
+| UI-02-AC1 | T002, T010 | 🟡 the scan runs (`UI_02_AC1_*`, T002); `account.css` is clean (T004); the new frame files are clean and `AppShell.module.css` left the allow list (T009); 6 files remain for T010 |
 | UI-02-AC2 | T001, T002, T004 | ✅ the theme and `design-values.css` come from the same values and agree on brand, on-brand text and font (`UI_02_AC2_*`, T002); the login pages load `design-values.css` before their layout (`UI_02_AC2_*`, T004) |
 | UI-03-AC1 | T007, T011 | 🟡 admin sees "Administration", a User does not, current item selected with `aria-current`, mark and name on top of the panel (`UI_03_AC1_*`, component and registry tests, T007); the screenshot follows in T011 |
 | UI-03-AC2 | T008 | ✅ the header shows the title of each page, the browser tab "<page> – <installation>" and follows navigation, the title is not a second heading, the user menu shows initials and display name and offers "My profile" and "Log out" (`UI_03_AC2_*`, component tests); initials by the C6 rule (`UI_03_AC2_initials_*`); the end-to-end helpers still find "User menu for …" |
 | UI-04-AC1 | T007, T011 | 🟡 collapsed: icons only, every item keeps its accessible name and tooltip, the choice survives a re-render from storage, the button works with Enter and Space (`UI_04_AC1_*`, T007); the real reload in a browser follows in T011 |
 | UI-04-AC2 | T007, T011 | 🟡 open at 1025 and 1280 px, collapsed at 768–1024 px, a stored choice wins, blocked or unknown storage falls back to the default (`UI_04_AC2_*`, hook tests, T007); end-to-end at 1280 and 900 px in T011 |
-| UI-05-AC1 | T009, T011 | ⬜ |
-| UI-05-AC2 | T009, T011 | ⬜ |
-| UI-06-AC1 | T004, T009, T011 | ⬜ |
+| UI-05-AC1 | T009, T011 | 🟡 the frame lets wide content scroll inside its box and the users table scrolls inside itself (T009; a local look at 375 px measured a 375 px page); the automated check on every screen follows in T011 |
+| UI-05-AC2 | T009, T011 | 🟡 a phone has a menu button instead of the side panel; it opens the navigation (`aria-expanded`), choosing an item opens that screen and closes it, focus returns to the button, Escape and the close button close it (`UI_05_AC2_*`, component tests); the 375 px end-to-end test follows in T011 |
+| UI-06-AC1 | T004, T009, T011 | 🟡 contrast fixes in the frame (selected item, avatar, drawer) with unit tests; the axe checks of the end-to-end suite pass on every app page at desktop width, and a local axe check of the open phone drawer found nothing (T009); axe at phone width on every screen follows in T011 |
 | UI-06-AC2 | T004, T011 | ⬜ |
 | UI-07-AC1 | T001 (A1) | ✅ 22 brand colours and all 256 greys reach ≥ 4.5 : 1; the theme picks the text colour (`UI_07_AC1_*`) |
 | UI-08-AC1 | T003, T004, T006 (A3) | 🟡 initials rule proven (`UI_08_AC1_*`: two, many, one word, one letter, spaces, Hindi, Tamil, accents; T003); on the login page a 100-character name is shortened by CSS and kept whole in `title` and the text (`UI_08_AC1_*`, T004); the same in the frame, full name in `title` and the link's accessible name (`UI_08_AC1_*`, T006). ✅ by tests; the visible "…" is confirmed by the screenshots in T011 |
