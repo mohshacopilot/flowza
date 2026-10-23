@@ -19,7 +19,7 @@ Nothing else: no new database, secret, library or program.
 |---|---|---|
 | T001 Design values and Ant Design adapter | ✅ | 8c9af68 |
 | T002 Login-page CSS generator and the two checks | ✅ | 610bd49 |
-| T003 Installation name and initials (Identity) | ⬜ | |
+| T003 Installation name and initials (Identity) | ✅ | 4e2f387 |
 | T004 Login and change-password pages, split layout | ⬜ | |
 | T005 Show/hide password | ⬜ | |
 | T006 Installation in the web app, brand mark | ⬜ | |
@@ -52,6 +52,15 @@ Nothing else: no new database, secret, library or program.
   `profile.module.css`, `AccessSection.tsx`, `TemporaryPasswordPanel.tsx`, `UserDetailsPage.tsx`,
   `ApiErrorAlert.tsx`. A test fails when a listed file is already clean, so the list only shrinks. The login pages
   do not load `design-values.css` yet; T004 links it.
+- **T003 (2026-10-23):** `InstallationBrand` (Identity.Application) holds the C6 rule and the name check; the length
+  counts text elements (100 Hindi syllables pass although they are 200 UTF-16 characters). The application reads the
+  brand through a port, `IInstallationBrandSource`; v0.1's adapter (`Identity.Infrastructure/Installation`) reads
+  `Installation:Name`, and M3 (PLT-08) can swap in the Settings screen without touching the endpoint. A missing key
+  falls back to "Flowza"; a key set to blank or longer than 100 stops the start (`ValidateOnStart`, checked by
+  removing it and watching the test fail). It is registered in Identity's web host only, not in the `flowza` tool.
+  The endpoint is in Identity's OpenAPI document (`GetInstallation`); the web client is regenerated in T006. The
+  AppHost left running for the owner was stopped to free Identity's build output; it is started again for the T005
+  look.
 
 ## Phase 1: Design values (M1)
 | ID | Task | Spec IDs | Done when |
@@ -120,7 +129,7 @@ Nothing else: no new database, secret, library or program.
 | UI-06-AC1 | T004, T009, T011 | ⬜ |
 | UI-06-AC2 | T004, T011 | ⬜ |
 | UI-07-AC1 | T001 (A1) | ✅ 22 brand colours and all 256 greys reach ≥ 4.5 : 1; the theme picks the text colour (`UI_07_AC1_*`) |
-| UI-08-AC1 | T003, T004, T006 (A3) | ⬜ |
-| UI-08-AC2 | T003, T004, T006 | ⬜ |
+| UI-08-AC1 | T003, T004, T006 (A3) | 🟡 initials rule proven (`UI_08_AC1_*`: two, many, one word, one letter, spaces, Hindi, Tamil, accents; T003); shortening with "…" and the full name on hover follow on the login page (T004) and in the frame (T006) |
+| UI-08-AC2 | T003, T004, T006 | 🟡 configured name and initials, default "Flowza"/"FL", anonymous → 401 (`UI_08_AC2_*`, T003); shown on the login page in T004 and in the frame in T006 |
 | UI-09-AC1 | T010, T011, T012 | ⬜ |
 | UI-10-AC1 | T012 (A2) | ⬜ |
