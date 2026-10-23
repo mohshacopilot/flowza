@@ -3,6 +3,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { createAntdTheme } from '../src/app/theme/antdTheme.ts';
 import designValues from '../src/app/theme/designValues.json';
+import { shellCssVariables } from '../src/app/theme/shellCssVariables.ts';
 import { accountCssFile, renderAccountCss } from './accountCss.ts';
 
 const webRoot = new URL('..', import.meta.url);
@@ -31,6 +32,16 @@ describe('Login-page CSS from the design values (UI-02)', () => {
     expect(variable(generated, '--flowza-on-brand')).toBe(theme.token?.colorTextLightSolid);
     expect(variable(generated, '--flowza-font-family')).toBe(theme.token?.fontFamily);
     expect(variable(generated, '--flowza-font-size-base')).toBe(`${String(theme.token?.fontSize)}px`);
+  });
+
+  it('UI_02_AC2_the_frame_names_the_navigation_colours_as_the_login_pages_do', () => {
+    const frame = shellCssVariables(designValues) as Record<string, string>;
+    const names = Object.keys(frame).filter((name) => name.startsWith('--flowza-navigation-'));
+
+    expect(names).toHaveLength(Object.keys(designValues.navigation).length);
+    for (const name of names) {
+      expect(variable(generated, name)).toBe(frame[name]);
+    }
   });
 
   it('every_value_becomes_a_variable_named_by_its_path_with_pixel_units_where_needed', () => {

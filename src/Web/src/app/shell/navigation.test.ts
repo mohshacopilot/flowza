@@ -1,16 +1,25 @@
 import { SystemRole } from '../../shared/auth/systemRoles';
 import {
+  groupNavigationItems,
+  navigationGroups,
   navigationItems,
   selectedNavigationKey,
   visibleNavigationItems,
+  type NavigationGroupKey,
   type NavigationItem,
 } from './navigation';
 
-const item = (key: string, path: string, requiredRole?: SystemRole): NavigationItem => ({
+const item = (
+  key: string,
+  path: string,
+  requiredRole?: SystemRole,
+  group: NavigationGroupKey = 'main',
+): NavigationItem => ({
   key,
   path,
   labelKey: 'nav.home',
   icon: null,
+  group,
   ...(requiredRole ? { requiredRole } : {}),
 });
 
@@ -34,6 +43,32 @@ describe('Navigation by role', () => {
 
   it('the_users_screen_needs_platform_admin', () => {
     expect(navigationItems.find((i) => i.key === 'users')?.requiredRole).toBe(SystemRole.PlatformAdmin);
+  });
+
+  it('UI_03_AC1_the_users_screen_is_in_the_administration_group', () => {
+    expect(navigationItems.find((i) => i.key === 'users')?.group).toBe('administration');
+    expect(navigationItems.find((i) => i.key === 'home')?.group).toBe('main');
+  });
+
+  it('UI_03_AC1_items_stand_under_their_groups_in_group_order', () => {
+    const items = [item('admin', '/admin', undefined, 'administration'), item('a', '/a'), item('b', '/b')];
+
+    const grouped = groupNavigationItems(navigationGroups, items);
+
+    expect(grouped.map((g) => [g.group.key, g.items.map((i) => i.key)])).toEqual([
+      ['main', ['a', 'b']],
+      ['administration', ['admin']],
+    ]);
+  });
+
+  it('UI_03_AC1_a_group_without_visible_items_is_left_out', () => {
+    const items = visibleNavigationItems(
+      [item('a', '/a'), item('admin', '/admin', SystemRole.PlatformAdmin, 'administration')],
+      [SystemRole.User],
+    );
+
+    expect(groupNavigationItems(navigationGroups, items).map((g) => g.group.key)).toEqual(['main']);
+    expect(groupNavigationItems(navigationGroups, [])).toEqual([]);
   });
 
   it.each([

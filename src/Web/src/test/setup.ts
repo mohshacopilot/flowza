@@ -33,6 +33,10 @@ beforeAll(() => {
 afterEach(() => {
   server.resetHandlers();
   cleanup();
+  // Remembered choices (e.g. the collapsed navigation) must not leak into the next test.
+  if (typeof window !== 'undefined') {
+    window.localStorage.clear();
+  }
 });
 afterAll(() => {
   server.close();

@@ -45,13 +45,11 @@ describe('App shell', () => {
     expect(nav.getByRole('link', { name: 'Users' })).toHaveAttribute('aria-current', 'page');
   });
 
-  it('shows_the_installation_name_and_the_user_in_the_header', async () => {
+  it('shows_the_user_menu_in_the_header', async () => {
     server.use(currentUserIs(platformAdmin));
     renderRoutes(routes, '/');
 
     const header = within(await screen.findByRole('banner'));
-    // The name comes from Identity (UI-08, T006), a moment after the frame.
-    expect(await header.findByRole('link', { name: 'Flowza home page' })).toHaveAttribute('href', '/');
     expect(header.getByRole('button', { name: 'User menu for Asha Admin' })).toBeInTheDocument();
   });
 

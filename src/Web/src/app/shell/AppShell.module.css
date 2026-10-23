@@ -7,15 +7,12 @@
   min-height: 100vh;
 }
 
+/* The page title joins on the left in T008. */
 .header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   border-bottom: 1px solid var(--flowza-color-border-secondary);
-}
-
-.sider {
-  border-right: 1px solid var(--flowza-color-border-secondary);
 }
 
 .content {

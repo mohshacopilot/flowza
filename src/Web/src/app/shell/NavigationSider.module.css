@@ -1,0 +1,62 @@
+/* Layout only: colours and sizes come from the design values (--flowza-navigation-*, Ant Design's CSS variables). */
+.sider {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* The same height as the header beside it, so the panel and the header line up. */
+.brand,
+.brandCollapsed {
+  display: flex;
+  flex: none;
+  align-items: center;
+  height: var(--flowza-shell-header-height);
+  padding-inline: var(--flowza-padding);
+  border-bottom: 1px solid var(--flowza-navigation-raised);
+}
+
+.brandCollapsed {
+  justify-content: center;
+  padding-inline: 0;
+}
+
+.toggle,
+.toggleCollapsed {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--flowza-margin-sm);
+  width: 100%;
+  padding-block: var(--flowza-padding-sm);
+  padding-inline: var(--flowza-padding);
+  font: inherit;
+  color: var(--flowza-navigation-text);
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  border-top: 1px solid var(--flowza-navigation-raised);
+}
+
+.toggleCollapsed {
+  justify-content: center;
+  padding-inline: 0;
+}
+
+.toggle:hover,
+.toggleCollapsed:hover {
+  color: var(--flowza-navigation-text-active);
+  background: var(--flowza-navigation-raised);
+}
+
+.toggle:focus-visible,
+.toggleCollapsed:focus-visible {
+  outline: var(--flowza-line-width-focus) solid var(--flowza-navigation-focus);
+  outline-offset: calc(-1 * var(--flowza-line-width-focus));
+}

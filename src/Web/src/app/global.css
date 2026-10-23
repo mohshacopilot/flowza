@@ -1,0 +1,4 @@
+/* The frame fills the window: without this the browser's 8 px body margin shows around the dark navigation. */
+body {
+  margin: 0;
+}

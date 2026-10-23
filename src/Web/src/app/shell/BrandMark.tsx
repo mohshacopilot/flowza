@@ -4,11 +4,12 @@ import { useInstallation } from '../../shared/installation/useInstallation';
 import styles from './BrandMark.module.css';
 
 /**
- * The installation's initials mark and name, linking to the home page (spec 007 UI-08, C6). A long name is
- * shortened with "…" on screen; the full name stays in the tooltip (title) and in the link's accessible name.
- * Until the name has loaded (or if it cannot be loaded) only the mark's outline shows, so no wrong name flashes up.
+ * The installation's initials mark and name at the top of the deep teal navigation, linking to the home page
+ * (spec 007 UI-03, UI-08, C6). A long name is shortened with "…" on screen; the full name stays in the tooltip
+ * (title) and in the link's accessible name. Collapsed, only the mark shows. Until the name has loaded (or if it
+ * cannot be loaded) only the mark's outline shows, so no wrong name flashes up.
  */
-export function BrandMark() {
+export function BrandMark({ collapsed = false }: { collapsed?: boolean }) {
   const { t } = useTranslation();
   const installation = useInstallation();
   const brand = installation.data;
@@ -23,7 +24,7 @@ export function BrandMark() {
       <span className={brand ? styles.mark : styles.markPending} aria-hidden="true">
         {brand?.initials}
       </span>
-      {brand && <span className={styles.name}>{brand.name}</span>}
+      {brand && !collapsed && <span className={styles.name}>{brand.name}</span>}
     </Link>
   );
 }

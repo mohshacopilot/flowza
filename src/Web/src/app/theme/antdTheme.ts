@@ -49,10 +49,19 @@ export function createAntdTheme(values: DesignValues, options: ThemeOptions = {}
       boxShadowTertiary: values.shadow.card,
       lineWidthFocus: values.focusRing,
       motion: !options.reducedMotion,
+      // Ant Design's md and lg breakpoints become our tablet and desktop widths (C3, C4), so Grid.useBreakpoint()
+      // answers in our terms: md = tablet and wider, lg = desktop.
+      screenSMMax: values.breakpoints.tablet - 1,
+      screenMD: values.breakpoints.tablet,
+      screenMDMin: values.breakpoints.tablet,
+      screenMDMax: values.breakpoints.desktop - 1,
+      screenLG: values.breakpoints.desktop,
+      screenLGMin: values.breakpoints.desktop,
     },
     components: {
       Layout: {
         headerBg: values.neutral.surface,
+        headerHeight: values.layout.headerHeight,
         bodyBg: values.neutral.page,
         siderBg: values.navigation.background,
         triggerBg: values.navigation.background,
@@ -69,6 +78,8 @@ export function createAntdTheme(values: DesignValues, options: ThemeOptions = {}
         darkPopupBg: values.navigation.background,
         darkItemColor: values.navigation.text,
         darkItemHoverColor: values.navigation.textActive,
+        darkItemHoverBg: values.navigation.raised,
+        collapsedWidth: values.layout.navigationCollapsedWidth,
         darkItemSelectedBg: values.brand,
         darkItemSelectedColor: onBrand,
         darkGroupTitleColor: values.navigation.groupLabel,

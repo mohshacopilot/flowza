@@ -4,17 +4,21 @@ import { Outlet } from 'react-router';
 import { ApiError } from '../../shared/api/ApiError';
 import { useCurrentUser } from '../../shared/auth/currentUser';
 import { PageForError } from '../../shared/components/ErrorPages';
+import designValues from '../theme/designValues.json';
+import { shellCssVariables } from '../theme/shellCssVariables';
 import { AppLoading } from './AppLoading';
-import { BrandMark } from './BrandMark';
-import { SideNavigation } from './SideNavigation';
+import { NavigationSider } from './NavigationSider';
 import { UserMenu } from './UserMenu';
 import styles from './AppShell.module.css';
 
 const isUnauthenticated = (error: unknown): boolean => error instanceof ApiError && error.status === 401;
 
+const shellVariables = shellCssVariables(designValues);
+
 /**
- * The frame of every screen: header (installation mark and name, user menu), side navigation by role and the page.
- * Pages render in <main>; a "skip to main content" link comes first for keyboard users (constitution 12.2).
+ * The frame of every screen: the deep teal side navigation (installation mark and name, items by role), the header
+ * (user menu) and the page. Pages render in <main>; a "skip to main content" link comes first for keyboard users
+ * (constitution 12.2).
  */
 export function AppShell() {
   const { t } = useTranslation();
@@ -34,18 +38,15 @@ export function AppShell() {
   }
 
   return (
-    <Layout className={styles.shell}>
+    <Layout className={styles.shell} style={shellVariables}>
       <a className={styles.skipLink} href="#main-content">
         {t('shell.skipToContent')}
       </a>
-      <Layout.Header className={styles.header}>
-        <BrandMark />
-        <UserMenu user={user.data} />
-      </Layout.Header>
+      <NavigationSider roles={user.data.roles} />
       <Layout>
-        <Layout.Sider width={240} className={styles.sider}>
-          <SideNavigation roles={user.data.roles} />
-        </Layout.Sider>
+        <Layout.Header className={styles.header}>
+          <UserMenu user={user.data} />
+        </Layout.Header>
         <Layout.Content id="main-content" tabIndex={-1} className={styles.content}>
           <Outlet />
         </Layout.Content>

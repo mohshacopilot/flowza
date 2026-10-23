@@ -1,0 +1,28 @@
+/* Layout only: colours come from the design values (Ant Design's dark Menu tokens and --flowza-navigation-*). */
+.navigation {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/*
+ * The selected item has the brand background and a light bar on its left edge: teal on deep teal alone is only
+ * 2.2 : 1, the bar (accent) reaches 3 : 1 against both (ui-design.md 4b).
+ */
+.navigation :global(.ant-menu-item-selected) {
+  box-shadow: inset var(--flowza-line-width-focus) 0 0 var(--flowza-navigation-accent);
+}
+
+/* Focus sits on the link inside an item; the whole item shows a white ring, also when its label is hidden. */
+.navigation :global(.ant-menu-item) a:focus-visible {
+  outline: none;
+}
+
+.navigation :global(.ant-menu-item:has(a:focus-visible)) {
+  outline: var(--flowza-line-width-focus) solid var(--flowza-navigation-focus);
+  outline-offset: calc(-1 * var(--flowza-line-width-focus));
+}
+
+.navigation :global(.ant-menu-item-divider) {
+  border-color: var(--flowza-navigation-raised);
+}

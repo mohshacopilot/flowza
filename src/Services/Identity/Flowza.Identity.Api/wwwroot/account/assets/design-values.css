@@ -46,4 +46,7 @@
   --flowza-radius-card: 8px;
   --flowza-shadow-card: 0 1px 2px rgba(4, 52, 44, 0.06), 0 4px 12px rgba(4, 52, 44, 0.08);
   --flowza-focus-ring: 3px;
+  --flowza-layout-navigation-width: 232px;
+  --flowza-layout-navigation-collapsed-width: 72px;
+  --flowza-layout-header-height: 64px;
 }

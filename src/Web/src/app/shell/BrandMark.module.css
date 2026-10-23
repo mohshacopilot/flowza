@@ -1,11 +1,22 @@
-/* Layout only: colours, fonts and radii come from the design values through Ant Design's CSS variables (UI-02). */
+/* Layout only: colours, fonts and radii come from the design values through CSS variables (UI-02). */
 .brand {
   display: inline-flex;
   align-items: center;
   gap: var(--flowza-margin-sm);
   min-width: 0;
-  max-width: 320px;
-  color: var(--flowza-color-text);
+  max-width: 100%;
+  color: var(--flowza-navigation-text-active);
+  border-radius: var(--flowza-border-radius);
+}
+
+.brand:hover {
+  color: var(--flowza-navigation-text-active);
+}
+
+/* White ring on the deep teal panel (plan 007 §9). */
+.brand:focus-visible {
+  outline: var(--flowza-line-width-focus) solid var(--flowza-navigation-focus);
+  outline-offset: var(--flowza-line-width-focus);
 }
 
 .mark,
@@ -29,7 +40,7 @@
 
 /* While the name loads: the mark's outline only. */
 .markPending {
-  border: 2px solid var(--flowza-color-primary);
+  border: 2px solid var(--flowza-navigation-accent);
 }
 
 /* A long name ends in "…"; the full name is in the link's title and accessible name (UI-08-AC1). */

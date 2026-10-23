@@ -3,11 +3,21 @@ import { delay, http, HttpResponse } from 'msw';
 import { currentUserIs, installationIs, installationUrl, platformAdmin, problem } from '../../test/handlers';
 import { renderRoutes } from '../../test/render';
 import { server } from '../../test/server';
+import { viewportWidth } from '../../test/viewport';
 import { routes } from '../routes';
 
-const header = async () => within(await screen.findByRole('banner'));
+// The mark sits at the top of the side navigation panel (T007); at desktop width the panel is open with the name.
+const panel = async () => within(await screen.findByRole('complementary'));
 
 describe('Brand mark in the frame (UI-08)', () => {
+  let viewport: { restore: () => void };
+  beforeEach(() => {
+    viewport = viewportWidth(1280);
+  });
+  afterEach(() => {
+    viewport.restore();
+  });
+
   it('UI_08_AC2_the_name_and_initials_from_the_installation_appear_in_the_frame', async () => {
     server.use(
       currentUserIs(platformAdmin),
@@ -15,7 +25,7 @@ describe('Brand mark in the frame (UI-08)', () => {
     );
     renderRoutes(routes, '/');
 
-    const home = await (await header()).findByRole('link', { name: 'State Bank of Example home page' });
+    const home = await (await panel()).findByRole('link', { name: 'State Bank of Example home page' });
     expect(home).toHaveAttribute('href', '/');
     expect(within(home).getByText('SB')).toBeInTheDocument();
     expect(within(home).getByText('State Bank of Example')).toBeInTheDocument();
@@ -25,7 +35,7 @@ describe('Brand mark in the frame (UI-08)', () => {
     server.use(currentUserIs(platformAdmin));
     renderRoutes(routes, '/');
 
-    const home = await (await header()).findByRole('link', { name: 'Flowza home page' });
+    const home = await (await panel()).findByRole('link', { name: 'Flowza home page' });
     expect(within(home).getByText('FL')).toBeInTheDocument();
   });
 
@@ -35,7 +45,7 @@ describe('Brand mark in the frame (UI-08)', () => {
     server.use(currentUserIs(platformAdmin), installationIs({ name, initials: 'DO' }));
     renderRoutes(routes, '/');
 
-    const home = await (await header()).findByRole('link', { name: `${name} home page` });
+    const home = await (await panel()).findByRole('link', { name: `${name} home page` });
     expect(home).toHaveAttribute('title', name);
     // The text itself is complete; the "…" comes from the stylesheet (text-overflow: ellipsis), which jsdom does
     // not draw. The screenshot tests (T011) show the shortened name.
@@ -46,7 +56,7 @@ describe('Brand mark in the frame (UI-08)', () => {
     server.use(currentUserIs(platformAdmin));
     renderRoutes(routes, '/');
 
-    const home = await (await header()).findByRole('link', { name: 'Flowza home page' });
+    const home = await (await panel()).findByRole('link', { name: 'Flowza home page' });
     expect(within(home).getByText('FL')).toHaveAttribute('aria-hidden', 'true');
   });
 
@@ -60,7 +70,7 @@ describe('Brand mark in the frame (UI-08)', () => {
     );
     renderRoutes(routes, '/');
 
-    const home = await (await header()).findByRole('link', { name: 'Home page' });
+    const home = await (await panel()).findByRole('link', { name: 'Home page' });
     expect(home).not.toHaveAttribute('title');
     expect(home.textContent).toBe('');
   });
@@ -72,7 +82,7 @@ describe('Brand mark in the frame (UI-08)', () => {
     );
     renderRoutes(routes, '/');
 
-    expect(await (await header()).findByRole('link', { name: 'Home page' })).toHaveAttribute('href', '/');
+    expect(await (await panel()).findByRole('link', { name: 'Home page' })).toHaveAttribute('href', '/');
     expect(await screen.findByRole('heading', { level: 1, name: 'Welcome' })).toBeInTheDocument();
   });
 });
