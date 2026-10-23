@@ -17,7 +17,7 @@ Nothing else: no new database, secret, library or program.
 ## Progress
 | Task | Status | Commit |
 |---|---|---|
-| T001 Design values and Ant Design adapter | ⬜ | |
+| T001 Design values and Ant Design adapter | ✅ | 8c9af68 |
 | T002 Login-page CSS generator and the two checks | ⬜ | |
 | T003 Installation name and initials (Identity) | ⬜ | |
 | T004 Login and change-password pages, split layout | ⬜ | |
@@ -31,6 +31,15 @@ Nothing else: no new database, secret, library or program.
 | T012 CI look check and screenshot baselines | ⬜ | |
 | T013 Setup guide and CLAUDE.md | ⬜ | |
 | T014 Verify 007 | ⬜ | |
+
+**Progress notes**
+- **T001 (2026-10-23):** the dark candidate for text on coloured surfaces is **black** (`onColour.dark` `#000000`),
+  not the body text colour `#1b2333`: with `#1b2333` a mid grey only reaches about 4 : 1, while white or black
+  always reach at least 4.58 : 1 (test `a_dark_candidate_lighter_than_black_cannot_promise_4_5_to_1`). The brand
+  `#1f5fbf` carries white text (6.1 : 1). Reduced motion is a hook (`usePrefersReducedMotion`) that follows the
+  system setting while the app is open. Until T007 the old light `Menu` sits in the now dark `Sider` (only the empty
+  area below the items is navy); not pushed in between. For T002: the stray-value scan must leave out test files
+  (`*.test.ts(x)`), which use example colours on purpose.
 
 ## Phase 1: Design values (M1)
 | ID | Task | Spec IDs | Done when |
@@ -89,7 +98,7 @@ Nothing else: no new database, secret, library or program.
 | UI-01-AC2 | T005 | ⬜ |
 | UI-01-AC3 | T004, T011, T012 | ⬜ |
 | UI-02-AC1 | T002, T010 | ⬜ |
-| UI-02-AC2 | T001, T002 | ⬜ |
+| UI-02-AC2 | T001, T002 | 🟡 the Ant Design theme is built only from the design values (T001, `UI_02_*`); the login-page CSS and the drift check follow in T002 |
 | UI-03-AC1 | T007, T011 | ⬜ |
 | UI-03-AC2 | T008 | ⬜ |
 | UI-04-AC1 | T007, T011 | ⬜ |
@@ -98,7 +107,7 @@ Nothing else: no new database, secret, library or program.
 | UI-05-AC2 | T009, T011 | ⬜ |
 | UI-06-AC1 | T004, T009, T011 | ⬜ |
 | UI-06-AC2 | T004, T011 | ⬜ |
-| UI-07-AC1 | T001 (A1) | ⬜ |
+| UI-07-AC1 | T001 (A1) | ✅ 22 brand colours and all 256 greys reach ≥ 4.5 : 1; the theme picks the text colour (`UI_07_AC1_*`) |
 | UI-08-AC1 | T003, T004, T006 (A3) | ⬜ |
 | UI-08-AC2 | T003, T004, T006 | ⬜ |
 | UI-09-AC1 | T010, T011, T012 | ⬜ |
