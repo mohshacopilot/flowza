@@ -27,7 +27,7 @@ Nothing else: no new database, secret, library or program.
 | T007 Dark side navigation and its preference | ✅ | 991aa07 |
 | T008 Header and page titles | ✅ | cdbbab2 |
 | T009 Phone frame | ✅ | 9dfbe33 |
-| T010 Existing screens in the new look | ⬜ | |
+| T010 Existing screens in the new look | ✅ | 4c83aae |
 | T011 Visual and accessibility end-to-end tests | ⬜ | |
 | T012 CI look check and screenshot baselines | ⬜ | |
 | T013 Setup guide and CLAUDE.md | ⬜ | |
@@ -169,6 +169,28 @@ Nothing else: no new database, secret, library or program.
     26 test files run in parallel on this PC: one passed 5 s (Vitest's limit; it takes 2.4 s alone), one waited
     longer than `findBy…`'s 1 s for a lazily loaded screen. `testTimeout` is now 15 s and `asyncUtilTimeout` 5 s;
     no expectation changed. Four full runs in a row then passed.
+- **T010 (2026-10-23):** decisions inside plan §5.6:
+  - **`SectionCard`** (shared): a part of a screen on a borderless card (the card shadow from the design values)
+    with an `<h2>` in the card's title, still a `<section>` named by that heading, so the existing tests that find
+    sections as regions ("Details", "System roles", "Access", "Change password") pass unchanged. User details and
+    my profile use it; the users list puts the filters and the table on two cards; create user, the created-user
+    panel, home and the status pages sit on a card. Page headings (`<h1>`) stay as they were (the owner accepted
+    the frame with "Users" in the header and as the heading).
+  - **Spacing scale and code font from the design values:** the adapter now sets Ant Design's `margin*`/`padding*`
+    tokens from `space` (same numbers as Ant Design's defaults, so nothing moved) and `fontFamilyCode` from the new
+    `font.familyCode`; the screens' CSS reads `--flowza-margin-*`, `--flowza-padding-*` and
+    `--flowza-font-family-code` (temporary password). `design-values.css` regenerated (one new line).
+  - **403/404 pages:** Ant Design's pictures carry their own colours (a bright blue question mark seen in the look
+    check), which the design values cannot reach; they now show a large icon (lock, page search) with status
+    "info", whose colour is the brand. The error page keeps the error icon. `StatusPage` takes a `kind`.
+  - **Empty list:** Ant Design `Empty` (simple picture) with today's translated text.
+  - **Frame error page** (who-is-logged-in failed) sits in a `Layout`, so it has the page background and padding.
+  - **The T002 allow list is gone:** the scan has no exceptions left; a new test checks that it covers the screens,
+    the frame and the login pages.
+  - `className` on Ant Design components needs a definite string (`exactOptionalPropertyTypes`), so module classes
+    are passed as `styles.x ?? ''`, as in `NavigationDrawer`.
+  - Look check (end-to-end environment, 1280 px): home, users list, user details, create user, my profile, 404 and
+    the empty search, each with axe: no findings.
 
 ## Phase 1: Design values (M1)
 | ID | Task | Spec IDs | Done when |
@@ -227,7 +249,7 @@ Nothing else: no new database, secret, library or program.
 | UI-01-AC1 | T004, T005b, T011, T012 | 🟡 brand panel (mark, name, product line), form card and "Powered by Flowza" (`UI_01_AC1_*`, T004/T005b); workflow picture hidden from screen readers and the three highlights (`UI_01_AC1_*`, T005b); the desktop screenshot follows in T011/T012 |
 | UI-01-AC2 | T005 | ✅ mouse and keyboard (Tab, Space, Enter) switch the field, `aria-pressed` follows, the login still works with the password shown, axe clean (`UI_01_AC2_*`, end-to-end); the script is a file with its translated name (`UI_01_AC2_*`, integration) |
 | UI-01-AC3 | T004, T011, T012 | 🟡 the general error above the form in the page look, and the change-password page in the same layout (`UI_01_AC3_*`, T004); screenshots in T011/T012 |
-| UI-02-AC1 | T002, T010 | 🟡 the scan runs (`UI_02_AC1_*`, T002); `account.css` is clean (T004); the new frame files are clean and `AppShell.module.css` left the allow list (T009); 6 files remain for T010 |
+| UI-02-AC1 | T002, T010 | ✅ no screen, frame file or login page holds a colour, font, spacing or corner value of its own; the scan runs with **no exceptions** and covers the screens, the frame and the login pages (`UI_02_AC1_*`, T010); spacing and the code font come from the design values through the adapter (`UI_02_spacing_and_the_code_font_*`) |
 | UI-02-AC2 | T001, T002, T004 | ✅ the theme and `design-values.css` come from the same values and agree on brand, on-brand text and font (`UI_02_AC2_*`, T002); the login pages load `design-values.css` before their layout (`UI_02_AC2_*`, T004) |
 | UI-03-AC1 | T007, T011 | 🟡 admin sees "Administration", a User does not, current item selected with `aria-current`, mark and name on top of the panel (`UI_03_AC1_*`, component and registry tests, T007); the screenshot follows in T011 |
 | UI-03-AC2 | T008 | ✅ the header shows the title of each page, the browser tab "<page> – <installation>" and follows navigation, the title is not a second heading, the user menu shows initials and display name and offers "My profile" and "Log out" (`UI_03_AC2_*`, component tests); initials by the C6 rule (`UI_03_AC2_initials_*`); the end-to-end helpers still find "User menu for …" |
@@ -240,5 +262,5 @@ Nothing else: no new database, secret, library or program.
 | UI-07-AC1 | T001 (A1) | ✅ 22 brand colours and all 256 greys reach ≥ 4.5 : 1; the theme picks the text colour (`UI_07_AC1_*`) |
 | UI-08-AC1 | T003, T004, T006 (A3) | 🟡 initials rule proven (`UI_08_AC1_*`: two, many, one word, one letter, spaces, Hindi, Tamil, accents; T003); on the login page a 100-character name is shortened by CSS and kept whole in `title` and the text (`UI_08_AC1_*`, T004); the same in the frame, full name in `title` and the link's accessible name (`UI_08_AC1_*`, T006). ✅ by tests; the visible "…" is confirmed by the screenshots in T011 |
 | UI-08-AC2 | T003, T004, T006 | ✅ configured name and initials, default "Flowza"/"FL", anonymous → 401 (`UI_08_AC2_*`, T003); on the login page (`UI_08_AC2_*`, T004); in the frame, from the API (`UI_08_AC2_*`, T006) |
-| UI-09-AC1 | T010, T011, T012 | ⬜ |
+| UI-09-AC1 | T010, T011, T012 | 🟡 every screen on cards in the new look; 403/404 with an icon in the brand colour instead of Ant Design's own pictures (`UI_09_AC1_*`, T010); empty list with `Empty`; all earlier component and end-to-end tests pass unchanged; axe clean on seven screens in a look check; the screenshots (loading and error states included) follow in T011/T012 |
 | UI-10-AC1 | T012 (A2) | ⬜ |
