@@ -1,8 +1,10 @@
 using Flowza.Identity.Api;
 using Flowza.Identity.Api.Connect;
+using Flowza.Identity.Api.Installation;
 using Flowza.Identity.Api.Me;
 using Flowza.Identity.Api.Users;
 using Flowza.Identity.Infrastructure;
+using Flowza.Identity.Infrastructure.Installation;
 using Flowza.Identity.Infrastructure.Persistence;
 using Flowza.Identity.Infrastructure.TokenServer;
 using Flowza.Messaging;
@@ -26,6 +28,7 @@ builder.AddFlowzaApiSecurity(validation =>
     validation.EnableTokenEntryValidation();
 });
 builder.AddIdentityLoginSession();
+builder.AddInstallationBrand();
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
@@ -46,6 +49,7 @@ app.MapConnectEndpoints();
 app.MapRazorPages();
 app.MapUserEndpoints();
 app.MapMeEndpoints();
+app.MapInstallationEndpoints();
 
 if (app.Environment.IsDevelopment())
 {

@@ -1,5 +1,6 @@
 using Flowza.Common.Results;
 using Flowza.Contracts;
+using Flowza.Identity.Application.Installation;
 using Flowza.Identity.Domain.Users;
 
 namespace Flowza.Identity.Application.Abstractions;
@@ -71,4 +72,13 @@ public interface IUnitOfWork
 public interface ITemporaryPasswordGenerator
 {
     string Generate();
+}
+
+/// <summary>
+/// The installation's name and initials mark (UI-08). v0.1 reads it from configuration (C7); from M3 the Settings
+/// screen (PLT-08) provides it through the same port.
+/// </summary>
+public interface IInstallationBrandSource
+{
+    Task<InstallationBrand> GetAsync(CancellationToken cancellationToken);
 }
