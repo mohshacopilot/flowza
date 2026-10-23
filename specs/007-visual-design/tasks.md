@@ -25,7 +25,7 @@ Nothing else: no new database, secret, library or program.
 | T005b Login page as mockup B, teal values (spec amendment 1) | ✅ | 30d29b9 |
 | T006 Installation in the web app, brand mark | ✅ | e7d11dd |
 | T007 Dark side navigation and its preference | ✅ | 991aa07 |
-| T008 Header and page titles | ⬜ | |
+| T008 Header and page titles | ✅ | cdbbab2 |
 | T009 Phone frame | ⬜ | |
 | T010 Existing screens in the new look | ⬜ | |
 | T011 Visual and accessibility end-to-end tests | ⬜ | |
@@ -126,8 +126,25 @@ Nothing else: no new database, secret, library or program.
     a divider line; each item keeps its label as accessible name and Ant Design's tooltip.
   - **`app/global.css`** (`body { margin: 0 }`): the browser's 8 px body margin showed as a white strip around
     the dark panel (seen in a local look check at 1280 and 900 px; the old white header had hidden it).
+  - **Fixed in T008:** `Grid.useBreakpoint()` knows the width only after its first effect, so at desktop width the
+    panel rendered collapsed once and then slid open; an axe check caught the half-faded menu text (1.04 : 1) in one
+    end-to-end run. The hook now asks `matchMedia` for the desktop width on the first render (test
+    `UI_04_AC2_at_desktop_width_the_very_first_render_is_already_open`, which fails without the fix).
   - Tests set the window width with `test/viewport.ts` (a `matchMedia` that answers width queries); `setup.ts`
     clears `localStorage` after each test. Until T009 the phone width shows the collapsed Sider.
+- **T008 (2026-10-23):** decisions inside plan §5.5:
+  - **Titles have their own keys** (`pageTitles.*`: Home, Users, New user, User details, My profile, Page not found)
+    and a route names its title with `handle: titled(…)`; `pageTitleKey()` takes the deepest matched route's key
+    (O(route depth)), so `/admin/users/42` shows "User details" and an error inside the users area still shows
+    "Users". The 403 page inside the users area also shows "Users" in the header (its URL says the same).
+  - **The header title is text, not a heading:** every page keeps its own `<h1>` (the end-to-end helpers and screen
+    readers rely on it), so a page has exactly one `<h1>`. On the users list this means "Users" appears in the header
+    and as the page heading; the owner sees it at the T009 look (T010 may make the page headings smaller).
+  - **Browser tab:** "<page> – <installation>", the same pattern as the login pages; "Flowza" while the name loads.
+  - **Avatar:** initials by the C6 rule in TypeScript (`initialsOf`, letters counted with `Intl.Segmenter` like
+    C#'s `StringInfo`; the same test cases as Identity's, Hindi and Tamil included), on the brand colour through the
+    adapter's `Avatar.colorTextPlaceholder` (Ant Design's grey gave white text only 2.3 : 1). The avatar is
+    `aria-hidden`; the button keeps its name "User menu for …" (A8).
 
 ## Phase 1: Design values (M1)
 | ID | Task | Spec IDs | Done when |
@@ -189,7 +206,7 @@ Nothing else: no new database, secret, library or program.
 | UI-02-AC1 | T002, T010 | 🟡 the scan runs (`UI_02_AC1_*`, T002); `account.css` is clean (T004); 7 files remain on the allow list for T007–T010 |
 | UI-02-AC2 | T001, T002, T004 | ✅ the theme and `design-values.css` come from the same values and agree on brand, on-brand text and font (`UI_02_AC2_*`, T002); the login pages load `design-values.css` before their layout (`UI_02_AC2_*`, T004) |
 | UI-03-AC1 | T007, T011 | 🟡 admin sees "Administration", a User does not, current item selected with `aria-current`, mark and name on top of the panel (`UI_03_AC1_*`, component and registry tests, T007); the screenshot follows in T011 |
-| UI-03-AC2 | T008 | ⬜ |
+| UI-03-AC2 | T008 | ✅ the header shows the title of each page, the browser tab "<page> – <installation>" and follows navigation, the title is not a second heading, the user menu shows initials and display name and offers "My profile" and "Log out" (`UI_03_AC2_*`, component tests); initials by the C6 rule (`UI_03_AC2_initials_*`); the end-to-end helpers still find "User menu for …" |
 | UI-04-AC1 | T007, T011 | 🟡 collapsed: icons only, every item keeps its accessible name and tooltip, the choice survives a re-render from storage, the button works with Enter and Space (`UI_04_AC1_*`, T007); the real reload in a browser follows in T011 |
 | UI-04-AC2 | T007, T011 | 🟡 open at 1025 and 1280 px, collapsed at 768–1024 px, a stored choice wins, blocked or unknown storage falls back to the default (`UI_04_AC2_*`, hook tests, T007); end-to-end at 1280 and 900 px in T011 |
 | UI-05-AC1 | T009, T011 | ⬜ |
