@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.RegularExpressions;
 using Flowza.Identity.Api;
 using Flowza.Identity.IntegrationTests.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
@@ -41,9 +42,9 @@ public sealed class LoginPageLookTests(IdentityApp app) : IAsyncLifetime
         var html = await browser.GetStringAsync(s_login, Ct);
         var designValues = await browser.GetAsync(new Uri("/account/assets/design-values.css", UriKind.Relative), Ct);
 
-        var designValuesLink = html.IndexOf("href=\"/account/assets/design-values.css\"", StringComparison.Ordinal);
+        var designValuesLink = html.IndexOf("href=\"/account/assets/design-values.css?v=", StringComparison.Ordinal);
         designValuesLink.ShouldBeGreaterThan(0);
-        designValuesLink.ShouldBeLessThan(html.IndexOf("href=\"/account/assets/account.css\"", StringComparison.Ordinal));
+        designValuesLink.ShouldBeLessThan(html.IndexOf("href=\"/account/assets/account.css?v=", StringComparison.Ordinal));
         designValues.StatusCode.ShouldBe(HttpStatusCode.OK);
         (await designValues.Content.ReadAsStringAsync(Ct)).ShouldContain("--flowza-brand: #1f5fbf;");
     }
@@ -57,11 +58,27 @@ public sealed class LoginPageLookTests(IdentityApp app) : IAsyncLifetime
         var script = await browser.GetAsync(new Uri("/account/assets/account.js", UriKind.Relative), Ct);
 
         // A file, not an inline script: the Gateway's Content-Security-Policy allows only scripts from its own address.
-        html.ShouldContain("<script src=\"/account/assets/account.js\" defer></script>");
+        html.ShouldContain("<script src=\"/account/assets/account.js?v=");
         html.ShouldNotContain("<script>");
         html.ShouldContain("<body data-show-password-label=\"Show password\">");
         script.StatusCode.ShouldBe(HttpStatusCode.OK);
         (await script.Content.ReadAsStringAsync(Ct)).ShouldContain("aria-pressed");
+    }
+
+    [Theory]
+    [InlineData("design-values.css")]
+    [InlineData("account.css")]
+    [InlineData("account.js")]
+    public async Task UI_01_after_an_upgrade_browsers_fetch_the_changed_look_at_once(string asset)
+    {
+        using var browser = app.CreateBrowser();
+
+        var html = await browser.GetStringAsync(s_login, Ct);
+
+        // The address carries a hash of the file's content, so a cached older copy is never used (found at the T005 look).
+        var version = Regex.Match(html, $"/account/assets/{Regex.Escape(asset)}\\?v=([A-Za-z0-9_-]+)\"");
+        version.Success.ShouldBeTrue($"{asset} is linked without a version");
+        version.Groups[1].Value.Length.ShouldBeGreaterThan(20);
     }
 
     [Fact]
