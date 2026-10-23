@@ -49,6 +49,22 @@ public sealed class LoginPageLookTests(IdentityApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task UI_01_AC2_the_pages_load_the_show_password_script_from_a_file_with_its_translated_name()
+    {
+        using var browser = app.CreateBrowser();
+
+        var html = await browser.GetStringAsync(s_login, Ct);
+        var script = await browser.GetAsync(new Uri("/account/assets/account.js", UriKind.Relative), Ct);
+
+        // A file, not an inline script: the Gateway's Content-Security-Policy allows only scripts from its own address.
+        html.ShouldContain("<script src=\"/account/assets/account.js\" defer></script>");
+        html.ShouldNotContain("<script>");
+        html.ShouldContain("<body data-show-password-label=\"Show password\">");
+        script.StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await script.Content.ReadAsStringAsync(Ct)).ShouldContain("aria-pressed");
+    }
+
+    [Fact]
     public async Task UI_01_AC3_a_failed_login_shows_the_general_message_above_the_form_in_the_page_look()
     {
         await app.CreateUserAsync("ravi.k");

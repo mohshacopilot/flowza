@@ -141,6 +141,20 @@ button {
   cursor: pointer;
 }
 
+/* Show/hide password (UI-01-AC2), added by account.js after each password field: a quiet text button on the right. */
+.password-toggle {
+  display: block;
+  width: auto;
+  margin: var(--flowza-space-xs) 0 0 auto;
+  padding: var(--flowza-space-xs) var(--flowza-space-sm);
+  font-size: var(--flowza-font-size-small);
+  color: var(--flowza-brand);
+  background: transparent;
+}
+
+/* Pressed (password shown): a light background, so the state is visible and not only announced. */
+.password-toggle[aria-pressed="true"] { background: var(--flowza-neutral-page); }
+
 /* Errors in the page's look (UI-01-AC3): the status colours of the design values, AA on their own background. */
 .errors {
   margin-bottom: var(--flowza-space-lg);

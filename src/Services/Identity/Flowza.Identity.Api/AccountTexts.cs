@@ -14,6 +14,9 @@ public sealed class AccountTexts
     /// <summary>The small product credit under the form (U3); the installation's own name is on the brand panel.</summary>
     public const string PoweredBy = "Layout.PoweredBy";
 
+    /// <summary>The show/hide button of every password field (UI-01-AC2); a toggle, so its name never changes.</summary>
+    public const string ShowPassword = "Password.Show";
+
     public const string LoginTitle = "Login.Title";
     public const string LoginUsername = "Login.Username";
     public const string LoginPassword = "Login.Password";
@@ -35,7 +38,7 @@ public sealed class AccountTexts
     /// <summary>Every key above, for the test that checks the resource file has them all.</summary>
     public static IReadOnlyList<string> AllKeys { get; } =
     [
-        SkipToContent, ProductLine, PoweredBy, LoginTitle, LoginUsername, LoginPassword, LoginSubmit, LoginInvalid, LoginLockedOut,
+        SkipToContent, ProductLine, PoweredBy, ShowPassword, LoginTitle, LoginUsername, LoginPassword, LoginSubmit, LoginInvalid, LoginLockedOut,
         ChangePasswordTitle, ChangePasswordIntro, ChangePasswordCurrent, ChangePasswordNew, ChangePasswordConfirm,
         ChangePasswordRules, ChangePasswordSubmit, ChangePasswordMismatch, ErrorSummaryTitle,
     ];

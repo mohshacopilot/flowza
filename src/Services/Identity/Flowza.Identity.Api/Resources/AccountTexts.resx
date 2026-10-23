@@ -21,6 +21,9 @@
   <data name="Layout.PoweredBy" xml:space="preserve">
     <value>Powered by Flowza</value>
   </data>
+  <data name="Password.Show" xml:space="preserve">
+    <value>Show password</value>
+  </data>
   <data name="Login.Title" xml:space="preserve">
     <value>Log in</value>
   </data>
