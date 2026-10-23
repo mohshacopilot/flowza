@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | **Draft for the owner's review** (items to approve: PA1–PA6, section 14) |
+| **Status** | **Approved by the owner, 2026-10-23**, including PA1–PA6 (section 14) |
 | **Date** | 2026-10-23 |
 | **Spec** | [spec.md](spec.md) (approved 2026-10-23, C1–C7 all "a") |
 | **Inputs** | [UI design discussion](../../docs/discussions/ui-design.md) (U1–U12, design notes in section 7), [tech discussion](../../docs/discussions/tech-discussion.md) T10 (Ant Design theme tokens, FE4), [plan 001](../001-platform-foundation/plan.md) sections 5, 10, 12, [CLAUDE.md](../../CLAUDE.md) |
@@ -143,11 +143,11 @@ task, not this feature.
 ### 5.4 Login and change-password pages (UI-01, C1, C5)
 ```
 ┌──────────── brand panel (brand colour) ────────────┬──────────── form column (surface) ───────────┐
-│ [YO] Your organisation                              │  Sign in                                     │
+│ [YO] Your organisation                              │  Log in                                      │
 │                                                     │  Use your work username.                     │
 │ Requests and approvals in one place   (C1, resx)    │  Username [                    ]             │
 │                                                     │  Password [                 ][Show]          │
-│                                                     │  [            Sign in            ]           │
+│                                                     │  [            Log in             ]           │
 │                                                     │            Powered by Flowza                 │
 └─────────────────────────────────────────────────────┴──────────────────────────────────────────────┘
 phone (< 768 px): the brand panel becomes a band (mark + name) above the form; the product line is hidden
@@ -269,7 +269,7 @@ them (`test(ui): accept new screenshots …`).
 |---|---|---|
 | `GET /api/v1/installation` | The installation's name and initials mark (C6, C7) | Any logged-in user |
 
-## 14. Items needing the owner's approval (constitution 1.6)
+## 14. Items approved by the owner (constitution 1.6, approved 2026-10-23)
 | # | Item | Proposal |
 |---|---|---|
 | PA1 | **API contract** | `GET /api/v1/installation` → `{ name, initials }` (section 13); unchanged when M3 moves the name to the Settings screen |

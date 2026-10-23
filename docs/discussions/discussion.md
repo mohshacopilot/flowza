@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Last session** | 2026-10-23, office PC: phase 3–4 review findings fixed; feature 001 verified (T032), pushed, CI green; UI design decided (A Classic), spec 007 approved, plan 007 drafted; next: owner reviews plan 007 (PA1–PA6), then tasks 007, build 007, then plan 002 |
+| **Last session** | 2026-10-23, office PC: phase 3–4 review findings fixed; feature 001 verified (T032), pushed, CI green; UI design decided (A Classic), spec, plan and tasks 007 approved/written; next: build 007 from T001, then plan 002 |
 | **Build** | From 2026-10-21 on the **office PC** (`D:\Projects\Workflow`); the owner reviews on weekdays, full days |
 | **Git** | Local commits per task on `main`; public repository https://github.com/mohshacopilot/flowza, pushed only when the owner says so |
 
@@ -23,8 +23,9 @@ Spec Kit is postponed; we follow the same method by hand (see [CLAUDE.md](../../
    **Before plan 002 (owner, 2026-10-23):** the UI design discussion [ui-design.md](ui-design.md) (the owner found
    the pages plain) is decided: U1 = A Classic enterprise, U2–U12 all "a" (Ant Design themed, no Tailwind). Spec
    [007-visual-design](../../specs/007-visual-design/spec.md) **approved** 2026-10-23 (C1–C7 all "a").
-   [Plan 007](../../specs/007-visual-design/plan.md) is a **draft for the owner's review** (PA1–PA6); after approval:
-   tasks → build 007, **then plan 002**. UI-01 to UI-10 are in the v0.1 scope (M1).
+   [Plan 007](../../specs/007-visual-design/plan.md) **approved** 2026-10-23 (PA1–PA6).
+   [Tasks 007](../../specs/007-visual-design/tasks.md) written and analyzed (T001–T014): **next: build 007 from T001**
+   (skill `implement-task`), **then plan 002**. T012 needs the owner's push OK for the screenshot baselines. UI-01 to UI-10 are in the v0.1 scope (M1).
 2. ~~Write the specs for 002 to 006~~ **Done:** all five specs approved on 2026-10-21 (row 21).
 3. Per feature: plan → tasks → analyze → implement, building **Milestone 1** first. Next plan: **002** (`specs/002-org-hierarchy/plan.md`, skill `write-plan`). When 002 is planned, amend spec 001 for 002 C2 (a new user needs a primary unit; the first admin gets the root unit).
 
@@ -63,7 +64,7 @@ module. Sections marked "design notes" go into `plan.md`, never into `spec.md`.
 | 19 | RabbitMQ removed from the development PC (owner, 2026-10-22) | ✅ SQL Server transport only on the PC; SQL Server topology fixed so events reach other services | [ADR-0005](../decisions/0005-message-transport-selection.md) amendment 1 |
 | 20 | Transport per deployment (owner, 2026-10-22) | ✅ **On-premises = SQL Server only, cloud = Azure Service Bus; RabbitMQ dropped and its code removed** | [ADR-0005](../decisions/0005-message-transport-selection.md) amendments 2 and 3 |
 | 21 | Specs 002–006 (ORG, EXP, APP + FRM, WF, INB + NTF) | ✅ Approved 2026-10-21; all clarifications answered "a" (002 C1–C9, 003 C1–C11, 004 C1–C13, 005 C1–C12, 006 C1–C18) | [002](../../specs/002-org-hierarchy/spec.md), [003](../../specs/003-expression-language/spec.md), [004](../../specs/004-apps-and-form-builder/spec.md), [005](../../specs/005-workflow-engine/spec.md), [006](../../specs/006-inbox-notifications/spec.md) |
-| 22 | UI: visual design (owner's request, 2026-10-23) | ✅ Decided (U1 = **A Classic enterprise**, U2–U12 "a"); spec 007 approved (C1–C7 "a"); plan 007 drafted, PA1–PA6 to approve | [ui-design.md](ui-design.md), [spec 007](../../specs/007-visual-design/spec.md) |
+| 22 | UI: visual design (owner's request, 2026-10-23) | ✅ Decided (U1 = **A Classic enterprise**, U2–U12 "a"); spec 007 approved (C1–C7 "a"); plan 007 approved (PA1–PA6); tasks 007 written (T001–T014) | [ui-design.md](ui-design.md), [spec 007](../../specs/007-visual-design/spec.md) |
 
 ## 2. Key decisions made today (summary)
 Details and reasons are in each module file and ADR.
