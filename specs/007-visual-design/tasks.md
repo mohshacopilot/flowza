@@ -21,7 +21,7 @@ Nothing else: no new database, secret, library or program.
 | T002 Login-page CSS generator and the two checks | ✅ | 610bd49 |
 | T003 Installation name and initials (Identity) | ✅ | 4e2f387 |
 | T004 Login and change-password pages, split layout | ✅ | 8c71511 |
-| T005 Show/hide password | ✅ | 2a4dcd3 |
+| T005 Show/hide password | ✅ | 2a4dcd3, fix f5fa51c |
 | T006 Installation in the web app, brand mark | ⬜ | |
 | T007 Dark side navigation and its preference | ⬜ | |
 | T008 Header and page titles | ⬜ | |
@@ -78,6 +78,11 @@ Nothing else: no new database, secret, library or program.
   visible. "Hide password" is therefore not used. The translated name reaches the script through
   `data-show-password-label` on `<body>`. The field goes back to hidden when the form is sent. The end-to-end tests
   live in `specs/07-visual-design.spec.ts`, which T011 extends with the screenshots.
+- **T005 fix (f5fa51c):** when the platform was started for the owner's look, the browser still showed the old login
+  page: the CSS and script had fixed addresses and no caching rules, so the browser reused its old copy. Every real
+  installation would see the same after an upgrade. `asp-append-version` now adds a hash of each file to its address
+  (`?v=…`); `UI_01_after_an_upgrade_browsers_fetch_the_changed_look_at_once` checks all three assets. Checked by
+  eye afterwards at desktop width and at 375 px (brand band, no sideways scrolling).
 
 ## Phase 1: Design values (M1)
 | ID | Task | Spec IDs | Done when |
