@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Approved by the owner, 2026-10-23 (clarifications C1–C7 answered, all "a"). **Amendment 1 (login page option B, teal; section 12): draft, waiting for the owner's approval** |
+| **Status** | Approved by the owner, 2026-10-23 (clarifications C1–C7 answered, all "a"). **Amendment 1 (login page option B, teal; section 12) approved by the owner, 2026-10-23**, including the teal side navigation and the C8 texts |
 | **Date** | 2026-10-23 |
 | **Module** | UI (visual design of the web application and the login pages) |
 | **Scope IDs** | UI-01 to UI-10 (new; added to the [v0.1 scope](../v0.1-scope.md) section 3.10) |
@@ -181,7 +181,7 @@ labels).
 - [x] All clarifications answered (C1–C7)
 - [x] Approved by the owner (2026-10-23)
 - [x] Amendment 1: requirements, criteria, out of scope and C8 updated; colours checked for contrast (section 12)
-- [ ] Amendment 1 approved by the owner
+- [x] Amendment 1 approved by the owner (2026-10-23)
 
 ## 12. Amendments
 | # | Date | What changed | Why |

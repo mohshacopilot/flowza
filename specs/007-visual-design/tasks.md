@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Status** | **Written and analyzed 2026-10-23**; build starts with T001 (feature 007 is built **before 002**, U11) |
-| **Spec / Plan** | [spec.md](spec.md) (approved 2026-10-23) · [plan.md](plan.md) (approved 2026-10-23, PA1–PA6) |
+| **Spec / Plan** | [spec.md](spec.md) (approved 2026-10-23; amendment 1 approved the same day) · [plan.md](plan.md) (approved 2026-10-23, PA1–PA6; updated for amendment 1, section 17) |
 | **Rules** | One task at a time, in order. Each task ends with: builds without warnings, lint clean, its tests pass (and all earlier tests still pass), a local commit (`feat|test|docs(ui): … (IDs)`). Nothing is pushed without the owner's OK. Every task is Milestone 1 |
 
 ## Before coding: owner's steps
@@ -22,6 +22,7 @@ Nothing else: no new database, secret, library or program.
 | T003 Installation name and initials (Identity) | ✅ | 4e2f387 |
 | T004 Login and change-password pages, split layout | ✅ | 8c71511 |
 | T005 Show/hide password | ✅ | 2a4dcd3, fix f5fa51c |
+| T005b Login page as mockup B, teal values (spec amendment 1) | ✅ | 30d29b9 |
 | T006 Installation in the web app, brand mark | ⬜ | |
 | T007 Dark side navigation and its preference | ⬜ | |
 | T008 Header and page titles | ⬜ | |
@@ -83,6 +84,19 @@ Nothing else: no new database, secret, library or program.
   installation would see the same after an upgrade. `asp-append-version` now adds a hash of each file to its address
   (`?v=…`); `UI_01_after_an_upgrade_browsers_fetch_the_changed_look_at_once` checks all three assets. Checked by
   eye afterwards at desktop width and at 375 px (brand band, no sideways scrolling).
+- **Owner's look after T005 (2026-10-23):** not happy (too plain, form too small, colours and layout); picked
+  mockup B from three options → spec amendment 1, plan §17, task T005b.
+- **T005b (2026-10-23):** the login panel reuses the navigation's dark values (plus the new `raised`, `line`,
+  `accent`), so the panel and the app's navigation are one deep teal. The workflow picture is HTML/CSS with three
+  tiny inline SVG icons drawn in `currentColor`; no image file. The eye button sits inside the field: `account.js`
+  wraps the field and the button in one positioned box and gives focus back if the field had it (autofocus on the
+  change-password page). The room for the icon is `calc(space-xxl + space-md)`, because the stray-value scan
+  flagged a written `44px`. Two findings of the axe checks in the app (not the login pages), both fixed here:
+  (1) the old light menu (until T007) showed the selected item in a tint Ant Design derives from the brand, only
+  2.7 : 1 with teal → the selected item is now brand with the readable text colour in the light **and** dark menu
+  (`UI_06_the_selected_menu_item_is_readable_*`); (2) axe once caught a menu item halfway through its 0.3 s colour
+  fade → `expectNoAccessibilityViolations` now waits until no transition is running, so it checks the colours
+  people actually read.
 
 ## Phase 1: Design values (M1)
 | ID | Task | Spec IDs | Done when |
@@ -96,6 +110,7 @@ Nothing else: no new database, secret, library or program.
 | T003 | **Installation name and initials:** `Installation:Name` options (default "Flowza" in `appsettings.json`; validated at start-up, 1–100 characters, not blank); `InstallationBrand` (name + initials by the C6 rule, text elements via `StringInfo`, upper case invariant); vertical slice `Installation/GetInstallation`; endpoint `GET /api/v1/installation` (any logged-in user, `Cache-Control: private, max-age=300`) in Identity's OpenAPI | UI-08 (C6, C7; PA1, PA2) | Unit `UI_08_AC1_*` (two words, many words, one word, one letter, extra spaces, Hindi and Tamil names); integration on `flowza_test_identity` `UI_08_AC2_*` (configured name and initials; default "Flowza"/"FL"; anonymous → 401); start-up refuses a blank or 101-character name |
 | T004 | **Login and change-password pages in the split layout:** `_Layout.cshtml` with the brand panel (initials mark, installation name from `InstallationBrand`, product line from resources, C1) and the form column ("Powered by Flowza"); one column below 768 px with the brand band; `account.css` rewritten as layout only, reading `design-values.css`; focus outlines (brand on the form side, white on the panel); error block in the new look with today's general text; both pages use the layout (C5). Page texts stay as today ("Log in"), so the end-to-end helpers keep working | UI-01, UI-06, UI-08 (C1, C5, C7) | Integration (Identity, `WebApplicationFactory`) `UI_01_*` and `UI_08_AC2_*` for the login page: name, initials, product line and "Powered by Flowza" rendered; a 100-character name carries the full text in `title`; `account.css` leaves the T002 allow list; existing `IAM_01_AC2_*` and the T029 end-to-end suite still pass |
 | T005 | **Show/hide password:** `account.js` (served from `/account/assets`, no inline script, CSP unchanged) adds a `<button type="button" aria-pressed>` with translated "Show password" / "Hide password" next to each password field; without JavaScript the field just stays hidden | UI-01 (PA6) | End-to-end `UI_01_AC2_*`: mouse and keyboard (Space, Enter) switch the field between `password` and `text`, `aria-pressed` follows; the login still submits; axe clean on the login page |
+| T005b | **Login page as mockup B (spec amendment 1):** `designValues.json` to the teal values of plan §5.1 (brand `#0F6E56`; navigation deep teal with `raised`, `line`, `accent`; light page, border, teal-tinted card shadow) and `npm run design:css`; `_Layout.cshtml` with the deep teal panel (mark, name, decorative circle, workflow picture `aria-hidden`, product line as headline, highlights as a list) and the form on a card; "Use your work username" on the login page; C8 texts in the resources; `account.css` rewritten for it; `account.js` shows the toggle as an eye icon inside the field (name "Show password" kept, icon follows the state) | UI-01, UI-02, UI-06 (C1, C5, C8) | Integration `UI_01_AC1_*` (panel with picture hidden from screen readers, headline, three highlights, form card), `UI_01_AC3_*`, `UI_08_*` updated; web theme and contrast tests pass with the new values; the stray-value scan stays clean for the login pages; end-to-end `UI_01_AC2_*` and the T029 suite pass; the owner looks at the page |
 
 ## Phase 3: Web frame (M1)
 | ID | Task | Spec IDs | Done when |
@@ -137,7 +152,7 @@ Nothing else: no new database, secret, library or program.
 ### Traceability (acceptance criteria → tasks)
 | Criterion | Task(s) | Status |
 |---|---|---|
-| UI-01-AC1 | T004, T011, T012 | 🟡 brand panel (mark, name, product line), form and "Powered by Flowza" rendered (`UI_01_AC1_*`, T004); the desktop screenshot follows in T011/T012 |
+| UI-01-AC1 | T004, T005b, T011, T012 | 🟡 brand panel (mark, name, product line), form card and "Powered by Flowza" (`UI_01_AC1_*`, T004/T005b); workflow picture hidden from screen readers and the three highlights (`UI_01_AC1_*`, T005b); the desktop screenshot follows in T011/T012 |
 | UI-01-AC2 | T005 | ✅ mouse and keyboard (Tab, Space, Enter) switch the field, `aria-pressed` follows, the login still works with the password shown, axe clean (`UI_01_AC2_*`, end-to-end); the script is a file with its translated name (`UI_01_AC2_*`, integration) |
 | UI-01-AC3 | T004, T011, T012 | 🟡 the general error above the form in the page look, and the change-password page in the same layout (`UI_01_AC3_*`, T004); screenshots in T011/T012 |
 | UI-02-AC1 | T002, T010 | 🟡 the scan runs (`UI_02_AC1_*`, T002); `account.css` is clean (T004); 7 files remain on the allow list for T007–T010 |

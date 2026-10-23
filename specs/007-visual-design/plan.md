@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | **Approved by the owner, 2026-10-23**, including PA1–PA6 (section 14) |
+| **Status** | **Approved by the owner, 2026-10-23**, including PA1–PA6 (section 14). **Updated for spec amendment 1** (login page as mockup B, teal; sections 5.1, 5.4, 17), 2026-10-23: no new library, API or approval item |
 | **Date** | 2026-10-23 |
 | **Spec** | [spec.md](spec.md) (approved 2026-10-23, C1–C7 all "a") |
 | **Inputs** | [UI design discussion](../../docs/discussions/ui-design.md) (U1–U12, design notes in section 7), [tech discussion](../../docs/discussions/tech-discussion.md) T10 (Ant Design theme tokens, FE4), [plan 001](../001-platform-foundation/plan.md) sections 5, 10, 12, [CLAUDE.md](../../CLAUDE.md) |
@@ -18,7 +18,8 @@ Design theme for the React app, and a small **generator** writes the same values
 login pages, with a test that fails if the two ever drift (today they already differ: the login page uses
 `#1f5eff`, the app `#1f5fbf`). The React frame is rebuilt in the **Classic enterprise** look with Ant Design's own
 components (dark `Layout.Sider` + `Menu`, header with page title and user menu, a `Drawer` on phones). Identity's
-login and change-password pages get the **split layout** (brand panel + form). The installation name comes from
+login and change-password pages get the **split layout** (deep teal brand panel with a workflow picture and
+highlights + the form on a card; spec amendment 1). The installation name comes from
 Identity's configuration (C7) through one small new API, together with its initials mark (C6), so both the login
 page and the app show the same brand. Playwright **screenshot tests** at desktop, tablet and phone width, plus the
 existing axe checks, protect the result.
@@ -95,11 +96,11 @@ docs/setup/local-setup.md                      how to set the installation name;
 ### 5.1 Design values (UI-02)
 `designValues.json` holds every visual value, by purpose, not by place:
 
-| Group | Values (from the approved mockup A) |
+| Group | Values (from the approved mockup B, spec amendment 1; the first build used mockup A's blue and navy) |
 |---|---|
-| Brand | `brand` `#1f5fbf`; `onBrand` computed (UI-07), not stored |
-| Navigation | `navBackground` `#14294d`, `navText` `#c8d3e6`, `navGroupLabel` `#8193b3`, `navSelectedBackground` = brand, `focusOnDark` `#ffffff` |
-| Neutrals | page `#f3f5f9`, surface `#ffffff`, border `#e3e8f0`, text `#1b2333`, secondary text `#5b6577` (AA on page and surface) |
+| Brand | `brand` teal `#0F6E56` (white text 6.2 : 1); `onBrand` computed (UI-07), not stored |
+| Navigation (the dark surface) | `background` deep teal `#04342C`, `text` `#9FE1CB` (9.2 : 1), `textActive` `#ffffff`, `groupLabel` `#5DCAA5` (6.8 : 1), `focus` `#ffffff`; for the login panel's picture also `raised` `#085041` (boxes, the decorative circle), `line` `#1D9E75` (box edges, connectors) and `accent` `#5DCAA5` (the "done" step, the highlight ticks). The **login brand panel uses these same values**, so the panel and the app's navigation are one deep teal (amendment 1). The selected menu item is brand teal on deep teal (2.2 : 1), so its 3 px light left bar is what makes it visible |
+| Neutrals | page `#f1f5f3` (light, slightly green), surface `#ffffff`, border `#d3e3dc`, text `#1b2333`, secondary text `#5b6577` (AA on page and surface); card shadow tinted with the deep teal |
 | Status | the AA-tuned success, warning, error colours already in `theme.ts` (T029), moved unchanged |
 | Type | system font stack (incl. Noto Devanagari/Tamil), sizes 12 / 14 / 16 / 20 / 24, weights 400 / 600 |
 | Space and shape | spacing scale 4 / 8 / 12 / 16 / 24 / 32, radius 6 (controls) and 8 (cards), one card shadow, focus ring 3 px |
@@ -140,22 +141,38 @@ task, not this feature.
   outline without text (no flash of "Flowza"). Long names: CSS `text-overflow: ellipsis`, the full name in `title`
   and in the link's accessible name.
 
-### 5.4 Login and change-password pages (UI-01, C1, C5)
+### 5.4 Login and change-password pages (UI-01, C1, C5, C8; mockup B, spec amendment 1)
 ```
-┌──────────── brand panel (brand colour) ────────────┬──────────── form column (surface) ───────────┐
-│ [YO] Your organisation                              │  Log in                                      │
-│                                                     │  Use your work username.                     │
-│ Requests and approvals in one place   (C1, resx)    │  Username [                    ]             │
-│                                                     │  Password [                 ][Show]          │
-│                                                     │  [            Log in             ]           │
-│                                                     │            Powered by Flowza                 │
-└─────────────────────────────────────────────────────┴──────────────────────────────────────────────┘
-phone (< 768 px): the brand panel becomes a band (mark + name) above the form; the product line is hidden
+┌──────────── brand panel (deep teal) ──────────────┬──────────── light page ───────────────────────┐
+│ [SB] State Bank of Example                (◯ deco)│                                               │
+│                                                   │   ┌───────────── card ──────────────┐         │
+│ [▤ Form] ── [☺ Approve] ── [✓ Done]   (picture)   │   │ Log in                           │         │
+│                                                   │   │ Use your work username     (C8)  │         │
+│ Requests and approvals in one place  (C1, headline)│  │ Username [                     ] │         │
+│ ✓ Forms built without code                 (C8)   │   │ Password [                  👁 ] │         │
+│ ✓ Approvals that route themselves          (C8)   │   │ [            Log in            ] │         │
+│ ✓ Every step tracked                       (C8)   │   └──────────────────────────────────┘         │
+│                                                   │              Powered by Flowza                │
+└───────────────────────────────────────────────────┴───────────────────────────────────────────────┘
+phone (< 768 px): a deep teal band (mark + name) above the card; picture, headline and highlights hidden
 ```
-- `_Layout.cshtml` gets the two-column layout (CSS grid; one column below 768 px). Both pages use it (C5).
-- **Show/hide password** (UI-01-AC2): a real `<button type="button" aria-pressed>` with a translated label
-  ("Show password" / "Hide password"), added by `account.js` (served from `/account/assets`, so the Gateway's CSP
-  `script-src 'self'` keeps working). Without JavaScript the field simply stays hidden; the form still works.
+- `_Layout.cshtml`: CSS grid `1.1fr 1fr` (one column below 768 px); both pages use it (C5). The panel is the page's
+  `header` and uses the **navigation's dark values** (5.1), so it matches the app's side navigation. A decorative
+  circle in `raised` sits behind the top corner (CSS `::before`, no image file).
+- **Workflow picture:** three small boxes joined by short lines, made of HTML and CSS with three tiny inline SVG
+  icons (`stroke="currentColor"`, so no colour is written in the markup); the whole picture is `aria-hidden="true"`
+  (decorative, UI-01-AC1). Labels from the resources (C8). No image files, nothing loaded from the internet (NFR-04).
+- **Highlights:** a real list (`<ul>`) read by screen readers, each item with a decorative tick (C8).
+- **Form card:** surface background, border, card radius and the card shadow, at most 22 rem wide, on the light
+  page; the login page gets the line "Use your work username" under its title (C8).
+- **Show/hide password** (UI-01-AC2): a real `<button type="button" aria-pressed>` added by `account.js` (served
+  from `/account/assets`, so the Gateway's CSP `script-src 'self'` keeps working). In mockup B it is an **eye icon
+  inside the field** (the script wraps the field and the button in one positioned box; the field gets room on the
+  right). Its accessible name stays **"Show password"** (`aria-label`, from the resources) and `aria-pressed` gives
+  the state (T005 decision); the icon changes between "eye" and "eye crossed out" so the state is also visible.
+  Without JavaScript the field simply stays hidden; the form still works.
+- **Field borders** use the secondary text colour, not the mockup's light teal (1.5 : 1): a field's edge must reach
+  3 : 1 (WCAG 1.4.11).
 - The error block (`role="alert"`) keeps today's general text (IAM-01) in the new look.
 - Focus: 3 px brand outline on the form side, white outline on the brand panel.
 
@@ -295,3 +312,8 @@ No database design change and no event change.
 About **1.5–2 build days** (as agreed in U11): design values, adapter and generator 0.25 · login pages 0.25 ·
 installation endpoint 0.25 · frame (Sider, Drawer, header, preference) 0.5 · existing screens 0.25 ·
 screenshot and accessibility tests, CI workflow 0.5.
+
+## 17. Changes after approval
+| Date | Change | Effect on tasks |
+|---|---|---|
+| 2026-10-23 | **Spec amendment 1** (owner): login page as mockup B, brand teal `#0F6E56`, navigation and login panel in deep teal `#04342C`, C8 texts. Sections 1, 5.1 and 5.4 updated. Still no library, API, event or database change, so no new PA item | New task **T005b** reworks T004/T005's login layout and the colour values; T001–T003 and the checks of T002 stay; T007 builds the navigation with the new values from the start; +0.25 day |
