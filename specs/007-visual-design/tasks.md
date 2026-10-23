@@ -18,7 +18,7 @@ Nothing else: no new database, secret, library or program.
 | Task | Status | Commit |
 |---|---|---|
 | T001 Design values and Ant Design adapter | ✅ | 8c9af68 |
-| T002 Login-page CSS generator and the two checks | ⬜ | |
+| T002 Login-page CSS generator and the two checks | ✅ | 610bd49 |
 | T003 Installation name and initials (Identity) | ⬜ | |
 | T004 Login and change-password pages, split layout | ⬜ | |
 | T005 Show/hide password | ⬜ | |
@@ -40,6 +40,18 @@ Nothing else: no new database, secret, library or program.
   system setting while the app is open. Until T007 the old light `Menu` sits in the now dark `Sider` (only the empty
   area below the items is navy); not pushed in between. For T002: the stray-value scan must leave out test files
   (`*.test.ts(x)`), which use example colours on purpose.
+- **T002 (2026-10-23):** the generator and the checks live in `src/Web/tooling` (`accountCss.ts`,
+  `generate-account-css.ts`, `designValues.test.ts`). Every design value becomes one variable named by its path
+  (`--flowza-brand`, `--flowza-neutral-text-secondary`, `--flowza-space-xl` …, numbers in px except font weights),
+  plus `--flowza-on-brand` from `readableTextOn`; breakpoints are left out (CSS variables do not work in media
+  queries). The drift test ignores line endings (git checks text out with CRLF on Windows). The scan follows the
+  spec's wording "colour, font or size": colour literals, font size, weight and family, and written spacing and
+  corner sizes (`padding`, `margin`, `gap`, `border-radius`); layout sizes (widths, positions, 1 px lines) stay
+  allowed. It covers `src/**/*.{tsx,css}` (not tests) and Identity's `wwwroot/**/*.css` and `Pages/**/*.cshtml`.
+  Allow list today: `account.css` (T004), `AppShell.module.css` (T007–T009), and for T010 `users.module.css`,
+  `profile.module.css`, `AccessSection.tsx`, `TemporaryPasswordPanel.tsx`, `UserDetailsPage.tsx`,
+  `ApiErrorAlert.tsx`. A test fails when a listed file is already clean, so the list only shrinks. The login pages
+  do not load `design-values.css` yet; T004 links it.
 
 ## Phase 1: Design values (M1)
 | ID | Task | Spec IDs | Done when |
@@ -97,8 +109,8 @@ Nothing else: no new database, secret, library or program.
 | UI-01-AC1 | T004, T011, T012 | ⬜ |
 | UI-01-AC2 | T005 | ⬜ |
 | UI-01-AC3 | T004, T011, T012 | ⬜ |
-| UI-02-AC1 | T002, T010 | ⬜ |
-| UI-02-AC2 | T001, T002 | 🟡 the Ant Design theme is built only from the design values (T001, `UI_02_*`); the login-page CSS and the drift check follow in T002 |
+| UI-02-AC1 | T002, T010 | 🟡 the scan runs (`UI_02_AC1_*`, T002) with an allow list of 8 files; it must be empty after T004, T007–T009 and T010 |
+| UI-02-AC2 | T001, T002, T004 | 🟡 the theme and `design-values.css` come from the same values and agree on brand, on-brand text and font (`UI_02_AC2_*`, T002); the login pages load the file from T004 |
 | UI-03-AC1 | T007, T011 | ⬜ |
 | UI-03-AC2 | T008 | ⬜ |
 | UI-04-AC1 | T007, T011 | ⬜ |
