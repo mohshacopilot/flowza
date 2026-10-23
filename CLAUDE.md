@@ -34,6 +34,7 @@ same method by hand; the file layout matches Spec Kit's, so it can be adopted la
 | Folder | Modules | Discussion input |
 |---|---|---|
 | `001-platform-foundation` | IAM + PLT | [IAM](docs/discussions/identity-and-access.md), [PLT](docs/discussions/platform.md) |
+| `007-visual-design` (**built before 002**, owner 2026-10-23) | UI | [UI](docs/discussions/ui-design.md): Classic enterprise look, Ant Design themed, no Tailwind (U1–U12) |
 | `002-org-hierarchy` | ORG | [ORG](docs/discussions/org-hierarchy.md) |
 | `003-expression-language` | EXP | [EXP](docs/discussions/expression-language.md) |
 | `004-apps-and-form-builder` | APP + FRM | [APP](docs/discussions/apps-and-versions.md), [FRM](docs/discussions/form-builder.md) |
