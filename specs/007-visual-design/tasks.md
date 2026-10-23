@@ -23,7 +23,7 @@ Nothing else: no new database, secret, library or program.
 | T004 Login and change-password pages, split layout | ✅ | 8c71511 |
 | T005 Show/hide password | ✅ | 2a4dcd3, fix f5fa51c |
 | T005b Login page as mockup B, teal values (spec amendment 1) | ✅ | 30d29b9 |
-| T006 Installation in the web app, brand mark | ⬜ | |
+| T006 Installation in the web app, brand mark | ✅ | e7d11dd |
 | T007 Dark side navigation and its preference | ⬜ | |
 | T008 Header and page titles | ⬜ | |
 | T009 Phone frame | ⬜ | |
@@ -97,6 +97,15 @@ Nothing else: no new database, secret, library or program.
   (`UI_06_the_selected_menu_item_is_readable_*`); (2) axe once caught a menu item halfway through its 0.3 s colour
   fade → `expectNoAccessibilityViolations` now waits until no transition is running, so it checks the colours
   people actually read.
+- **T006 (2026-10-23):** `npm run api:update` changed only Identity's document (additive: `GET /api/v1/installation`,
+  `InstallationView`); the other services answered 401 for their documents, as before, and were skipped.
+  `BrandMark` sits in the header for now (where the name was); T007 moves it to the top of the dark navigation.
+  While the name loads, **and** when it cannot be loaded, the mark shows its outline only and the link is called
+  "Home page" (`shell.homeLinkWithoutName`): the frame keeps working without Identity's answer. The placeholder text
+  `shell.installationName` was removed. MSW now answers the installation by default (`server.ts`), so every
+  component test that renders the frame works without extra set-up. The "…" itself is drawn by CSS, which jsdom
+  does not draw, so the component test checks the full name in `title` and the accessible name; the screenshot
+  tests (T011) show the shortened name. End-to-end suite 14/14 with axe on every app page that shows the mark.
 
 ## Phase 1: Design values (M1)
 | ID | Task | Spec IDs | Done when |
@@ -166,7 +175,7 @@ Nothing else: no new database, secret, library or program.
 | UI-06-AC1 | T004, T009, T011 | ⬜ |
 | UI-06-AC2 | T004, T011 | ⬜ |
 | UI-07-AC1 | T001 (A1) | ✅ 22 brand colours and all 256 greys reach ≥ 4.5 : 1; the theme picks the text colour (`UI_07_AC1_*`) |
-| UI-08-AC1 | T003, T004, T006 (A3) | 🟡 initials rule proven (`UI_08_AC1_*`: two, many, one word, one letter, spaces, Hindi, Tamil, accents; T003); on the login page a 100-character name is shortened by CSS and kept whole in `title` and the text (`UI_08_AC1_*`, T004); the frame follows in T006 |
-| UI-08-AC2 | T003, T004, T006 | 🟡 configured name and initials, default "Flowza"/"FL", anonymous → 401 (`UI_08_AC2_*`, T003); the login page shows the configured name and initials (`UI_08_AC2_*`, T004); the frame follows in T006 |
+| UI-08-AC1 | T003, T004, T006 (A3) | 🟡 initials rule proven (`UI_08_AC1_*`: two, many, one word, one letter, spaces, Hindi, Tamil, accents; T003); on the login page a 100-character name is shortened by CSS and kept whole in `title` and the text (`UI_08_AC1_*`, T004); the same in the frame, full name in `title` and the link's accessible name (`UI_08_AC1_*`, T006). ✅ by tests; the visible "…" is confirmed by the screenshots in T011 |
+| UI-08-AC2 | T003, T004, T006 | ✅ configured name and initials, default "Flowza"/"FL", anonymous → 401 (`UI_08_AC2_*`, T003); on the login page (`UI_08_AC2_*`, T004); in the frame, from the API (`UI_08_AC2_*`, T006) |
 | UI-09-AC1 | T010, T011, T012 | ⬜ |
 | UI-10-AC1 | T012 (A2) | ⬜ |
