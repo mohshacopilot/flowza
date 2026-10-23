@@ -50,7 +50,7 @@ Node.js 24 LTS and npm are required (`engines` in package.json).
 
 ```
 src/
-  app/          start-up: providers, theme tokens (theme.ts, the only place for colours), routes
+  app/          start-up: providers, design values (theme/designValues.json, the only place for colours and sizes; antdTheme.ts adapts them to Ant Design), routes
   features/     one folder per feature area, loaded lazily (home, admin/users, …)
   shared/       code used by several features (i18n, api, auth, components)
   locales/en/   translation files: ALL screen text lives here (constitution 12.1)

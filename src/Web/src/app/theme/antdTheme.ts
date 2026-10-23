@@ -1,0 +1,77 @@
+import type { ThemeConfig } from 'antd';
+import { readableTextOn } from './contrast';
+import type designValues from './designValues.json';
+
+export type DesignValues = typeof designValues;
+
+export interface ThemeOptions {
+  /** The user asked their system for reduced motion: Ant Design's animations are switched off. */
+  reducedMotion?: boolean;
+}
+
+/**
+ * Adapter from our design values to Ant Design's theme (plan 007 section 5.1, pattern "Adapter"): the only place
+ * that knows Ant Design's token names. Tokens are also CSS variables (--flowza-color-primary, …), so layout CSS
+ * can read them too.
+ */
+export function createAntdTheme(values: DesignValues, options: ThemeOptions = {}): ThemeConfig {
+  const onBrand = readableTextOn(values.brand, values.onColour);
+  return {
+    cssVar: { prefix: 'flowza' },
+    token: {
+      colorPrimary: values.brand,
+      colorInfo: values.brand,
+      colorLink: values.brand,
+      colorTextLightSolid: onBrand,
+      colorText: values.neutral.text,
+      colorTextHeading: values.neutral.text,
+      // Help and secondary texts must reach AA (4.5 : 1) on the page and on cards (found by the axe checks, T029).
+      colorTextSecondary: values.neutral.textSecondary,
+      colorTextDescription: values.neutral.textSecondary,
+      colorBgLayout: values.neutral.page,
+      colorBgContainer: values.neutral.surface,
+      colorBorderSecondary: values.neutral.border,
+      // Status colours dark enough for text on white and on their own light backgrounds (tags, alerts, danger
+      // buttons); the light backgrounds and borders are set too, because derived ones turn muddy.
+      colorSuccess: values.status.success.text,
+      colorSuccessBg: values.status.success.background,
+      colorSuccessBorder: values.status.success.border,
+      colorWarning: values.status.warning.text,
+      colorWarningBg: values.status.warning.background,
+      colorWarningBorder: values.status.warning.border,
+      colorError: values.status.error.text,
+      colorErrorBg: values.status.error.background,
+      colorErrorBorder: values.status.error.border,
+      fontFamily: values.font.family,
+      fontSize: values.font.size.base,
+      borderRadius: values.radius.control,
+      borderRadiusLG: values.radius.card,
+      boxShadowTertiary: values.shadow.card,
+      lineWidthFocus: values.focusRing,
+      motion: !options.reducedMotion,
+    },
+    components: {
+      Layout: {
+        headerBg: values.neutral.surface,
+        bodyBg: values.neutral.page,
+        siderBg: values.navigation.background,
+        triggerBg: values.navigation.background,
+        triggerColor: values.navigation.text,
+        headerPadding: `0 ${values.space.xl}px`,
+      },
+      Menu: {
+        darkItemBg: values.navigation.background,
+        darkSubMenuItemBg: values.navigation.background,
+        darkPopupBg: values.navigation.background,
+        darkItemColor: values.navigation.text,
+        darkItemHoverColor: values.navigation.textActive,
+        darkItemSelectedBg: values.brand,
+        darkItemSelectedColor: onBrand,
+        darkGroupTitleColor: values.navigation.groupLabel,
+      },
+      Card: {
+        borderRadiusLG: values.radius.card,
+      },
+    },
+  };
+}

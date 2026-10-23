@@ -1,0 +1,37 @@
+{
+  "$description": "The one source of every visual value (spec 007 UI-02, plan 007 section 5.1). The Ant Design theme (antdTheme.ts) and the login pages' CSS (npm run design:css) are made from this file; no screen sets its own colours, fonts or sizes.",
+  "brand": "#1f5fbf",
+  "onColour": {
+    "light": "#ffffff",
+    "dark": "#000000"
+  },
+  "navigation": {
+    "background": "#14294d",
+    "text": "#c8d3e6",
+    "textActive": "#ffffff",
+    "groupLabel": "#8193b3",
+    "focus": "#ffffff"
+  },
+  "neutral": {
+    "page": "#f3f5f9",
+    "surface": "#ffffff",
+    "border": "#e3e8f0",
+    "text": "#1b2333",
+    "textSecondary": "#5b6577"
+  },
+  "status": {
+    "success": { "text": "#2e7d32", "background": "#edf7ed", "border": "#a5d6a7" },
+    "warning": { "text": "#a35a00", "background": "#fff8e1", "border": "#ffd27f" },
+    "error": { "text": "#c62828", "background": "#fdecea", "border": "#f5b7b1" }
+  },
+  "font": {
+    "family": "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans', 'Noto Sans Devanagari', 'Noto Sans Tamil', sans-serif",
+    "size": { "small": 12, "base": 14, "medium": 16, "large": 20, "extraLarge": 24 },
+    "weight": { "regular": 400, "strong": 600 }
+  },
+  "space": { "xs": 4, "sm": 8, "md": 12, "lg": 16, "xl": 24, "xxl": 32 },
+  "radius": { "control": 6, "card": 8 },
+  "shadow": { "card": "0 1px 2px rgba(20, 41, 77, 0.06), 0 1px 3px rgba(20, 41, 77, 0.10)" },
+  "focusRing": 3,
+  "breakpoints": { "tablet": 768, "desktop": 1025 }
+}

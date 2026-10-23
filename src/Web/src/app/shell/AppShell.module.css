@@ -1,4 +1,4 @@
-/* Layout only: colours, fonts and radii come from the theme tokens (app/theme.ts). */
+/* Layout only: colours, fonts and radii come from the design values (app/theme/designValues.json). */
 .shell {
   min-height: 100vh;
 }
