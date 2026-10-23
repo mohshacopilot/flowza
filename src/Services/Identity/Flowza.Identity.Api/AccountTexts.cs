@@ -6,8 +6,13 @@ namespace Flowza.Identity.Api;
 /// </summary>
 public sealed class AccountTexts
 {
-    public const string ProductName = "Product.Name";
     public const string SkipToContent = "Layout.SkipToContent";
+
+    /// <summary>The short line about the product on the brand panel (spec 007 C1: fixed, not editable in v0.1).</summary>
+    public const string ProductLine = "Layout.ProductLine";
+
+    /// <summary>The small product credit under the form (U3); the installation's own name is on the brand panel.</summary>
+    public const string PoweredBy = "Layout.PoweredBy";
 
     public const string LoginTitle = "Login.Title";
     public const string LoginUsername = "Login.Username";
@@ -30,7 +35,7 @@ public sealed class AccountTexts
     /// <summary>Every key above, for the test that checks the resource file has them all.</summary>
     public static IReadOnlyList<string> AllKeys { get; } =
     [
-        ProductName, SkipToContent, LoginTitle, LoginUsername, LoginPassword, LoginSubmit, LoginInvalid, LoginLockedOut,
+        SkipToContent, ProductLine, PoweredBy, LoginTitle, LoginUsername, LoginPassword, LoginSubmit, LoginInvalid, LoginLockedOut,
         ChangePasswordTitle, ChangePasswordIntro, ChangePasswordCurrent, ChangePasswordNew, ChangePasswordConfirm,
         ChangePasswordRules, ChangePasswordSubmit, ChangePasswordMismatch, ErrorSummaryTitle,
     ];

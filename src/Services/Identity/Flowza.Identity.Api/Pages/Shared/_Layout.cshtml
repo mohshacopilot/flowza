@@ -1,16 +1,36 @@
+@using Flowza.Identity.Application.Abstractions
+@inject IInstallationBrandSource Brands
+@{
+    // The installation's own name and initials mark (UI-08, C6, C7); read here, so the login pages work even when
+    // the web app or the Gateway's API routes are down (spec 007 edge case).
+    var brand = await Brands.GetAsync(Context.RequestAborted);
+}
 <!DOCTYPE html>
 <html lang="@System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>@ViewData["Title"] – @T[AccountTexts.ProductName]</title>
+    <title>@ViewData["Title"] – @brand.Name</title>
+    @* Generated from the web app's design values (npm run design:css, UI-02); account.css holds the layout only. *@
+    <link rel="stylesheet" href="/account/assets/design-values.css" />
     <link rel="stylesheet" href="/account/assets/account.css" />
 </head>
 <body>
     <a class="skip-link" href="#main">@T[AccountTexts.SkipToContent]</a>
-    <header class="brand">@T[AccountTexts.ProductName]</header>
-    <main id="main" class="card">
-        @RenderBody()
-    </main>
+    <div class="account">
+        <header class="brand-panel">
+            <div class="brand">
+                <span class="brand-mark" aria-hidden="true">@brand.Initials</span>
+                <span class="brand-name" title="@brand.Name">@brand.Name</span>
+            </div>
+            <p class="product-line">@T[AccountTexts.ProductLine]</p>
+        </header>
+        <div class="form-column">
+            <main id="main" class="form-area">
+                @RenderBody()
+            </main>
+            <footer class="powered-by">@T[AccountTexts.PoweredBy]</footer>
+        </div>
+    </div>
 </body>
 </html>

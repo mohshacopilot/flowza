@@ -12,11 +12,14 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="Product.Name" xml:space="preserve">
-    <value>Flowza</value>
-  </data>
   <data name="Layout.SkipToContent" xml:space="preserve">
     <value>Skip to the form</value>
+  </data>
+  <data name="Layout.ProductLine" xml:space="preserve">
+    <value>Requests and approvals in one place</value>
+  </data>
+  <data name="Layout.PoweredBy" xml:space="preserve">
+    <value>Powered by Flowza</value>
   </data>
   <data name="Login.Title" xml:space="preserve">
     <value>Log in</value>
