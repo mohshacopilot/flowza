@@ -24,7 +24,7 @@ Nothing else: no new database, secret, library or program.
 | T005 Show/hide password | ✅ | 2a4dcd3, fix f5fa51c |
 | T005b Login page as mockup B, teal values (spec amendment 1) | ✅ | 30d29b9 |
 | T006 Installation in the web app, brand mark | ✅ | e7d11dd |
-| T007 Dark side navigation and its preference | ⬜ | |
+| T007 Dark side navigation and its preference | ✅ | 991aa07 |
 | T008 Header and page titles | ⬜ | |
 | T009 Phone frame | ⬜ | |
 | T010 Existing screens in the new look | ⬜ | |
@@ -106,6 +106,28 @@ Nothing else: no new database, secret, library or program.
   component test that renders the frame works without extra set-up. The "…" itself is drawn by CSS, which jsdom
   does not draw, so the component test checks the full name in `title` and the accessible name; the screenshot
   tests (T011) show the shortened name. End-to-end suite 14/14 with axe on every app page that shows the mark.
+- **T007 (2026-10-23):** decisions inside plan §5.5:
+  - **One more component, `NavigationSider`** (Sider + `BrandMark` on top + navigation + collapse button), so
+    `AppShell` only arranges the frame; T009 puts the same `SideNavigation` into the phone drawer.
+  - **Breakpoints:** the adapter sets Ant Design's `screenMD*`/`screenLG*` tokens from `breakpoints.tablet` (768) and
+    `breakpoints.desktop` (1025), so `Grid.useBreakpoint().lg` means "desktop" in our terms (Ant Design's own `lg`
+    starts at 992 px; the test at 1024 px proves the difference).
+  - **Sizes in the design values:** `layout.navigationWidth` 232, `layout.navigationCollapsedWidth` 72 and
+    `layout.headerHeight` 64 (also in the regenerated `design-values.css`, harmless for the login pages).
+  - **Navigation colours as CSS variables:** Ant Design has no token for the white focus ring on dark, the selected
+    item's bar or the panel's lines; `shellCssVariables()` puts `--flowza-navigation-*` on the frame with the same
+    names and values as the login pages' `design-values.css` (checked by a test).
+  - **Collapse button is our own `<button>`** with "Collapse navigation" / "Expand navigation" (and a tooltip when
+    collapsed): Ant Design's built-in Sider trigger is a `div` that the keyboard cannot reach.
+  - **Selected item:** brand background with a 3 px accent bar on the left (accent reaches 3.1 : 1 on the brand and
+    6.8 : 1 on the deep teal). **Focus:** the link inside an item has the focus; the whole item shows a white ring
+    (`:has(a:focus-visible)`), also when the label is hidden.
+  - **Collapsed groups:** the "Administration" heading would be cut to one letter in 72 px, so collapsed it becomes
+    a divider line; each item keeps its label as accessible name and Ant Design's tooltip.
+  - **`app/global.css`** (`body { margin: 0 }`): the browser's 8 px body margin showed as a white strip around
+    the dark panel (seen in a local look check at 1280 and 900 px; the old white header had hidden it).
+  - Tests set the window width with `test/viewport.ts` (a `matchMedia` that answers width queries); `setup.ts`
+    clears `localStorage` after each test. Until T009 the phone width shows the collapsed Sider.
 
 ## Phase 1: Design values (M1)
 | ID | Task | Spec IDs | Done when |
@@ -166,10 +188,10 @@ Nothing else: no new database, secret, library or program.
 | UI-01-AC3 | T004, T011, T012 | 🟡 the general error above the form in the page look, and the change-password page in the same layout (`UI_01_AC3_*`, T004); screenshots in T011/T012 |
 | UI-02-AC1 | T002, T010 | 🟡 the scan runs (`UI_02_AC1_*`, T002); `account.css` is clean (T004); 7 files remain on the allow list for T007–T010 |
 | UI-02-AC2 | T001, T002, T004 | ✅ the theme and `design-values.css` come from the same values and agree on brand, on-brand text and font (`UI_02_AC2_*`, T002); the login pages load `design-values.css` before their layout (`UI_02_AC2_*`, T004) |
-| UI-03-AC1 | T007, T011 | ⬜ |
+| UI-03-AC1 | T007, T011 | 🟡 admin sees "Administration", a User does not, current item selected with `aria-current`, mark and name on top of the panel (`UI_03_AC1_*`, component and registry tests, T007); the screenshot follows in T011 |
 | UI-03-AC2 | T008 | ⬜ |
-| UI-04-AC1 | T007, T011 | ⬜ |
-| UI-04-AC2 | T007, T011 | ⬜ |
+| UI-04-AC1 | T007, T011 | 🟡 collapsed: icons only, every item keeps its accessible name and tooltip, the choice survives a re-render from storage, the button works with Enter and Space (`UI_04_AC1_*`, T007); the real reload in a browser follows in T011 |
+| UI-04-AC2 | T007, T011 | 🟡 open at 1025 and 1280 px, collapsed at 768–1024 px, a stored choice wins, blocked or unknown storage falls back to the default (`UI_04_AC2_*`, hook tests, T007); end-to-end at 1280 and 900 px in T011 |
 | UI-05-AC1 | T009, T011 | ⬜ |
 | UI-05-AC2 | T009, T011 | ⬜ |
 | UI-06-AC1 | T004, T009, T011 | ⬜ |
