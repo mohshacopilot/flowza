@@ -1,5 +1,5 @@
 import { Layout } from 'antd';
-import { useEffect } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMatches } from 'react-router';
 import type { CurrentUser } from '../../shared/auth/currentUser';
@@ -9,10 +9,11 @@ import { UserMenu } from './UserMenu';
 import styles from './HeaderBar.module.css';
 
 /**
- * The header (spec 007 UI-03): the page's title on the left, the user menu on the right. The title also names the
+ * The header (spec 007 UI-03): the page's title on the left (after the menu button on a phone, UI-05), the user
+ * menu on the right. The title also names the
  * browser tab, "<page> – <installation>", like the login pages. It is not a heading: each page keeps its own <h1>.
  */
-export function HeaderBar({ user }: { user: CurrentUser }) {
+export function HeaderBar({ user, navigation }: { user: CurrentUser; navigation?: ReactNode }) {
   const { t } = useTranslation();
   const titleKey = pageTitleKey(useMatches());
   const title = titleKey ? t(titleKey) : undefined;
@@ -24,7 +25,10 @@ export function HeaderBar({ user }: { user: CurrentUser }) {
 
   return (
     <Layout.Header className={styles.header}>
-      <span className={styles.title}>{title}</span>
+      <div className={styles.start}>
+        {navigation}
+        <span className={styles.title}>{title}</span>
+      </div>
       <UserMenu user={user} />
     </Layout.Header>
   );

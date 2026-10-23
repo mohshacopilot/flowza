@@ -5,6 +5,12 @@
   height: 100vh;
 }
 
+@media print {
+  .sider {
+    display: none;
+  }
+}
+
 .panel {
   display: flex;
   flex-direction: column;

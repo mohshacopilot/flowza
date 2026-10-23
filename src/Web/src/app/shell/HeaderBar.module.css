@@ -7,6 +7,13 @@
   border-bottom: 1px solid var(--flowza-color-border-secondary);
 }
 
+.start {
+  display: flex;
+  gap: var(--flowza-margin-xs);
+  align-items: center;
+  min-width: 0;
+}
+
 /* A long or translated title ends in "…" instead of pushing the user menu away. */
 .title {
   min-width: 0;
@@ -16,4 +23,22 @@
   color: var(--flowza-color-text-heading);
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Phone (below breakpoints.tablet): less padding, a smaller title. */
+@media (max-width: 767.98px) {
+  .header {
+    gap: var(--flowza-margin-xs);
+    padding-inline: var(--flowza-padding-xs);
+  }
+
+  .title {
+    font-size: var(--flowza-font-size-lg);
+  }
+}
+
+@media print {
+  .header {
+    display: none;
+  }
 }

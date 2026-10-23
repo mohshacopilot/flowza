@@ -29,5 +29,8 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     css: false,
     restoreMocks: true,
+    // Whole-screen tests that type into forms take 2–3 s alone and over 5 s (Vitest's default) when all test files
+    // run in parallel on the office PC; a slow test is not a failing one.
+    testTimeout: 15_000,
   },
 });

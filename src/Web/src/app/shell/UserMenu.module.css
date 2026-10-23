@@ -18,3 +18,10 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* Phone (below breakpoints.tablet): the avatar only; the button's accessible name still says who is logged in. */
+@media (max-width: 767.98px) {
+  .name {
+    display: none;
+  }
+}

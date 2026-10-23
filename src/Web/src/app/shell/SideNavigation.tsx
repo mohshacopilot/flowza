@@ -17,13 +17,15 @@ interface SideNavigationProps {
   roles: readonly string[];
   /** Collapsed to icons (UI-04): each label stays the link's accessible name and shows as a tooltip. */
   collapsed?: boolean;
+  /** Called when the user chooses an item (the phone drawer closes then, UI-05-AC2). */
+  onNavigate?: () => void;
 }
 
 /**
  * The dark side navigation by role and group (spec 007 UI-03). Items are ordinary links, so Tab, Enter and
  * "open in new tab" all work. A group heading appears only when the user has an item in that group.
  */
-export function SideNavigation({ roles, collapsed = false }: SideNavigationProps) {
+export function SideNavigation({ roles, collapsed = false, onNavigate }: SideNavigationProps) {
   const { t } = useTranslation();
   const { pathname } = useLocation();
   const visible = visibleNavigationItems(navigationItems, roles);
@@ -54,7 +56,13 @@ export function SideNavigation({ roles, collapsed = false }: SideNavigationProps
 
   return (
     <nav aria-label={t('shell.mainNavigation')} className={styles.navigation}>
-      <Menu mode="inline" theme="dark" selectedKeys={selected ? [selected] : []} items={items} />
+      <Menu
+        mode="inline"
+        theme="dark"
+        selectedKeys={selected ? [selected] : []}
+        items={items}
+        {...(onNavigate ? { onClick: onNavigate } : {})}
+      />
     </nav>
   );
 }

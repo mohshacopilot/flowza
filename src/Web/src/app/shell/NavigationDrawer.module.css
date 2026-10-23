@@ -1,0 +1,26 @@
+/* Layout only: colours come from the design values (--flowza-navigation-*, Ant Design's CSS variables). The deep
+   teal background and the paddings are set through the Drawer's `styles` (NavigationDrawer.tsx). */
+
+/* Only the close button sits in the header: light on the deep teal, on the right, with a white focus ring. */
+.drawer :global(.ant-drawer-header .ant-drawer-close) {
+  margin-inline-start: auto;
+  color: var(--flowza-navigation-text);
+}
+
+.drawer :global(.ant-drawer-header .ant-drawer-close):hover {
+  color: var(--flowza-navigation-text-active);
+  background: var(--flowza-navigation-raised);
+}
+
+.drawer :global(.ant-drawer-header .ant-drawer-close):focus-visible {
+  outline: var(--flowza-line-width-focus) solid var(--flowza-navigation-focus);
+}
+
+.brand {
+  display: flex;
+  flex: none;
+  align-items: center;
+  padding-inline: var(--flowza-padding);
+  padding-block-end: var(--flowza-padding-sm);
+  border-bottom: 1px solid var(--flowza-navigation-raised);
+}

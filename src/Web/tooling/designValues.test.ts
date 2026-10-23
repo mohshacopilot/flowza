@@ -128,7 +128,6 @@ function read(file: string): string {
  * when T010 is done (tasks 007).
  */
 const stillToClean = new Map<string, string>([
-  ['src/app/shell/AppShell.module.css', 'T007 to T009 rebuild the frame (navigation, header, phone drawer)'],
   ['src/features/admin/users/AccessSection.tsx', 'T010 restyles the user details'],
   ['src/features/admin/users/TemporaryPasswordPanel.tsx', 'T010 restyles create user'],
   ['src/features/admin/users/UserDetailsPage.tsx', 'T010 restyles the user details'],

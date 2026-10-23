@@ -1,7 +1,7 @@
 /**
  * Makes window.matchMedia answer width queries ("(min-width: 1025px)", "(max-width: 767px)") as a browser window
  * of this width would, so Ant Design's Grid.useBreakpoint() sees it. Other queries do not match. jsdom has no
- * layout, so the default fake in setup.ts matches nothing (narrower than every breakpoint).
+ * layout; setup.ts makes every test a 1280 px desktop window unless the test sets another width.
  */
 export function viewportWidth(width: number): { restore: () => void } {
   const original = window.matchMedia.bind(window);

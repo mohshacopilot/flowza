@@ -8,7 +8,9 @@ import designValues from '../theme/designValues.json';
 import { shellCssVariables } from '../theme/shellCssVariables';
 import { AppLoading } from './AppLoading';
 import { HeaderBar } from './HeaderBar';
+import { NavigationDrawer } from './NavigationDrawer';
 import { NavigationSider } from './NavigationSider';
+import { useWidthClass } from './useWidthClass';
 import styles from './AppShell.module.css';
 
 const isUnauthenticated = (error: unknown): boolean => error instanceof ApiError && error.status === 401;
@@ -23,6 +25,8 @@ const shellVariables = shellCssVariables(designValues);
 export function AppShell() {
   const { t } = useTranslation();
   const user = useCurrentUser();
+  // A phone gets a menu button and a drawer instead of the side panel (UI-05).
+  const phone = useWidthClass() === 'phone';
   // A 401 sends the browser to the login page (query client, app/queryClient.ts); keep the spinner meanwhile.
   const unauthenticated = user.isError && isUnauthenticated(user.error);
 
@@ -42,9 +46,12 @@ export function AppShell() {
       <a className={styles.skipLink} href="#main-content">
         {t('shell.skipToContent')}
       </a>
-      <NavigationSider roles={user.data.roles} />
-      <Layout>
-        <HeaderBar user={user.data} />
+      {phone ? null : <NavigationSider roles={user.data.roles} />}
+      <Layout className={styles.main}>
+        <HeaderBar
+          user={user.data}
+          navigation={phone ? <NavigationDrawer roles={user.data.roles} /> : undefined}
+        />
         <Layout.Content id="main-content" tabIndex={-1} className={styles.content}>
           <Outlet />
         </Layout.Content>
