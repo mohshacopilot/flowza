@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Last session** | 2026-10-23, office PC: phase 3–4 review findings fixed; feature 001 verified (T032); next: push, then plan 002 |
+| **Last session** | 2026-10-23, office PC: phase 3–4 review findings fixed; feature 001 verified (T032), pushed, CI green; next: plan 002 |
 | **Build** | From 2026-10-21 on the **office PC** (`D:\Projects\Workflow`); the owner reviews on weekdays, full days |
 | **Git** | Local commits per task on `main`; public repository https://github.com/mohshacopilot/flowza, pushed only when the owner says so |
 
@@ -16,7 +16,7 @@ Spec Kit is postponed; we follow the same method by hand (see [CLAUDE.md](../../
    Phase 3–4 review: all 12 findings handled 2026-10-23 (10 fixed, 6 and 11 not defects but now tested; outcomes in
    [tasks.md](../../specs/001-platform-foundation/tasks.md)). **Feature 001 is done** apart from the owner's
    [setup checklist](../../specs/001-platform-foundation/checklists/setup.md) signature (PLT-06-AC1, timed run on a
-   fresh PC) and the items carried below. **Next: push and check CI**, then plan 002 (step 3).
+   fresh PC) and the items carried below. Pushed 2026-10-23, CI green (run 39903770691). **Next: plan 002** (step 3).
    **Carried from 001 into later plans:** demo data for the org chart (002) and the two reference apps (004/005)
    extend `flowza demo-data` (PLT-07-AC1, analysis A1); designer screens and APIs refuse users without App Designer
    (IAM-02-AC1, feature 004).
