@@ -21,6 +21,15 @@
       "administration": "Administration"
     }
   },
+  "pageTitles": {
+    "home": "Home",
+    "users": "Users",
+    "newUser": "New user",
+    "userDetails": "User details",
+    "myProfile": "My profile",
+    "notFound": "Page not found",
+    "documentTitle": "{{page}} – {{installation}}"
+  },
   "home": {
     "title": "Welcome",
     "intro": "Choose a task from the menu to get started."

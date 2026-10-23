@@ -7,14 +7,6 @@
   min-height: 100vh;
 }
 
-/* The page title joins on the left in T008. */
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  border-bottom: 1px solid var(--flowza-color-border-secondary);
-}
-
 .content {
   padding: 24px;
   outline: none;

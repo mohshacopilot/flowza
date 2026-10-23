@@ -7,8 +7,8 @@ import { PageForError } from '../../shared/components/ErrorPages';
 import designValues from '../theme/designValues.json';
 import { shellCssVariables } from '../theme/shellCssVariables';
 import { AppLoading } from './AppLoading';
+import { HeaderBar } from './HeaderBar';
 import { NavigationSider } from './NavigationSider';
-import { UserMenu } from './UserMenu';
 import styles from './AppShell.module.css';
 
 const isUnauthenticated = (error: unknown): boolean => error instanceof ApiError && error.status === 401;
@@ -17,7 +17,7 @@ const shellVariables = shellCssVariables(designValues);
 
 /**
  * The frame of every screen: the deep teal side navigation (installation mark and name, items by role), the header
- * (user menu) and the page. Pages render in <main>; a "skip to main content" link comes first for keyboard users
+ * (page title, user menu) and the page. Pages render in <main>; a "skip to main content" link comes first for keyboard users
  * (constitution 12.2).
  */
 export function AppShell() {
@@ -44,9 +44,7 @@ export function AppShell() {
       </a>
       <NavigationSider roles={user.data.roles} />
       <Layout>
-        <Layout.Header className={styles.header}>
-          <UserMenu user={user.data} />
-        </Layout.Header>
+        <HeaderBar user={user.data} />
         <Layout.Content id="main-content" tabIndex={-1} className={styles.content}>
           <Outlet />
         </Layout.Content>

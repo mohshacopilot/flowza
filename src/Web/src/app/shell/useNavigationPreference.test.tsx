@@ -32,6 +32,23 @@ describe('Navigation preference', () => {
     expect(collapsedAt(768)).toBe(true);
   });
 
+  it('UI_04_AC2_at_desktop_width_the_very_first_render_is_already_open', () => {
+    // Otherwise the panel would start collapsed and slide open while the page is shown.
+    const viewport = viewportWidth(1280);
+    const seen: boolean[] = [];
+    renderHook(
+      () => {
+        const { collapsed } = useNavigationPreference();
+        seen.push(collapsed);
+      },
+      { wrapper },
+    );
+    viewport.restore();
+
+    expect(seen.length).toBeGreaterThan(0);
+    expect(seen.every((collapsed) => !collapsed)).toBe(true);
+  });
+
   it('UI_04_AC2_a_remembered_choice_wins_over_the_width', () => {
     window.localStorage.setItem(navigationPreferenceKey, 'true');
     expect(collapsedAt(1280)).toBe(true);

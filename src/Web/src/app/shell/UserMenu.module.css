@@ -1,0 +1,20 @@
+/* Layout only: colours and fonts come from the design values through CSS variables (UI-02). */
+.content {
+  display: inline-flex;
+  gap: var(--flowza-margin-xs);
+  align-items: center;
+  min-width: 0;
+}
+
+/* Its colours (brand, with the text chosen for it, UI-07) come from the theme's Avatar tokens. */
+.content :global(.ant-avatar) {
+  flex: none;
+  font-weight: var(--flowza-font-weight-strong);
+}
+
+.name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

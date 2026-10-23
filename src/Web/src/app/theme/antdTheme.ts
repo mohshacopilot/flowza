@@ -84,6 +84,11 @@ export function createAntdTheme(values: DesignValues, options: ThemeOptions = {}
         darkItemSelectedColor: onBrand,
         darkGroupTitleColor: values.navigation.groupLabel,
       },
+      Avatar: {
+        // The user's initials sit on the brand colour with the text chosen for it (UI-07), like the installation
+        // mark; Ant Design's default grey gives white text only 2.3 : 1.
+        colorTextPlaceholder: values.brand,
+      },
       Card: {
         borderRadiusLG: values.radius.card,
       },

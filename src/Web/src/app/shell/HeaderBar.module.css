@@ -1,0 +1,19 @@
+/* Layout only: colours, fonts and sizes come from the design values through CSS variables (UI-02). */
+.header {
+  display: flex;
+  gap: var(--flowza-margin);
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--flowza-color-border-secondary);
+}
+
+/* A long or translated title ends in "…" instead of pushing the user menu away. */
+.title {
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--flowza-font-size-xl);
+  font-weight: var(--flowza-font-weight-strong);
+  color: var(--flowza-color-text-heading);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

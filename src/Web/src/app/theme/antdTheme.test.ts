@@ -42,6 +42,13 @@ describe('Ant Design theme from the design values', () => {
     }
   });
 
+  it('UI_06_the_avatar_initials_are_readable_on_the_brand_colour', () => {
+    expect(theme.components?.Avatar?.colorTextPlaceholder).toBe(designValues.brand);
+    expect(contrastRatio(theme.token?.colorTextLightSolid ?? '', designValues.brand)).toBeGreaterThanOrEqual(
+      4.5,
+    );
+  });
+
   it('UI_06_navigation_texts_reach_4_5_to_1_on_the_dark_navigation', () => {
     const navigation = designValues.navigation;
     for (const text of [navigation.text, navigation.textActive, navigation.groupLabel]) {
