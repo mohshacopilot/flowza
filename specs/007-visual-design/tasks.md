@@ -30,7 +30,7 @@ Nothing else: no new database, secret, library or program.
 | T010 Existing screens in the new look | ✅ | 4c83aae |
 | T011 Visual and accessibility end-to-end tests | ✅ | 1e7e510 |
 | T012 CI look check and screenshot baselines | ✅ | e06c1be, b7b45ce, 85107ea |
-| T013 Setup guide and CLAUDE.md | ⬜ | |
+| T013 Setup guide and CLAUDE.md | ✅ | 20b7680 (owner to read §5 of the guide) |
 | T014 Verify 007 | ⬜ | |
 
 **Progress notes**
@@ -245,6 +245,13 @@ Nothing else: no new database, secret, library or program.
     463 .NET tests passed locally on the same commit and the re-run was green: watch for a flaky .NET test.
     (3) Dependabot opened pull requests that move the GitHub actions to newer versions (the "Node.js 20 is
     deprecated" warning); they pass CI and wait for the owner.
+- **T013 (2026-10-24):** [setup guide](../../docs/setup/local-setup.md) §5 (the old §5 "What to tell Claude" is now §6;
+  nothing linked to it by number): 5.1 the installation name (`appsettings.Production.json` or `Installation__Name`
+  on a real installation; on the dev PC a temporary change of Identity's `appsettings.json`, put back before a
+  commit, because the repository is public), its rules and start-up message, the web app's 5-minute cache; 5.2
+  `designValues.json` → `npm run design:css`, commit both, the drift test; 5.3 what a red look check means and the
+  five steps to accept a new look (PA5, O2). CLAUDE.md: a "Visual design" row in the decisions table. All relative
+  links in both files were checked to point to existing files.
 
 ## Phase 1: Design values (M1)
 | ID | Task | Spec IDs | Done when |
