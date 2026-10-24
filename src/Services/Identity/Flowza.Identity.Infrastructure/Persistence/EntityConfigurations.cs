@@ -49,12 +49,7 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Ignore(u => u.IsActivePlatformAdmin);
         builder.Ignore(u => u.DomainEvents);
 
-        // Feature 002: the user's place in the organization gets its columns and table with the OrgHierarchy migration
-        // (task T005). Until then the database does not store it.
-        builder.Ignore(u => u.PrimaryUnitId);
-        builder.Ignore(u => u.ManagerId);
-        builder.Ignore(u => u.BusinessRoleAssignments);
-        builder.Ignore(u => u.BusinessRoleIds);
+        UserOrgConfiguration.Configure(builder);
     }
 }
 

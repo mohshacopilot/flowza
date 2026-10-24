@@ -23,6 +23,224 @@ namespace Flowza.Identity.Infrastructure.Persistence.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.HasSequence<int>("UnitNumbers")
+                .StartsAt(2L);
+
+            modelBuilder.Entity("Flowza.Identity.Domain.Organization.BusinessRole", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("BusinessRoles", (string)null);
+                });
+
+            modelBuilder.Entity("Flowza.Identity.Domain.Organization.OrgStructure", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long>("ChangeCount")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("ChangedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("OrgStructure", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("0f6e5600-0000-4000-8000-000000000001"),
+                            ChangeCount = 0L
+                        });
+                });
+
+            modelBuilder.Entity("Flowza.Identity.Domain.Organization.OrgUnit", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("HeadUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("Number")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("ParentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Path")
+                        .IsRequired()
+                        .HasMaxLength(900)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(900)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<Guid>("UnitTypeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("HeadUserId");
+
+                    b.HasIndex("Number")
+                        .IsUnique();
+
+                    b.HasIndex("ParentId");
+
+                    b.HasIndex("Path");
+
+                    SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("Path"), new[] { "UnitTypeId", "HeadUserId", "IsActive" });
+
+                    b.HasIndex("UnitTypeId");
+
+                    b.HasIndex(new[] { "ParentId" }, "IX_OrgUnits_OneRoot")
+                        .IsUnique()
+                        .HasFilter("[ParentId] IS NULL");
+
+                    b.ToTable("OrgUnits", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("0f6e5600-0000-4000-8000-000000000003"),
+                            Code = "ROOT",
+                            CreatedAt = new DateTime(2026, 10, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Organization",
+                            Number = 1,
+                            Path = "/1/",
+                            UnitTypeId = new Guid("0f6e5600-0000-4000-8000-000000000002")
+                        });
+                });
+
+            modelBuilder.Entity("Flowza.Identity.Domain.Organization.UnitType", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("UnitTypes", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("0f6e5600-0000-4000-8000-000000000002"),
+                            Code = "ROOT",
+                            CreatedAt = new DateTime(2026, 10, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Organization"
+                        });
+                });
+
             modelBuilder.Entity("Flowza.Identity.Domain.Users.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -58,6 +276,9 @@ namespace Flowza.Identity.Infrastructure.Persistence.Migrations
                     b.Property<DateTime?>("LockoutEnd")
                         .HasColumnType("datetime2");
 
+                    b.Property<Guid?>("ManagerId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Mobile")
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
@@ -83,6 +304,9 @@ namespace Flowza.Identity.Infrastructure.Persistence.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
+                    b.Property<Guid>("PrimaryUnitId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
                         .ValueGeneratedOnAddOrUpdate()
@@ -106,11 +330,17 @@ namespace Flowza.Identity.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ManagerId");
+
                     b.HasIndex("NormalizedEmail")
                         .IsUnique();
 
                     b.HasIndex("NormalizedUsername")
                         .IsUnique();
+
+                    b.HasIndex("PrimaryUnitId");
+
+                    SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("PrimaryUnitId"), new[] { "IsActive" });
 
                     b.ToTable("Users", (string)null);
                 });
@@ -506,8 +736,62 @@ namespace Flowza.Identity.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Flowza.Identity.Domain.Organization.OrgUnit", b =>
+                {
+                    b.HasOne("Flowza.Identity.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("HeadUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Flowza.Identity.Domain.Organization.OrgUnit", null)
+                        .WithMany()
+                        .HasForeignKey("ParentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Flowza.Identity.Domain.Organization.UnitType", null)
+                        .WithMany()
+                        .HasForeignKey("UnitTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Flowza.Identity.Domain.Users.User", b =>
                 {
+                    b.HasOne("Flowza.Identity.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("ManagerId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Flowza.Identity.Domain.Organization.OrgUnit", null)
+                        .WithMany()
+                        .HasForeignKey("PrimaryUnitId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.OwnsMany("Flowza.Identity.Domain.Users.UserBusinessRoleAssignment", "BusinessRoleAssignments", b1 =>
+                        {
+                            b1.Property<Guid>("UserId")
+                                .HasColumnType("uniqueidentifier");
+
+                            b1.Property<Guid>("BusinessRoleId")
+                                .HasColumnType("uniqueidentifier");
+
+                            b1.HasKey("UserId", "BusinessRoleId");
+
+                            b1.HasIndex("BusinessRoleId", "UserId");
+
+                            b1.ToTable("UserBusinessRoles", (string)null);
+
+                            b1.HasOne("Flowza.Identity.Domain.Organization.BusinessRole", null)
+                                .WithMany()
+                                .HasForeignKey("BusinessRoleId")
+                                .OnDelete(DeleteBehavior.Restrict)
+                                .IsRequired();
+
+                            b1.WithOwner()
+                                .HasForeignKey("UserId");
+                        });
+
                     b.OwnsMany("Flowza.Identity.Domain.Users.UserRoleAssignment", "RoleAssignments", b1 =>
                         {
                             b1.Property<Guid>("UserId")
@@ -531,6 +815,8 @@ namespace Flowza.Identity.Infrastructure.Persistence.Migrations
                             b1.WithOwner()
                                 .HasForeignKey("UserId");
                         });
+
+                    b.Navigation("BusinessRoleAssignments");
 
                     b.Navigation("RoleAssignments");
                 });

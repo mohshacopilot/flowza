@@ -20,10 +20,17 @@ public static class TestDatabase
         JOIN sys.schemas s ON t.schema_id = s.schema_id
         WHERE s.name IN (N'dbo', N'wolverine');
         EXEC (@sql);
+
+        SET @sql = N'';
+        SELECT @sql += N'DROP SEQUENCE ' + QUOTENAME(s.name) + N'.' + QUOTENAME(q.name) + N';'
+        FROM sys.sequences q
+        JOIN sys.schemas s ON q.schema_id = s.schema_id
+        WHERE s.name IN (N'dbo', N'wolverine');
+        EXEC (@sql);
         """;
 
     /// <summary>
-    /// Empties schemas completely (tables, procedures, table types), as on a database the DBA has just created. The
+    /// Empties schemas completely (tables, procedures, table types, sequences), as on a database the DBA has just created. The
     /// schemas are given as LIKE patterns, e.g. <c>dbo</c>, <c>wolverine%</c>, <c>queues</c>.
     /// </summary>
     public static async Task EmptySchemasAsync(string database, IReadOnlyList<string> schemaPatterns, CancellationToken cancellationToken)
@@ -43,6 +50,9 @@ public static class TestDatabase
             SELECT @sql += N'DROP TYPE ' + QUOTENAME(s.name) + N'.' + QUOTENAME(ty.name) + N';'
             FROM sys.table_types ty JOIN sys.schemas s ON ty.schema_id = s.schema_id
             WHERE EXISTS (SELECT 1 FROM @patterns p WHERE s.name LIKE p.pattern);
+            SELECT @sql += N'DROP SEQUENCE ' + QUOTENAME(s.name) + N'.' + QUOTENAME(q.name) + N';'
+            FROM sys.sequences q JOIN sys.schemas s ON q.schema_id = s.schema_id
+            WHERE EXISTS (SELECT 1 FROM @patterns p WHERE s.name LIKE p.pattern);
             EXEC (@sql);
             """;
         var declarations = string.Join(" ", schemaPatterns.Select((_, i) => $"INSERT INTO @patterns VALUES (@p{i});"));
@@ -58,8 +68,8 @@ public static class TestDatabase
     }
 
     /// <summary>
-    /// Drops every table a service owns in its test database (schemas <c>dbo</c>, including the EF migrations
-    /// history, and <c>wolverine</c>), so the next start behaves like a first start. Tables of other test schemas
+    /// Drops every table and sequence a service owns in its test database (schemas <c>dbo</c>, including the EF
+    /// migrations history, and <c>wolverine</c>), so the next start behaves like a first start. Tables of other test schemas
     /// are left alone.
     /// </summary>
     public static async Task DropServiceTablesAsync(string database, CancellationToken cancellationToken)

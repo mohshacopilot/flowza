@@ -66,6 +66,7 @@ public static class IdentityInfrastructureExtensions
                 options.XmlRepository = new DatabaseXmlRepository(provider.GetRequiredService<IServiceScopeFactory>())));
 
         builder.Services.AddUserAccounts();
+        builder.Services.AddOrganization();
         return builder;
     }
 
@@ -140,6 +141,16 @@ public static class IdentityInfrastructureExtensions
         services.RemoveAll<IUserValidator<User>>();
         services.RemoveAll<IPasswordValidator<User>>();
         services.AddScoped<IPasswordValidator<User>, PasswordPolicyValidator>();
+    }
+
+    /// <summary>Unit types, org units, business roles and the org-structure row (feature 002, plan §4).</summary>
+    private static void AddOrganization(this IServiceCollection services)
+    {
+        services.AddScoped<IUnitTypeRepository, UnitTypeRepository>();
+        services.AddScoped<IOrgUnitRepository, OrgUnitRepository>();
+        services.AddScoped<IBusinessRoleRepository, BusinessRoleRepository>();
+        services.AddScoped<IOrgStructureRepository, OrgStructureRepository>();
+        services.AddScoped<IUnitNumberSource, UnitNumberSource>();
     }
 
     public const int LockoutAttempts = 5;

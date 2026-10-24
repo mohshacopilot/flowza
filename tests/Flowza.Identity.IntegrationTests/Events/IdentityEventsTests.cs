@@ -132,11 +132,20 @@ public sealed class IdentityEventsTests(IdentityApp app) : IAsyncLifetime
     {
         var user = await app.CreateUserAsync("placed.secret.u");
         var branchType = UnitType.Create(Guid.NewGuid(), "BRANCH", "Branch").Value;
-        var root = OrgUnit.CreateRoot(OrgRoot.UnitId, OrgRoot.UnitNumber, OrgCode.Create(OrgRoot.Code).Value, OrgRoot.Name, OrgRoot.UnitTypeId);
-        var branch = OrgUnit.Create(Guid.NewGuid(), 2, "BR-SECRET", "Secret Branch", branchType, root).Value;
         var role = BusinessRole.Create(Guid.NewGuid(), "REVIEWER", "Secret Reviewer").Value;
+        OrgUnit branch = null!;
+        await using (var setup = app.Services.CreateAsyncScope())
+        {
+            var services = setup.ServiceProvider;
+            var root = (await services.GetRequiredService<IOrgUnitRepository>().GetAsync(OrgRoot.UnitId, Ct))!;
+            var number = await services.GetRequiredService<IUnitNumberSource>().NextAsync(Ct);
+            branch = OrgUnit.Create(Guid.NewGuid(), number, "BR-SECRET", "Secret Branch", branchType, root).Value;
+            services.GetRequiredService<IUnitTypeRepository>().Add(branchType);
+            services.GetRequiredService<IOrgUnitRepository>().Add(branch);
+            services.GetRequiredService<IBusinessRoleRepository>().Add(role);
+            (await services.GetRequiredService<IUnitOfWork>().SaveChangesAsync(Ct)).IsSuccess.ShouldBeTrue();
+        }
 
-        // Only the user is saved here: units and roles get their tables with the migration of task T005.
         var published = await PublishedWhileAsync(async () =>
         {
             await using var scope = app.Services.CreateAsyncScope();

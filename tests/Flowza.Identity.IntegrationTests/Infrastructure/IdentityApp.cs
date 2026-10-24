@@ -1,4 +1,5 @@
 using Flowza.Identity.Api;
+using Flowza.Identity.Domain.Organization;
 using Flowza.Identity.Infrastructure.Persistence;
 using Flowza.Testing;
 using Microsoft.AspNetCore.Hosting;
@@ -12,7 +13,7 @@ namespace Flowza.Identity.IntegrationTests.Infrastructure;
 /// <summary>
 /// The Identity service started in memory against <c>flowza_test_identity</c> (tech discussion T8, TE3). One instance
 /// per test collection; <see cref="ResetDataAsync"/> clears the business data between tests (Respawn), keeping the
-/// seeded roles, the OpenIddict clients and the Data Protection keys.
+/// seeded roles, the OpenIddict clients and the Data Protection keys, and restoring the installed root unit.
 /// </summary>
 public sealed class IdentityApp : WebApplicationFactory<ApiAssembly>, IAsyncLifetime
 {
@@ -41,10 +42,26 @@ public sealed class IdentityApp : WebApplicationFactory<ApiAssembly>, IAsyncLife
 
     public async Task ResetDataAsync()
     {
-        await using var connection = new SqlConnection(TestSqlServer.ConnectionString(Database));
-        await connection.OpenAsync();
-        await _respawner!.ResetAsync(connection);
+        await using (var connection = new SqlConnection(TestSqlServer.ConnectionString(Database)))
+        {
+            await connection.OpenAsync();
+            await _respawner!.ResetAsync(connection);
+        }
+
+        await RestoreInstalledOrganizationAsync();
     }
+
+    /// <summary>
+    /// Respawn empties every table, but the root unit type, the root unit and the org-structure row come with the
+    /// installation (the migration, C1). They are put back as the migration leaves them, so users can be created again.
+    /// </summary>
+    private Task<int> RestoreInstalledOrganizationAsync() => WithDbContextAsync(context =>
+    {
+        context.UnitTypes.Add(UnitType.Create(OrgRoot.UnitTypeId, OrgRoot.Code, OrgRoot.Name).Value);
+        context.OrgUnits.Add(OrgUnit.CreateRoot(OrgRoot.UnitId, OrgRoot.UnitNumber, OrgCode.Create(OrgRoot.Code).Value, OrgRoot.Name, OrgRoot.UnitTypeId));
+        context.OrgStructure.Add(new OrgStructure(OrgStructure.SingletonId));
+        return context.SaveChangesAsync();
+    });
 
     public async Task<T> WithDbContextAsync<T>(Func<IdentityServiceDbContext, Task<T>> action)
     {
