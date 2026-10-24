@@ -28,7 +28,7 @@ Nothing else: no new database, secret, library or program.
 | T008 Header and page titles | ✅ | cdbbab2 |
 | T009 Phone frame | ✅ | 9dfbe33 |
 | T010 Existing screens in the new look | ✅ | 4c83aae |
-| T011 Visual and accessibility end-to-end tests | ⬜ | |
+| T011 Visual and accessibility end-to-end tests | ✅ | 1e7e510 |
 | T012 CI look check and screenshot baselines | ⬜ | |
 | T013 Setup guide and CLAUDE.md | ⬜ | |
 | T014 Verify 007 | ⬜ | |
@@ -191,6 +191,38 @@ Nothing else: no new database, secret, library or program.
     are passed as `styles.x ?? ''`, as in `NavigationDrawer`.
   - Look check (end-to-end environment, 1280 px): home, users list, user details, create user, my profile, 404 and
     the empty search, each with axe: no findings.
+- **2026-10-23 push:** the owner asked for a push; `main` went to GitHub (`2428420..40c2e9b`, everything up to T010)
+  after a scan for secrets. **CI run #32 on `40c2e9b` is green** (4 min 57 s; seen by the owner on GitHub), so
+  T001–T010 count as done under DV4. This was a one-off OK, not O1 for T012.
+- **T011 (2026-10-23/24):** decisions inside plan §10:
+  - **Projects:** `chromium` runs the feature 001 specs once (as before); `desktop` 1280×800, `tablet` 900×1100 and
+    `phone` 375×812 (mobile, touch) run only `07-visual-design.spec.ts`. Running the 001 specs at three widths would
+    triple the run for behaviour that does not depend on the width. `toHaveScreenshot` defaults: 1 % of pixels,
+    animations off, caret hidden; comparisons only with `FLOWZA_E2E_SCREENSHOTS=1` (PA5), so a local run never
+    needs baselines.
+  - **Every screen gets the same three checks** (`expectScreen`): no sideways scrolling (`scrollWidth ≤ innerWidth`,
+    UI-05-AC1), axe (UI-06-AC1) and, when switched on, the full-page screenshot (UI-09-AC1, UI-01-AC1/AC3). Screens:
+    login, failed login, the forced change for a user created in the test, home, users list, user details, create
+    user, my profile, 404, the error page (a mocked 500 with reference `e2e00500` on `/bff/user`), the loading page
+    (`/bff/user` never answers) and the empty list. Plus the collapsed panel (desktop) and the open drawer (phone).
+  - **Same content in every run, so no masks are needed yet:** the users list is searched for `demo.example` (the
+    demo users only; earlier tests add users with random names), user details shows `demo.designer`, my profile
+    `demo.admin`, the error page a fixed reference. `expectScreen` takes masks for later screens with dates or
+    numbers.
+  - **Tab walks (UI-06-AC2):** from the top of the page, Tab until the focus leaves the page; every stop must show an
+    outline or focus shadow on the control or (side navigation) on its menu item. Login: username, password, show
+    password, Log in (and the skip link); frame: mark, items, collapse button, user menu (phone: menu button, user
+    menu).
+  - **Fixed after the first run:** two test mistakes (the Tab walk named both fields `input ""` and started after the
+    autofocused username, because `blur()` keeps the browser's starting point; two tooltips at once after the
+    collapse click) and **one real finding: at 375 px the empty users table still scrolled sideways, a scroll area
+    with nothing a keyboard can reach** (axe `scrollable-region-focusable`). An answered empty list now fits the
+    width; a list with rows keeps scrolling inside its box (component tests `UI_05_AC1_a_list_with_rows_…`,
+    `UI_06_AC1_an_empty_list_fits_the_width_…`, which fails without the fix). The switch waits for the answer,
+    because changing the scroll mode rebuilds the table.
+  - **Run:** 72 passed, 7 skipped (tests for one width only: drawer on the phone, collapse and groups on the
+    desktop, defaults not on the phone), 0 failed, 4.0 minutes. Screenshot comparisons were not run (no baselines
+    yet; they come from CI in T012).
 
 ## Phase 1: Design values (M1)
 | ID | Task | Spec IDs | Done when |
@@ -246,21 +278,21 @@ Nothing else: no new database, secret, library or program.
 ### Traceability (acceptance criteria → tasks)
 | Criterion | Task(s) | Status |
 |---|---|---|
-| UI-01-AC1 | T004, T005b, T011, T012 | 🟡 brand panel (mark, name, product line), form card and "Powered by Flowza" (`UI_01_AC1_*`, T004/T005b); workflow picture hidden from screen readers and the three highlights (`UI_01_AC1_*`, T005b); the desktop screenshot follows in T011/T012 |
+| UI-01-AC1 | T004, T005b, T011, T012 | 🟡 brand panel (mark, name, product line), form card and "Powered by Flowza" (`UI_01_AC1_*`, T004/T005b); picture hidden from screen readers and the three highlights (T005b); at desktop and tablet the panel sits beside the form, at 375 px the brand band above it with the picture and highlights left out, no sideways scrolling, axe clean (`UI_01_AC1_UI_05_AC1_UI_06_AC1_*`, end-to-end at three widths, T011); the screenshot comparison waits for the CI baselines (T012) |
 | UI-01-AC2 | T005 | ✅ mouse and keyboard (Tab, Space, Enter) switch the field, `aria-pressed` follows, the login still works with the password shown, axe clean (`UI_01_AC2_*`, end-to-end); the script is a file with its translated name (`UI_01_AC2_*`, integration) |
-| UI-01-AC3 | T004, T011, T012 | 🟡 the general error above the form in the page look, and the change-password page in the same layout (`UI_01_AC3_*`, T004); screenshots in T011/T012 |
+| UI-01-AC3 | T004, T011, T012 | 🟡 the general error inside the form card and the forced change for a freshly created user in the login look, at three widths, axe clean (`UI_01_AC3_*`, T004 and end-to-end T011); the screenshot comparison waits for the CI baselines (T012) |
 | UI-02-AC1 | T002, T010 | ✅ no screen, frame file or login page holds a colour, font, spacing or corner value of its own; the scan runs with **no exceptions** and covers the screens, the frame and the login pages (`UI_02_AC1_*`, T010); spacing and the code font come from the design values through the adapter (`UI_02_spacing_and_the_code_font_*`) |
 | UI-02-AC2 | T001, T002, T004 | ✅ the theme and `design-values.css` come from the same values and agree on brand, on-brand text and font (`UI_02_AC2_*`, T002); the login pages load `design-values.css` before their layout (`UI_02_AC2_*`, T004) |
-| UI-03-AC1 | T007, T011 | 🟡 admin sees "Administration", a User does not, current item selected with `aria-current`, mark and name on top of the panel (`UI_03_AC1_*`, component and registry tests, T007); the screenshot follows in T011 |
+| UI-03-AC1 | T007, T011 | ✅ admin sees "Administration", a User does not, the current item is selected with `aria-current` (`UI_03_AC1_*`, component and registry tests, T007; end-to-end with the demo admin and the demo designer, T011) |
 | UI-03-AC2 | T008 | ✅ the header shows the title of each page, the browser tab "<page> – <installation>" and follows navigation, the title is not a second heading, the user menu shows initials and display name and offers "My profile" and "Log out" (`UI_03_AC2_*`, component tests); initials by the C6 rule (`UI_03_AC2_initials_*`); the end-to-end helpers still find "User menu for …" |
-| UI-04-AC1 | T007, T011 | 🟡 collapsed: icons only, every item keeps its accessible name and tooltip, the choice survives a re-render from storage, the button works with Enter and Space (`UI_04_AC1_*`, T007); the real reload in a browser follows in T011 |
-| UI-04-AC2 | T007, T011 | 🟡 open at 1025 and 1280 px, collapsed at 768–1024 px, a stored choice wins, blocked or unknown storage falls back to the default (`UI_04_AC2_*`, hook tests, T007); end-to-end at 1280 and 900 px in T011 |
-| UI-05-AC1 | T009, T011 | 🟡 the frame lets wide content scroll inside its box and the users table scrolls inside itself (T009; a local look at 375 px measured a 375 px page); the automated check on every screen follows in T011 |
-| UI-05-AC2 | T009, T011 | 🟡 a phone has a menu button instead of the side panel; it opens the navigation (`aria-expanded`), choosing an item opens that screen and closes it, focus returns to the button, Escape and the close button close it (`UI_05_AC2_*`, component tests); the 375 px end-to-end test follows in T011 |
-| UI-06-AC1 | T004, T009, T011 | 🟡 contrast fixes in the frame (selected item, avatar, drawer) with unit tests; the axe checks of the end-to-end suite pass on every app page at desktop width, and a local axe check of the open phone drawer found nothing (T009); axe at phone width on every screen follows in T011 |
-| UI-06-AC2 | T004, T011 | ⬜ |
+| UI-04-AC1 | T007, T011 | ✅ collapsed: icons only (72 px), every item keeps its accessible name and its tooltip, axe clean; after a real reload still collapsed (`UI_04_AC1_*`, component tests T007, end-to-end T011) |
+| UI-04-AC2 | T007, T011 | ✅ without a remembered choice open (232 px) at 1280 px and collapsed (72 px) at 900 px (`UI_04_AC2_*`, hook tests T007, end-to-end T011) |
+| UI-05-AC1 | T009, T011 | ✅ no sideways scrolling on every screen (login, failed login, forced change, home, users list, user details, create user, my profile, 404, error, loading, empty list) at 375, 900 and 1280 px (`UI_*_UI_05_AC1_*`, end-to-end T011); wide tables scroll inside their box (`UI_05_AC1_a_list_with_rows_*`) |
+| UI-05-AC2 | T009, T011 | ✅ at 375 px the menu button opens the navigation (`aria-expanded`), choosing "Users" opens the list, closes the drawer and returns the focus to the button (`UI_05_AC2_*`, component tests T009, end-to-end T011) |
+| UI-06-AC1 | T004, T009, T011 | ✅ axe finds nothing on every screen, the collapsed panel and the open drawer, at desktop, tablet and phone width (`UI_*_UI_06_AC1_*`, end-to-end T011); the one finding (the empty table's scroll area at 375 px) was fixed (`UI_06_AC1_an_empty_list_fits_the_width_*`) |
+| UI-06-AC2 | T004, T011 | ✅ Tab through the login page and the frame at three widths: every control shows an outline or focus shadow (`UI_06_AC2_*`, end-to-end T011) |
 | UI-07-AC1 | T001 (A1) | ✅ 22 brand colours and all 256 greys reach ≥ 4.5 : 1; the theme picks the text colour (`UI_07_AC1_*`) |
-| UI-08-AC1 | T003, T004, T006 (A3) | 🟡 initials rule proven (`UI_08_AC1_*`: two, many, one word, one letter, spaces, Hindi, Tamil, accents; T003); on the login page a 100-character name is shortened by CSS and kept whole in `title` and the text (`UI_08_AC1_*`, T004); the same in the frame, full name in `title` and the link's accessible name (`UI_08_AC1_*`, T006). ✅ by tests; the visible "…" is confirmed by the screenshots in T011 |
+| UI-08-AC1 | T003, T004, T006 (A3) | 🟡 initials rule proven (`UI_08_AC1_*`: two, many, one word, one letter, spaces, Hindi, Tamil, accents; T003); on the login page a 100-character name is shortened by CSS and kept whole in `title` and the text (`UI_08_AC1_*`, T004); the same in the frame, full name in `title` and the link's accessible name (`UI_08_AC1_*`, T006). The visible "…" cannot appear in the end-to-end run, which uses the default name (A3): a hand check with a long configured name in T014 |
 | UI-08-AC2 | T003, T004, T006 | ✅ configured name and initials, default "Flowza"/"FL", anonymous → 401 (`UI_08_AC2_*`, T003); on the login page (`UI_08_AC2_*`, T004); in the frame, from the API (`UI_08_AC2_*`, T006) |
-| UI-09-AC1 | T010, T011, T012 | 🟡 every screen on cards in the new look; 403/404 with an icon in the brand colour instead of Ant Design's own pictures (`UI_09_AC1_*`, T010); empty list with `Empty`; all earlier component and end-to-end tests pass unchanged; axe clean on seven screens in a look check; the screenshots (loading and error states included) follow in T011/T012 |
+| UI-09-AC1 | T010, T011, T012 | 🟡 every screen on cards in the new look; 403/404 with a brand-coloured icon (`UI_09_AC1_*`, T010); home, users list, user details, create user, my profile, 404, error (mocked 500 with its reference code), loading (unanswered call) and empty list run at three widths with the scroll and axe checks (`UI_09_AC1_*`, end-to-end T011); the screenshot comparison waits for the CI baselines (T012) |
 | UI-10-AC1 | T012 (A2) | ⬜ |
