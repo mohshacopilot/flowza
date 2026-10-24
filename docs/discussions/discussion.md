@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Last session** | 2026-10-24, office PC: **feature 007 done** (T001–T014; T012 pushed with CI green and the 38 approved screenshots; T013–T014 committed locally, not yet pushed); next: push 007's last commits (owner's OK), then plan 002 |
+| **Last session** | 2026-10-24, office PC: **feature 007 done** (T001–T014), pushed, CI #43 green with the 38 approved screenshots; next: plan 002 |
 | **Build** | From 2026-10-21 on the **office PC** (`D:\Projects\Workflow`); the owner reviews on weekdays, full days |
 | **Git** | Local commits per task on `main`; public repository https://github.com/mohshacopilot/flowza, pushed only when the owner says so |
 
@@ -31,7 +31,7 @@ Spec Kit is postponed; we follow the same method by hand (see [CLAUDE.md](../../
    **Feature 007 is done (2026-10-24):** T001–T014 built and verified (all UI acceptance criteria ✅, code review
    handled, hand checks of long names, 200 % zoom, printing and long labels recorded in
    [tasks.md](../../specs/007-visual-design/tasks.md)). CI compares the main screens with the 38 approved screenshots
-   on every push. **Next: push the T013–T014 commits (owner's OK) and check CI is green, then plan 002** (step 3).
+   on every push. Pushed 2026-10-24 (`f116b44`), CI #43 green. **Next: plan 002** (step 3).
 2. ~~Write the specs for 002 to 006~~ **Done:** all five specs approved on 2026-10-21 (row 21).
 3. Per feature: plan → tasks → analyze → implement, building **Milestone 1** first. Next plan: **002** (`specs/002-org-hierarchy/plan.md`, skill `write-plan`). When 002 is planned, amend spec 001 for 002 C2 (a new user needs a primary unit; the first admin gets the root unit).
 

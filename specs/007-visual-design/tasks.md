@@ -301,8 +301,9 @@ Nothing else: no new database, secret, library or program.
       are not affected (CI will confirm on the next push).
     - Reduced motion has its component test (T009).
   - **After the fixes:** build 0 warnings; .NET 464 tests (463 passed, 1 skipped); web 239 tests, lint, types and
-    format clean; end-to-end 75 passed (7 width-specific skips). The screenshot comparison runs only in CI: these
-    changes are **not yet pushed**, so CI has not compared them yet.
+    format clean; end-to-end 75 passed (7 width-specific skips). Pushed with the owner's OK (`5d8e83e..f116b44`):
+    **CI #43 green** on all three jobs, so the screens still match the 38 approved screenshots after the menu and
+    print changes.
 
 ## Phase 1: Design values (M1)
 | ID | Task | Spec IDs | Done when |
