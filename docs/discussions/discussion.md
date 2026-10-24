@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Last session** | 2026-10-24, office PC: **feature 007 done** (T001–T014), pushed, CI #43 green with the 38 approved screenshots; **plan 002 drafted** (PA1–PA10 for the owner); next: owner reviews plan 002 |
+| **Last session** | 2026-10-24, office PC: **feature 007 done** (T001–T014), pushed, CI #43 green with the 38 approved screenshots; **plan 002 approved** (PA1–PA10), spec 001 amendment 1 (primary unit), **tasks 002 written** (T001–T019); next: build 002 from T001 |
 | **Build** | From 2026-10-21 on the **office PC** (`D:\Projects\Workflow`); the owner reviews on weekdays, full days |
 | **Git** | Local commits per task on `main`; public repository https://github.com/mohshacopilot/flowza, pushed only when the owner says so |
 
@@ -33,10 +33,11 @@ Spec Kit is postponed; we follow the same method by hand (see [CLAUDE.md](../../
    [tasks.md](../../specs/007-visual-design/tasks.md)). CI compares the main screens with the 38 approved screenshots
    on every push. Pushed 2026-10-24 (`f116b44`), CI #43 green. **Next: plan 002** (step 3).
 2. ~~Write the specs for 002 to 006~~ **Done:** all five specs approved on 2026-10-21 (row 21).
-3. Per feature: plan → tasks → analyze → implement, building **Milestone 1** first. **Plan 002 drafted 2026-10-24**
-   ([plan.md](../../specs/002-org-hierarchy/plan.md)): **next: the owner reviews it and answers PA1–PA10** (section 14),
-   then `tasks.md` for 002 and the spec 001 amendment for 002 C2 (PA8: a new user needs a primary unit; the first admin
-   gets the root unit).
+3. Per feature: plan → tasks → analyze → implement, building **Milestone 1** first. **Plan 002 approved 2026-10-24**
+   ([plan.md](../../specs/002-org-hierarchy/plan.md), PA1–PA10 as proposed). Spec 001 **amendment 1** done (section 12:
+   a new user needs a primary unit, the first admin gets the root unit, re-activation needs an active unit).
+   [Tasks 002](../../specs/002-org-hierarchy/tasks.md) written and analyzed (T001–T019, A1–A11): **next: build 002 from
+   T001** (skill `implement-task`). T018 needs the owner's push OK and a look at the new screenshots (O1, O2).
 
 In a new session, say:
 > Read `docs/discussions/discussion.md` and continue from "What to do next".
@@ -74,7 +75,7 @@ module. Sections marked "design notes" go into `plan.md`, never into `spec.md`.
 | 20 | Transport per deployment (owner, 2026-10-22) | ✅ **On-premises = SQL Server only, cloud = Azure Service Bus; RabbitMQ dropped and its code removed** | [ADR-0005](../decisions/0005-message-transport-selection.md) amendments 2 and 3 |
 | 21 | Specs 002–006 (ORG, EXP, APP + FRM, WF, INB + NTF) | ✅ Approved 2026-10-21; all clarifications answered "a" (002 C1–C9, 003 C1–C11, 004 C1–C13, 005 C1–C12, 006 C1–C18) | [002](../../specs/002-org-hierarchy/spec.md), [003](../../specs/003-expression-language/spec.md), [004](../../specs/004-apps-and-form-builder/spec.md), [005](../../specs/005-workflow-engine/spec.md), [006](../../specs/006-inbox-notifications/spec.md) |
 | 22 | UI: visual design (owner's request, 2026-10-23) | ✅ Decided (U1 = **A Classic enterprise**, U2–U12 "a"); spec 007 approved (C1–C7 "a"); plan 007 approved (PA1–PA6); tasks 007 written (T001–T014) | [ui-design.md](ui-design.md), [spec 007](../../specs/007-visual-design/spec.md) |
-| 23 | Plan 002 (org hierarchy) | 📝 Draft 2026-10-24, waiting for the owner (PA1–PA10) | [plan.md](../../specs/002-org-hierarchy/plan.md) |
+| 23 | Plan 002 (org hierarchy) | ✅ Approved 2026-10-24 (PA1–PA10); spec 001 amendment 1; tasks 002 written (T001–T019) | [plan.md](../../specs/002-org-hierarchy/plan.md), [tasks.md](../../specs/002-org-hierarchy/tasks.md) |
 
 ## 2. Key decisions made today (summary)
 Details and reasons are in each module file and ADR.

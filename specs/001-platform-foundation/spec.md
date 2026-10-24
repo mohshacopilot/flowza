@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | **Approved by the owner, 2026-10-21** (clarifications C1–C6 answered) |
+| **Status** | **Approved by the owner, 2026-10-21** (clarifications C1–C6 answered). **Amendment 1** (primary unit, from feature 002 C2) approved 2026-10-24 with plan 002 (PA8); see section 12 |
 | **Date** | 2026-10-21 |
 | **Modules** | IAM (Identity and access), PLT (Platform) |
 | **Scope IDs** | IAM-01 to IAM-08, PLT-01 to PLT-09 ([v0.1 scope](../v0.1-scope.md)) |
@@ -46,7 +46,7 @@ As the person installing the product, I get one administrator account so I can s
 
 ### US3: Administrators manage users and system roles (P1, IAM-02, IAM-04)
 As a Platform Admin, I create users and give them roles, so that people can use the platform without signing themselves up.
-1. **When** the admin creates a user with username, display name, email and (optionally) mobile, **then** the user can log in after setting their password.
+1. **When** the admin creates a user with username, display name, email, (optionally) mobile and a primary unit (amendment 1), **then** the user can log in after setting their password.
 2. **Given** a user, **then** the admin can give them several system roles (User, App Designer, Platform Admin); every active user has User.
 3. **When** the admin resets a password, **then** a temporary password is shown **once**, and the user must change it at their next login.
 4. **When** the admin deactivates a user who is logged in, **then** that user's next action is refused.
@@ -118,7 +118,7 @@ As a Platform Admin, I set installation-wide business settings on one screen, so
 | IAM-01 | Log in with username and password; log out. Wrong credentials give one general message | M1 |
 | IAM-02 | System roles Platform Admin, App Designer, User; a user may hold several; every active user has User; the server checks roles on every action | M1 |
 | IAM-03 | One Platform Admin exists after installation, with a random password generated at setup and shown once; it must be changed at first login (C2) | M1 |
-| IAM-04 | Admin creates, edits, activates, deactivates and re-activates users (C6); no self sign-up; usernames are 3–50 characters (letters, digits, `.` `_` `-`), unique ignoring case, and never change (C4); email is required and unique ignoring case (C3); reset gives a one-time temporary password; deactivation ends the user's session immediately; the last active Platform Admin is protected | M1 |
+| IAM-04 | Admin creates, edits, activates, deactivates and re-activates users (C6); no self sign-up; usernames are 3–50 characters (letters, digits, `.` `_` `-`), unique ignoring case, and never change (C4); email is required and unique ignoring case (C3); reset gives a one-time temporary password; deactivation ends the user's session immediately; the last active Platform Admin is protected. **Amendment 1:** a new user needs an active primary unit; the first admin gets the root unit; re-activating a user needs an active primary unit (002 C2, ORG-04-AC6) | M1 |
 | IAM-05 | Every API needs a logged-in user, except login and health checks | M1 |
 | IAM-06 | Password rules: minimum 10, no common passwords, not the username; users change their own password. **M3:** minimum length, expiry and reuse become installation settings | M1 / M3 |
 | IAM-07 | 5 wrong passwords lock the account for 15 minutes; admin can unlock; login attempts are rate-limited per network address | M1 |
@@ -187,7 +187,7 @@ From the [v0.1 scope](../v0.1-scope.md) section 6: NFR-01 (security), NFR-03 (re
 ## 8. Key entities (business view, not database design)
 | Entity | Meaning |
 |---|---|
-| **User** | A person who can log in: username (never changes), display name, email, mobile (optional), status (active/inactive/locked), system roles |
+| **User** | A person who can log in: username (never changes), display name, email, mobile (optional), status (active/inactive/locked), system roles; from feature 002 also a primary unit, a reporting manager (optional) and business roles (amendment 1) |
 | **System role** | Platform Admin, App Designer or User: what parts of the platform a user may use |
 | **Session** | A period during which a user is logged in; ends on logout, inactivity, maximum time or deactivation |
 | **Password policy** | The rules a new password must follow (fixed in M1, settings in M3) |
@@ -222,3 +222,8 @@ From the [v0.1 scope](../v0.1-scope.md) section 6: NFR-01 (security), NFR-03 (re
 - [x] Out-of-scope items are listed so nobody builds them by mistake
 - [x] All clarifications answered (C1–C6)
 - [x] Approved by the owner (2026-10-21)
+
+## 12. Amendments
+| # | Date | Change | Why | Tests |
+|---|---|---|---|---|
+| 1 | 2026-10-24 (approved with plan 002, PA8) | **Primary unit on the user screens.** Creating a user needs an active primary unit (a new required field on the create user screen); the first admin (IAM-03) gets the installation's root unit; re-activating a user (C6) is refused until their primary unit is active. User details show the user's organization (primary unit, reporting manager, business roles), which feature 002 lets the admin change | Feature 002, clarification C2 (IAM L1): every active user belongs to exactly one active primary unit, which every approver rule starts from | Carried by feature 002's **ORG-04-AC6** and ORG-04-AC5 (tasks in [002 tasks.md](../002-org-hierarchy/tasks.md)); the existing IAM-03 and IAM-04 tests are updated to give each user a primary unit and must keep passing |

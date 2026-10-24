@@ -2,11 +2,11 @@
 
 | | |
 |---|---|
-| **Status** | **Draft for the owner's review** (2026-10-24); approval items PA1–PA10 in section 14 |
+| **Status** | **Approved by the owner, 2026-10-24**, including PA1–PA10 as proposed (section 14) |
 | **Date** | 2026-10-24 |
 | **Spec** | [spec.md](spec.md) (approved 2026-10-21, C1–C9 all "a") |
 | **Inputs** | [ORG discussion](../../docs/discussions/org-hierarchy.md) (O1–O14, P1–P10, design notes in section 7), [IAM discussion](../../docs/discussions/identity-and-access.md) (L1), [WF discussion](../../docs/discussions/workflow-engine.md) (W8), [plan 001](../001-platform-foundation/plan.md), [plan 007](../007-visual-design/plan.md), [CLAUDE.md](../../CLAUDE.md) |
-| **Next** | `tasks.md` after this plan is approved; then the amendment of spec 001 for C2 (PA8) |
+| **Next** | [tasks.md](tasks.md) (written 2026-10-24); spec 001 amended for C2 the same day (PA8, spec 001 amendment 1) |
 
 > **This is the "how".** The spec says what and why; this plan chooses data, APIs, events, patterns and tests.
 > Anything here that changes a contract or the database needs the owner's approval (constitution 1.6); section 14
@@ -340,7 +340,7 @@ All of 002 is Milestone 1.
 No new configuration, program or database. The Runtime client already exists in `Identity:Clients` (001); feature
 005 will call resolve with it. CI is unchanged apart from the new tests and screenshots.
 
-## 14. Items needing the owner's approval (constitution 1.6)
+## 14. Items approved by the owner (constitution 1.6, approved 2026-10-24)
 | # | Item | Proposal |
 |---|---|---|
 | PA1 | **Identity API additions and changes** | Section 5.4, including **`primaryUnitId` required on create user** (a change of the 001 contract, used only by our web app and tests), the extended user details, `org-impact`, and 422 with lists for refused deactivations |
@@ -352,7 +352,7 @@ No new configuration, program or database. The Runtime client already exists in 
 | PA7 | **No new library** | Ant Design `Tree` (keyboard and dragging built in), `TreeSelect`, `Select`; no dnd-kit here |
 | PA8 | **Spec 001 amendment** | Section 11 wording, done after this plan is approved |
 | PA9 | **New screenshots** | Org chart, unit types and business roles at three widths join the look check; accepted after the owner sees them |
-| PA10 | **Left for plan 005** (please confirm) | Identity's endpoints for the publish-time reference check (C8, WF-04-AC5) and for the start-permission check (WF-06) are designed in plan 005, next to their only callers, instead of being built now without a user (constitution 9.1) |
+| PA10 | **Left for plan 005** (confirmed) | Identity's endpoints for the publish-time reference check (C8, WF-04-AC5) and for the start-permission check (WF-06) are designed in plan 005, next to their only callers, instead of being built now without a user (constitution 9.1) |
 
 ## 15. Risks
 | Risk | Mitigation |
