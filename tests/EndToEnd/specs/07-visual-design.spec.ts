@@ -328,7 +328,8 @@ test('UI_04_AC1_UI_03_AC1_collapsed_the_navigation_shows_icons_with_names_and_st
   page,
 }, testInfo) => {
   test.skip(widthOf(testInfo) !== 'desktop', 'Starts from the open panel of a desktop (C3).');
-  await logInToApp(page, demoAdmin.username, demoPassword, demoAdmin.displayName, '/admin/users');
+  // Demo users only, so the screenshot shows the same list in every run (earlier tests add users with random names).
+  await logInToApp(page, demoAdmin.username, demoPassword, demoAdmin.displayName, '/admin/users?search=demo.example');
   const navigation = page.getByRole('navigation', { name: 'Main navigation' });
   await expect(navigation.getByText('Administration')).toBeVisible();
   await expect(navigation.getByRole('link', { name: 'Users' })).toHaveAttribute('aria-current', 'page');
@@ -343,7 +344,8 @@ test('UI_04_AC1_UI_03_AC1_collapsed_the_navigation_shows_icons_with_names_and_st
   await expect(page.getByRole('tooltip').filter({ hasText: 'Users' })).toBeVisible();
   await expectNoAccessibilityViolations(page);
   if (compareScreenshots) {
-    await page.mouse.move(640, 400);
+    // Away from the menu and the table, so no tooltip and no highlighted row is in the picture.
+    await page.mouse.move(700, 100);
     await expect(page.getByRole('tooltip').filter({ hasText: 'Users' })).toBeHidden();
     await expect(page).toHaveScreenshot('navigation-collapsed.png');
   }
