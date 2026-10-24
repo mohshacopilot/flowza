@@ -44,6 +44,25 @@ describe('Users list', () => {
     expect(raviRow.getByText('Locked')).toBeInTheDocument();
   });
 
+  it('UI_05_AC1_a_list_with_rows_scrolls_sideways_inside_its_box', async () => {
+    listAnswers(page([listItem(asha)]));
+    renderRoutes(routes, '/admin/users');
+
+    await (await usersTable()).findByRole('link', { name: 'asha' });
+    expect(screen.getByRole('table')).toHaveStyle({ width: 'max-content' });
+  });
+
+  it('UI_06_AC1_an_empty_list_fits_the_width_so_no_scroll_area_without_focusable_content_remains', async () => {
+    listAnswers(page([]));
+    renderRoutes(routes, '/admin/users?search=nobody');
+
+    expect(await screen.findByText('No users match your search.')).toBeInTheDocument();
+    // The empty text shows while loading too; the table changes once the empty answer has arrived.
+    await vi.waitFor(() => {
+      expect(screen.getByRole('table')).not.toHaveStyle({ width: 'max-content' });
+    });
+  });
+
   it('IAM_04_search_and_status_filter_are_sent_to_the_server_and_start_at_page_1', async () => {
     const queries = listAnswers(page([listItem(asha)]));
     renderRoutes(routes, '/admin/users?page=2');

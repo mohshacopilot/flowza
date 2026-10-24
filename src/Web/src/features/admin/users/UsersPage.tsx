@@ -42,6 +42,10 @@ export function UsersPage() {
     { query: { placeholderData: keepPreviousData } },
   );
 
+  const rows = users.data?.items ?? [];
+  // Only a real empty answer: switching the scroll mode rebuilds the table, so it must not flip while loading.
+  const answeredEmpty = users.isSuccess && rows.length === 0;
+
   /** Changes the filter in the address; a new search or status starts again at page 1. */
   const update = (changes: { search?: string; status?: UserStatus | undefined; page?: number }) => {
     const next = new URLSearchParams(params);
@@ -138,10 +142,12 @@ export function UsersPage() {
         <Table<UserListItem>
           aria-label={t('users.listLabel')}
           rowKey="id"
-          // On a narrow screen the table scrolls inside itself instead of widening the whole page.
-          scroll={{ x: 'max-content' }}
+          // On a narrow screen the table scrolls inside itself instead of widening the whole page (UI-05). An empty
+          // list fits the width instead: a scroll area with nothing to focus cannot be scrolled with the keyboard
+          // (axe scrollable-region-focusable, found at phone width, T011).
+          {...(answeredEmpty ? {} : { scroll: { x: 'max-content' } })}
           columns={columns}
-          dataSource={users.data?.items ?? []}
+          dataSource={rows}
           loading={users.isFetching}
           locale={{
             emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('users.noUsers')} />,
