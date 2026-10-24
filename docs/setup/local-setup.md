@@ -93,6 +93,72 @@ Their places in the demo organization and the two reference apps (HR leave, loan
 SQL Server Management Studio) and run `docs/setup/create-databases.sql` again; the script creates only missing
 databases and never deletes one.
 
-## 5. What to tell Claude
+## 5. The look: installation name, design values, approved screenshots (feature 007)
+Background: [spec 007](../../specs/007-visual-design/spec.md) (what the look must be) and
+[plan 007](../../specs/007-visual-design/plan.md) §5 and §10 (how it is built and checked).
+
+### 5.1 The installation's name (UI-08, C7)
+The name appears on the login pages, in the side navigation and in the browser tab; its initials make the mark
+(two words "State Bank" → `SB`, one word "Flowza" → `FL`). It is a setting of the **Identity** service:
+`Installation:Name`, default `Flowza`.
+
+- **A real installation** sets it on the Identity service, in either of these:
+  - a file `appsettings.Production.json` next to Identity's program files:
+    ```json
+    { "Installation": { "Name": "State Bank of Example" } }
+    ```
+  - or the environment variable `Installation__Name` (two underscores) of the Identity service.
+- **To try a name on this PC:** change `"Name"` in
+  [src/Services/Identity/Flowza.Identity.Api/appsettings.json](../../src/Services/Identity/Flowza.Identity.Api/appsettings.json)
+  and restart the AppHost. Put it back to `Flowza` before anything is committed (`git status` shows the file as
+  changed); the repository is public, so a customer's name must never go into git.
+- **Rules:** 1 to 100 characters, not blank. A wrong value stops Identity at start-up with the message
+  `Installation:Name: The installation name must have 1 to 100 characters…`; the Aspire dashboard shows it in
+  Identity's log.
+- The web app keeps the name for up to 5 minutes, so after a change reload the page (or wait) to see it in the frame.
+- From M3 the name moves to the Settings screen (PLT-08); this setting is then no longer used.
+
+### 5.2 Changing a colour, font or size (UI-02)
+Every colour, font, size, spacing and radius lives in **one file**:
+[src/Web/src/app/theme/designValues.json](../../src/Web/src/app/theme/designValues.json). The web app's theme is made
+from it; screens and CSS files never hold a colour of their own (a test fails if one does).
+
+The login pages belong to Identity, which is built without Node, so they read a **generated copy**,
+`src/Services/Identity/Flowza.Identity.Api/wwwroot/account/assets/design-values.css`. After every change to
+`designValues.json`, regenerate it and commit both files together:
+```powershell
+cd src\Web
+npm run design:css
+```
+Never edit `design-values.css` by hand. If someone forgets this step, the test
+`UI_02_AC2_the_committed_login_css_equals_a_fresh_generation` fails (`npm test`, and CI), so the login pages and the
+app can never drift apart.
+
+A changed value usually changes the look of the main screens too, so CI's look check (5.3) turns red until the new
+look is accepted.
+
+### 5.3 Accepting a new look (UI-10, PA5)
+On every push, CI's end-to-end job compares the main screens at desktop, tablet and phone width with the **approved
+screenshots** in `tests/EndToEnd/specs/07-visual-design.spec.ts-snapshots/`. Any visible difference makes the job red.
+The red run's artifact `playwright-report` holds, for each screen that differs, the approved picture, the new one and
+a picture of the difference.
+
+- **A red run you did not expect** means something changed the look by mistake: fix the code, do not accept the new
+  pictures.
+- **A change of the look on purpose** (a new colour, a new screen, a moved button) is accepted like this:
+  1. Push the change (with the owner's OK, as always). CI's end-to-end job will be red: expected.
+  2. On GitHub: **Actions → Update screenshots → Run workflow** (branch `main`, or the branch with the change). It
+     runs the same tests on the same kind of Linux machine as CI and makes every picture anew; it never commits anything.
+  3. When it is green, download its artifact **screenshot-baselines** (a zip file) from the run's page.
+  4. The owner **looks at every new picture** and decides whether this is the approved look. Nothing is accepted
+     without that look (O2).
+  5. After the owner's OK, the pictures replace the ones in `07-visual-design.spec.ts-snapshots/` and are committed as
+     `test(ui): accept new screenshots (<what changed>)` and pushed. The next CI run is green.
+
+The pictures are always made on GitHub's Linux machine, never on this PC: Windows draws fonts slightly differently,
+so pictures from here would never match CI. For the same reason a local end-to-end run (`run-e2e.ps1`) skips the
+picture comparison and checks everything else; `FLOWZA_E2E_SCREENSHOTS=1` turns it on (CI sets it).
+
+## 6. What to tell Claude
 Only these, never passwords:
 - SQL: login name (e.g. `flowza_app`), server `localhost`

@@ -80,6 +80,7 @@ same method by hand; the file layout matches Spec Kit's, so it can be adopted la
 | Database | SQL Server; **must stay compatible with SQL Server 2019** (EF Core compatibility level 150; store JSON in `nvarchar(max)`; no 2025-only features) |
 | Frontend | React 19 + TypeScript (strict) + Vite |
 | UI library | Ant Design |
+| Visual design (spec 007, owner 2026-10-23) | **Classic enterprise** look (U1–U12): side navigation, header bar, content on cards. **Ant Design themed from one design-values file** (`src/Web/src/app/theme/designValues.json`; the adapter `antdTheme.ts` builds the theme; the login pages read a generated `design-values.css`, `npm run design:css`, drift test). No colour, font or size outside that file (stray-value test). **No Tailwind**, no web font, nothing loaded from the internet. Brand **teal** `#0F6E56` with deep teal side navigation and login panel (spec amendment 1, login option B). **Look check:** screenshot tests at desktop, tablet and phone width on every CI run; a new look is accepted only after the owner sees the images ("Update screenshots" workflow, PA5; [setup guide §5](docs/setup/local-setup.md)) |
 | Process designer | React Flow |
 | Architecture | Microservices, coarse-grained start (5 services + web app), monorepo |
 | Workflow engine | Custom engine; small BPMN-like subset (see the v0.1 scope) |
