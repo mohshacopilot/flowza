@@ -67,7 +67,7 @@ export function NavigationDrawer({ roles }: { roles: readonly string[] }) {
         styles={drawerStyles}
       >
         <div className={styles.brand}>
-          <BrandMark />
+          <BrandMark onNavigate={close} />
         </div>
         <SideNavigation roles={roles} onNavigate={close} />
       </Drawer>

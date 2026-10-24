@@ -23,6 +23,25 @@
   outline-offset: calc(-1 * var(--flowza-line-width-focus));
 }
 
+/*
+ * A long (translated) label wraps onto more lines instead of ending in "…" (spec 007 edge case, found by the T014
+ * hand check); a one-line label keeps Ant Design's row height. Collapsed, labels are hidden and the tooltip shows them.
+ */
+.navigation :global(.ant-menu:not(.ant-menu-inline-collapsed) .ant-menu-item) {
+  height: auto;
+  min-height: var(--flowza-menu-item-height);
+  padding-block: var(--flowza-padding-xxs);
+  line-height: var(--flowza-line-height);
+  white-space: normal;
+}
+
+.navigation :global(.ant-menu:not(.ant-menu-inline-collapsed) .ant-menu-title-content) {
+  overflow: visible;
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+  white-space: normal;
+}
+
 .navigation :global(.ant-menu-item-divider) {
   border-color: var(--flowza-navigation-raised);
 }

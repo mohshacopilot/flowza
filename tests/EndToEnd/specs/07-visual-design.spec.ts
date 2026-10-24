@@ -42,45 +42,76 @@ async function expectScreen(page: Page, name: string, mask: Locator[] = []): Pro
   }
 }
 
+/** What the walk below keeps in the page: each control's look without focus, and how to read a look. */
+interface FocusWalk {
+  look: (node: Element) => string;
+  rest: Map<Element, string>;
+}
+
 /**
- * Presses Tab through the page and checks that every control that gets the focus shows it: an outline or a focus
- * shadow on the control, or (side navigation) on its menu item (UI-06-AC2). Stops when the focus leaves the page.
+ * Presses Tab through the page and checks that every control that gets the focus shows it (UI-06-AC2): its outline
+ * or shadow, or (side navigation) its menu item's, must differ from how it looked before the walk, when nothing had
+ * the focus. A shadow that is always there (the selected item's bar, a primary button) is not counted as a focus
+ * sign. Stops when the focus leaves the page or comes back to the first control.
  */
 async function expectVisibleFocusOnEveryTabStop(page: Page): Promise<string[]> {
   // Start from the top of the page: blur() alone keeps the browser's Tab starting point (e.g. an autofocused field).
+  // Then remember every control's look without focus.
+  // (Functions are written inside evaluate, not passed as text: the page's Content-Security-Policy forbids eval.)
   await page.evaluate(() => {
     document.body.tabIndex = -1;
     document.body.focus();
     document.body.removeAttribute('tabindex');
+    const look = (node: Element) => {
+      const style = getComputedStyle(node);
+      const outline =
+        style.outlineStyle !== 'none' && parseFloat(style.outlineWidth) > 0
+          ? `${style.outlineStyle} ${style.outlineWidth} ${style.outlineColor}`
+          : 'none';
+      return `${outline} | ${style.boxShadow}`;
+    };
+    const rest = new Map<Element, string>();
+    for (const node of document.querySelectorAll('a[href], button, input, select, textarea, [tabindex], .ant-menu-item')) {
+      rest.set(node, look(node));
+    }
+    (window as unknown as { flowzaFocusWalk: FocusWalk }).flowzaFocusWalk = { look, rest };
   });
   const stops: string[] = [];
   for (let step = 0; step < 25; step++) {
     await page.keyboard.press('Tab');
-    const focused = await page.evaluate(() => {
+    const label = await page.evaluate(() => {
       const element = document.activeElement as HTMLElement | null;
       if (!element || element === document.body) {
         return null;
       }
-      const shows = (node: Element) => {
-        const style = getComputedStyle(node);
-        const outline = style.outlineStyle !== 'none' && parseFloat(style.outlineWidth) > 0;
-        return outline || style.boxShadow !== 'none';
-      };
-      const item = element.closest('.ant-menu-item');
       // Fields have no text of their own: name them by id, so two fields never look like the same stop.
-      const label = (
+      const text = (
         element.getAttribute('aria-label') ||
         (element instanceof HTMLInputElement ? `#${element.id || element.name}` : '') ||
         element.textContent?.trim() ||
         element.id
       ).slice(0, 40);
-      return { label: `${element.tagName.toLowerCase()} "${label}"`, visible: shows(element) || (item ? shows(item) : false) };
+      return `${element.tagName.toLowerCase()} "${text}"`;
     });
-    if (!focused || stops.includes(focused.label)) {
+    if (!label || stops.includes(label)) {
       break;
     }
-    stops.push(focused.label);
-    expect(focused.visible, `visible focus on ${focused.label}`).toBe(true);
+    stops.push(label);
+    // Polled: Ant Design moves into its focus look with a short transition.
+    await expect
+      .poll(
+        () =>
+          page.evaluate(() => {
+            const { look, rest } = (window as unknown as { flowzaFocusWalk: FocusWalk }).flowzaFocusWalk;
+            const element = document.activeElement as HTMLElement;
+            // A control drawn after the walk began has no look to compare with: then any outline or shadow counts.
+            const changed = (node: Element | null) =>
+              node !== null && (rest.has(node) ? rest.get(node) !== look(node) : look(node) !== 'none | none');
+            return changed(element) || changed(element.closest('.ant-menu-item'));
+          }),
+        { message: `visible focus on ${label}`, timeout: 2000 },
+      )
+      .toBe(true);
   }
   return stops;
 }
@@ -152,6 +183,24 @@ test('UI_01_AC3_UI_06_AC1_the_forced_password_change_has_the_login_look', async 
   await expect(page.locator('.brand-panel')).toBeVisible();
   await expect(page.locator('.form-card')).toBeVisible();
   await expectScreen(page, 'forced-password-change');
+});
+
+test('UI_01_AC2_each_show_password_button_on_the_change_page_says_which_field_it_shows', async ({ page, browser }) => {
+  const admin = await newUserPage(browser);
+  await logInToApp(admin, demoAdmin.username, demoPassword, demoAdmin.displayName);
+  const username = uniqueUsername('toggles');
+  const temporaryPassword = await createUser(admin, { username, displayName: 'Toggle Person' });
+  await admin.context().close();
+
+  await logIn(page, username, temporaryPassword);
+  await expect(page.getByRole('heading', { name: 'Choose a new password' })).toBeVisible();
+
+  // Three buttons with the same name: each is described by its field's label, so screen readers can tell them apart.
+  const toggles = page.getByRole('button', { name: 'Show password' });
+  await expect(toggles).toHaveCount(3);
+  await expect(toggles.nth(0)).toHaveAccessibleDescription('Current (temporary) password');
+  await expect(toggles.nth(1)).toHaveAccessibleDescription('New password');
+  await expect(toggles.nth(2)).toHaveAccessibleDescription('Repeat the new password');
 });
 
 test('UI_01_AC2_the_show_password_button_switches_the_field_with_the_mouse', async ({ page }) => {

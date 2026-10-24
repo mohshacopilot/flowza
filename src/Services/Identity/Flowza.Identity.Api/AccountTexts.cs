@@ -8,6 +8,9 @@ public sealed class AccountTexts
 {
     public const string SkipToContent = "Layout.SkipToContent";
 
+    /// <summary>The browser tab's title: the page's title and the installation's name (spec 007 UI-03-AC2, UI-08).</summary>
+    public const string DocumentTitle = "Layout.DocumentTitle";
+
     /// <summary>The short line about the product on the brand panel (spec 007 C1: fixed, not editable in v0.1).</summary>
     public const string ProductLine = "Layout.ProductLine";
 
@@ -52,7 +55,7 @@ public sealed class AccountTexts
     /// <summary>Every key above, for the test that checks the resource file has them all.</summary>
     public static IReadOnlyList<string> AllKeys { get; } =
     [
-        SkipToContent, ProductLine, PoweredBy, ShowPassword, WorkflowForm, WorkflowApprove, WorkflowDone,
+        SkipToContent, DocumentTitle, ProductLine, PoweredBy, ShowPassword, WorkflowForm, WorkflowApprove, WorkflowDone,
         HighlightForms, HighlightApprovals, HighlightTracking, LoginTitle, LoginIntro, LoginUsername, LoginPassword, LoginSubmit, LoginInvalid, LoginLockedOut,
         ChangePasswordTitle, ChangePasswordIntro, ChangePasswordCurrent, ChangePasswordNew, ChangePasswordConfirm,
         ChangePasswordRules, ChangePasswordSubmit, ChangePasswordMismatch, ErrorSummaryTitle,

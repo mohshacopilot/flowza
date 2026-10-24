@@ -1,12 +1,15 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Flowza.Identity.Api;
 using Flowza.Identity.Application.Abstractions;
+using Flowza.Identity.Infrastructure.Installation;
 using Flowza.Identity.IntegrationTests.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
 namespace Flowza.Identity.IntegrationTests.Installation;
@@ -24,7 +27,7 @@ public sealed class InstallationApiTests(IdentityApp app) : IAsyncLifetime
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 
     [Fact]
-    public async Task UI_08_AC2_without_a_configured_name_a_logged_in_user_gets_Flowza_and_FL()
+    public async Task UI_08_AC2_a_logged_in_user_gets_the_default_name_Flowza_and_FL()
     {
         var (_, session) = await app.UserWithSessionAsync("ravi.k");
         using var _ = session;
@@ -60,14 +63,32 @@ public sealed class InstallationApiTests(IdentityApp app) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task UI_08_AC2_the_name_set_at_installation_is_used_with_its_initials()
+    public async Task UI_08_AC2_the_name_set_at_installation_is_answered_with_its_initials()
     {
+        var (_, session) = await app.UserWithSessionAsync("ravi.k");
+        using var _ = session;
         await using var configured = WithInstallationName("State Bank of Example");
+        using var client = configured.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", session.AccessToken);
 
-        var brand = await configured.Services.GetRequiredService<IInstallationBrandSource>().GetAsync(Ct);
+        var body = await client.GetFromJsonAsync<JsonElement>(s_installation, Ct);
 
-        brand.Name.ShouldBe("State Bank of Example");
-        brand.Initials.ShouldBe("SB");
+        body.GetProperty("name").GetString().ShouldBe("State Bank of Example");
+        body.GetProperty("initials").GetString().ShouldBe("SB");
+    }
+
+    [Fact]
+    public async Task UI_08_AC2_without_the_setting_at_all_the_brand_is_Flowza_and_FL()
+    {
+        // No appsettings.json and no Installation section: the default in the options must take over (C7).
+        var builder = Host.CreateApplicationBuilder(new HostApplicationBuilderSettings { DisableDefaults = true });
+        builder.AddInstallationBrand();
+        using var host = builder.Build();
+
+        var brand = await host.Services.GetRequiredService<IInstallationBrandSource>().GetAsync(Ct);
+
+        brand.Name.ShouldBe("Flowza");
+        brand.Initials.ShouldBe("FL");
     }
 
     public static TheoryData<string> WrongNames => ["   ", new string('a', 101)];

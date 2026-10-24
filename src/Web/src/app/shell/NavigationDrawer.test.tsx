@@ -81,6 +81,19 @@ describe('Phone frame (UI-05)', () => {
     });
   });
 
+  it('UI_05_AC2_the_mark_on_the_home_page_closes_the_navigation_too', async () => {
+    renderRoutes(routes, '/');
+    const user = userEvent.setup();
+    await user.click(await menuButton());
+    const drawer = await screen.findByRole('dialog', { name: 'Navigation' });
+
+    await user.click(within(drawer).getByRole('link', { name: 'Flowza home page' }));
+
+    await vi.waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: 'Navigation' })).not.toBeInTheDocument();
+    });
+  });
+
   it('UI_05_AC2_Escape_closes_the_navigation_and_returns_focus_to_the_menu_button', async () => {
     renderRoutes(routes, '/');
     const user = userEvent.setup();

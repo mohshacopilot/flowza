@@ -10,7 +10,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>@ViewData["Title"] – @brand.Name</title>
+    <title>@T[AccountTexts.DocumentTitle, ViewData["Title"] ?? string.Empty, brand.Name]</title>
     @* Generated from the web app's design values (npm run design:css, UI-02); account.css holds the layout only.
        asp-append-version adds a hash of the file (?v=…), so browsers fetch a changed file at once after an upgrade. *@
     <link rel="stylesheet" href="/account/assets/design-values.css" asp-append-version="true" />

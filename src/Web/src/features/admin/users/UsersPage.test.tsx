@@ -63,6 +63,14 @@ describe('Users list', () => {
     });
   });
 
+  it('UI_06_AC1_a_failed_list_fits_the_width_too', async () => {
+    server.use(http.get(usersUrl, () => problem(500)));
+    renderRoutes(routes, '/admin/users');
+
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+    expect(screen.getByRole('table')).not.toHaveStyle({ width: 'max-content' });
+  });
+
   it('IAM_04_search_and_status_filter_are_sent_to_the_server_and_start_at_page_1', async () => {
     const queries = listAnswers(page([listItem(asha)]));
     renderRoutes(routes, '/admin/users?page=2');

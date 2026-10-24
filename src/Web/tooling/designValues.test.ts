@@ -85,7 +85,8 @@ const strayPatterns: { kind: string; pattern: RegExp }[] = [
   },
   { kind: 'font size', pattern: /\bfont-?size\s*:\s*(?!var\(|inherit)['"]?\d/gi },
   { kind: 'font weight', pattern: /\bfont-?weight\s*:\s*(?!var\(|inherit)['"]?\d/gi },
-  { kind: 'font family', pattern: /\bfont-?family\s*:\s*(?!var\(|inherit)\S/gi },
+  // A written family: quoted, or a bare CSS name (`Arial,`); `fontFamily: values.font.family` reads the design values.
+  { kind: 'font family', pattern: /\bfont-?family\s*:\s*(?!var\(|inherit)(?:['"]|[a-z][\w-]*\s*[;,}\n])/gi },
   { kind: 'spacing', pattern: literalSize('padding|margin|gap|row-?gap|column-?gap') },
   { kind: 'corner radius', pattern: literalSize('border-?radius') },
 ];
@@ -106,7 +107,12 @@ function scannedFiles(): string[] {
   const web = (readdirSync(new URL('src', webRoot), { recursive: true }) as string[])
     .map((path) => `src/${path.replace(/\\/g, '/')}`)
     .filter(
-      (path) => /\.(tsx|css)$/.test(path) && !/\.test\.tsx$/.test(path) && !path.startsWith('src/test/'),
+      (path) =>
+        /\.(tsx?|css)$/.test(path) &&
+        !/\.test\.tsx?$/.test(path) &&
+        !path.endsWith('.d.ts') &&
+        !path.startsWith('src/test/') &&
+        !path.startsWith('src/shared/api/generated/'),
     );
   const identity = (readdirSync(identityApi, { recursive: true }) as string[])
     .map((path) => path.replace(/\\/g, '/'))
@@ -148,6 +154,8 @@ describe('No stray visual values (UI-02-AC1)', () => {
       ),
     ).toEqual([]);
     expect(strayValues('/* brand #1f5fbf */ <a href="#main">')).toEqual([]);
+    expect(strayValues('a { font-family: Arial, sans-serif; }')).toHaveLength(1);
+    expect(strayValues('const theme = { fontFamily: values.font.family };')).toEqual([]);
   });
 
   it('UI_02_AC1_screens_and_login_pages_hold_no_colour_font_or_size_of_their_own', () => {
@@ -169,6 +177,8 @@ describe('No stray visual values (UI-02-AC1)', () => {
       'src/features/admin/users/users.module.css',
       'src/features/admin/users/UsersPage.tsx',
       'src/app/shell/AppShell.module.css',
+      'src/app/theme/antdTheme.ts',
+      'src/app/theme/shellCssVariables.ts',
       'identity/wwwroot/account/assets/account.css',
       'identity/Pages/Shared/_Layout.cshtml',
     ]) {

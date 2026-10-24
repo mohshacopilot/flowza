@@ -43,8 +43,9 @@ export function UsersPage() {
   );
 
   const rows = users.data?.items ?? [];
-  // Only a real empty answer: switching the scroll mode rebuilds the table, so it must not flip while loading.
-  const answeredEmpty = users.isSuccess && rows.length === 0;
+  // Empty once the server has answered (with no rows or with an error): switching the scroll mode rebuilds the
+  // table, so it must not flip while loading.
+  const answeredEmpty = !users.isPending && rows.length === 0;
 
   /** Changes the filter in the address; a new search or status starts again at page 1. */
   const update = (changes: { search?: string; status?: UserStatus | undefined; page?: number }) => {

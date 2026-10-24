@@ -142,7 +142,8 @@ public sealed class LoginPageLookTests(IdentityApp app) : IAsyncLifetime
 
         var html = await browser.GetStringAsync(s_login, Ct);
 
-        html.ShouldContain("<title>Log in – State Bank of Example</title>");
+        // The tab's pattern comes from the resources (NFR-10); Razor writes the dash as a character reference.
+        WebUtility.HtmlDecode(Regex.Match(html, "<title>(.*?)</title>").Groups[1].Value).ShouldBe("Log in – State Bank of Example");
         html.ShouldContain("<span class=\"brand-mark\" aria-hidden=\"true\">SB</span>");
         html.ShouldContain("<span class=\"brand-name\" title=\"State Bank of Example\">State Bank of Example</span>");
         html.ShouldContain("Powered by Flowza");

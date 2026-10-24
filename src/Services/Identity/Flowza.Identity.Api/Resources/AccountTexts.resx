@@ -15,6 +15,10 @@
   <data name="Layout.SkipToContent" xml:space="preserve">
     <value>Skip to the form</value>
   </data>
+  <data name="Layout.DocumentTitle" xml:space="preserve">
+    <value>{0} – {1}</value>
+    <comment>The browser tab: {0} the page's title, {1} the installation's name (same pattern as the web app's pageTitles.documentTitle)</comment>
+  </data>
   <data name="Layout.ProductLine" xml:space="preserve">
     <value>Requests and approvals in one place</value>
   </data>

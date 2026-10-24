@@ -33,9 +33,20 @@
   }
 }
 
+/* Printing (spec 007 edge case): no navigation or header (their own files), the content on white without shadows,
+   also when the browser prints background graphics (T014 hand check). */
 @media print {
+  .shell,
+  .main {
+    background: var(--flowza-color-bg-container);
+  }
+
   .content {
     padding: 0;
+  }
+
+  .content :global(.ant-card) {
+    box-shadow: none;
   }
 }
 

@@ -44,6 +44,13 @@
     button.setAttribute('aria-label', label);
     button.setAttribute('aria-pressed', 'false');
     button.setAttribute('aria-controls', input.id);
+    // The change-password page has three such buttons: each is described by its field's label ("Show password,
+    // New password"), so screen-reader users know which field it shows.
+    var fieldLabel = input.id ? document.querySelector('label[for="' + input.id + '"]') : null;
+    if (fieldLabel) {
+      fieldLabel.id = fieldLabel.id || input.id + '-label';
+      button.setAttribute('aria-describedby', fieldLabel.id);
+    }
     button.innerHTML = eye;
     box.appendChild(button);
 
