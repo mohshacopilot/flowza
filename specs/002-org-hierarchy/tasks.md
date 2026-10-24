@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | **Building** (written and analyzed 2026-10-24); T001–T003 done; next: T004 |
+| **Status** | **Building** (written and analyzed 2026-10-24); T001–T004 done; next: T005 |
 | **Spec / Plan** | [spec.md](spec.md) (approved 2026-10-21, C1–C9) · [plan.md](plan.md) (approved 2026-10-24, PA1–PA10) · [spec 001 amendment 1](../001-platform-foundation/spec.md) (section 12, primary unit) |
 | **Rules** | One task at a time, in order. Each task ends with: builds without warnings, lint clean, its tests pass (and all earlier tests still pass), a local commit (`feat|test|docs(identity|web|cli): … (IDs)`). Nothing is pushed without the owner's OK. Every task is Milestone 1 |
 
@@ -22,7 +22,7 @@ puts every existing user into the root unit (plan §5.2).
 | T001 Codes, unit types and business roles (domain) | ✅ | 01301f8 |
 | T002 Org units, paths and the org structure version (domain) | ✅ | a0b1686 |
 | T003 User's place in the organization, manager chain, head walk (domain) | ✅ | ed76bc9 |
-| T004 Contracts: org events and the approver rule contract | ⬜ | |
+| T004 Contracts: org events and the approver rule contract | ✅ | (this commit) |
 | T005 Database: tables, sequence, root seed, back-fill | ⬜ | |
 | T006 Unit types API | ⬜ | |
 | T007 Org units API: create, rename, head, tree, details | ⬜ | |
@@ -91,6 +91,28 @@ puts every existing user into the root unit (plan §5.2).
     "head is the requester" skip for a moment made 5 of them fail. Identity unit 196/196, Identity integration 95/95,
     Gateway integration 100/100, Platform integration 52/52 (1 skipped: Azure Service Bus), architecture 29/29,
     build 0 warnings. The 001 `UserTests` pass unchanged (they use the old `Create` until T010).
+- **T004 (2026-10-24):** decisions inside plan §§6–7:
+  - **One small addition to the PA2 shape, for the owner to confirm:** `ExplanationStep` has an optional `Number`
+    besides `Key` and `Args`. Some texts need a count that is not a user, unit, type or role (rule c: "the manager chain
+    of Ravi ends after 1 level; the rule asks for 2"). Without it the history could not show the number once the rule is
+    gone. Optional, so every other step stays `{ key, args }`.
+  - **The rule records carry no "rule type" property;** the `type` in JSON comes from `[JsonPolymorphic]` and is written
+    first. T012's registry keys resolvers by the rule's .NET type (a dictionary of `Type`), so no string matching. An
+    unknown `type` (also a wrong letter case) is a `JsonException`, a missing one a `NotSupportedException`; T012 turns
+    both into 400.
+  - **Enums in JSON are names** (`"scope": "NearestUnitOfTypeAndBelow"`, `"kind": "Unit"`) through converters on the
+    enum types themselves, so every service writes them the same way without extra options.
+  - **Unique-index errors** come from one table in the unit of work (index name part → error); T006, T007 and T009 add
+    their rows for codes. The unit of work now takes domain events from **every** tracked aggregate root.
+  - **Integration test:** the "unit-type change through the outbox" of this row needs the unit-type table (T005); it
+    moves to **T006** (added to its row). Here a user's org change (`PlaceInUnit`, `AddBusinessRole`) goes through the
+    real unit of work and outbox and is published with IDs only. Outside a request the actor is the system and there is
+    no correlation ID (as for 001's tool commands).
+  - Tests: 50 new unit tests (`ApproverRuleContractTests`, `OrgEventContractTests`, `IdentityEventMapperTests`, which
+    checks **every** domain event of the Identity domain has its integration event with the same IDs) and 1 integration
+    test. Removing one mapping and renaming the `type` property for a moment made 17 fail. Identity unit 246/246,
+    Identity integration 96/96, Gateway 100/100, Platform 52/52 (1 skipped), BuildingBlocks 107/107, architecture
+    29/29, build 0 warnings.
 
 ## Phase 1: Domain (M1)
 | ID | Task | Spec IDs | Done when |
@@ -108,7 +130,7 @@ puts every existing user into the root unit (plan §5.2).
 ## Phase 3: Admin APIs (M1)
 | ID | Task | Spec IDs | Done when |
 |---|---|---|---|
-| T006 | **Unit types API:** slices `UnitTypes/{Create,Rename,ChangeStatus,List}`; endpoints of plan §5.4 (Platform Admin); list with the number of active units; version on every change | ORG-01 | Integration `ORG_01_AC1_*` (create; duplicate in another case → validation error, also from a race through the index map), `ORG_01_AC2_*`, `ORG_01_AC3_*`, `ORG_01_AC5_*`, `ORG_01_AC6_*`; stale version → 409; non-admin → 403 |
+| T006 | **Unit types API:** slices `UnitTypes/{Create,Rename,ChangeStatus,List}`; endpoints of plan §5.4 (Platform Admin); list with the number of active units; version on every change | ORG-01 | Integration `ORG_01_AC1_*` (create; duplicate in another case → validation error, also from a race through the index map), `ORG_01_AC2_*`, `ORG_01_AC3_*`, `ORG_01_AC5_*`, `ORG_01_AC6_*`; stale version → 409; non-admin → 403; a unit-type change publishes its event through the outbox (moved from T004) |
 | T007 | **Org units API, part 1:** slices `Units/{Create,Rename,SetHead,GetTree,GetUnit,ListUnitUsers}`; create takes the next unit number and touches `OrgStructure`; tree as a flat list ordered by path | ORG-02, ORG-03 | Integration `ORG_02_AC1_*` (five levels, types in any order), `ORG_02_AC8_*` (create under an inactive unit refused), `ORG_03_AC1_*` (unique, no way to change), `ORG_03_AC2_*` (inactive head refused; head of another unit's staff; head of two units), `ORG_03_AC3_*`, `ORG_03_AC4_*`, `ORG_01_AC4_*` (inactive type refused, old units keep it); two admins renaming the same unit → second 409 |
 | T008 | **Org units API, part 2:** slices `Units/{Move,ChangeStatus}`; move loads the subtree and rewrites paths in one save; deactivate answers **422 with the active child units and active users** (first 20 of each and totals); activate under an active parent only; every structural change touches `OrgStructure` | ORG-02, O2, C3, C4 | Integration `ORG_02_AC2_*` (under itself, under a grandchild), `ORG_02_AC3_*` (the subtree's paths follow the move; the rule half is in T013), `ORG_02_AC4_*` (both lists named), `ORG_02_AC8_*` (move under an inactive unit), `ORG_02_AC9_*`; root: no move, deactivation blocked while it has active children or users; **two structural changes at the same moment → the second gets 409** (e.g. A under B and B under A started together) |
 | T009 | **Business roles API:** slices `BusinessRoles/{Create,Rename,ChangeStatus,List,GetMembers,AddMember,RemoveMember}`; members change through the `User` aggregate (`UserBusinessRolesChanged`) | ORG-05, C3, C7, P10 | Integration `ORG_05_AC1_*` (unique unchangeable code, add and remove members), `ORG_05_AC2_*` (deactivated role cannot be given), `ORG_05_AC3_*`, `ORG_05_AC4_*` (list and paged members), `ORG_05_AC5_*` (inactive user refused; re-activation) |

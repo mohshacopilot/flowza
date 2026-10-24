@@ -2,9 +2,12 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Flowza.Contracts;
 using Flowza.Contracts.Identity.Events.V1;
+using Flowza.Identity.Application.Abstractions;
+using Flowza.Identity.Domain.Organization;
 using Flowza.Identity.Domain.Users;
 using Flowza.Identity.IntegrationTests.Connect;
 using Flowza.Identity.IntegrationTests.Infrastructure;
+using Microsoft.Extensions.DependencyInjection;
 using Wolverine.Tracking;
 
 namespace Flowza.Identity.IntegrationTests.Events;
@@ -15,7 +18,14 @@ public sealed class IdentityEventsTests(IdentityApp app) : IAsyncLifetime
 {
     private static readonly string[] s_designer = ["AppDesigner"];
     private static readonly string[] s_admin = ["PlatformAdmin"];
-    private static readonly string[] s_allowedFields = ["UserId", "Roles", "EventId", "OccurredAt", "ActorId", "CorrelationId"];
+    private static readonly string[] s_allowedFields =
+    [
+        "UserId", "Roles", "EventId", "OccurredAt", "ActorId", "CorrelationId",
+
+        // Feature 002 (plan §6): the organization's IDs.
+        "PrimaryUnitId", "ManagerId", "BusinessRoleIds", "UnitId", "ParentId", "UnitTypeId", "HeadUserId",
+        "OldParentId", "NewParentId", "BusinessRoleId",
+    ];
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
@@ -114,6 +124,39 @@ public sealed class IdentityEventsTests(IdentityApp app) : IAsyncLifetime
         {
             AssertIdsOnly(published);
             published.ActorId.ShouldBe(adminUser.Id);
+        }
+    }
+
+    [Fact]
+    public async Task T004_a_change_of_a_users_place_in_the_organization_publishes_its_event_through_the_outbox()
+    {
+        var user = await app.CreateUserAsync("placed.secret.u");
+        var branchType = UnitType.Create(Guid.NewGuid(), "BRANCH", "Branch").Value;
+        var root = OrgUnit.CreateRoot(OrgRoot.UnitId, OrgRoot.UnitNumber, OrgCode.Create(OrgRoot.Code).Value, OrgRoot.Name, OrgRoot.UnitTypeId);
+        var branch = OrgUnit.Create(Guid.NewGuid(), 2, "BR-SECRET", "Secret Branch", branchType, root).Value;
+        var role = BusinessRole.Create(Guid.NewGuid(), "REVIEWER", "Secret Reviewer").Value;
+
+        // Only the user is saved here: units and roles get their tables with the migration of task T005.
+        var published = await PublishedWhileAsync(async () =>
+        {
+            await using var scope = app.Services.CreateAsyncScope();
+            var users = scope.ServiceProvider.GetRequiredService<IUserRepository>();
+            var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+            var loaded = (await users.GetAsync(user.Id, Ct))!;
+            loaded.PlaceInUnit(branch).IsSuccess.ShouldBeTrue();
+            loaded.AddBusinessRole(role).IsSuccess.ShouldBeTrue();
+            (await unitOfWork.SaveChangesAsync(Ct)).IsSuccess.ShouldBeTrue();
+        });
+
+        var placed = published.OfType<UserOrgPlacementChanged>().ShouldHaveSingleItem();
+        placed.UserId.ShouldBe(user.Id);
+        placed.PrimaryUnitId.ShouldBe(branch.Id);
+        placed.ManagerId.ShouldBeNull();
+        published.OfType<UserBusinessRolesChanged>().ShouldHaveSingleItem().BusinessRoleIds.ShouldBe([role.Id]);
+        foreach (var e in published)
+        {
+            AssertIdsOnly(e);
+            e.ActorId.ShouldBeNull(); // no logged-in user outside a request: the system acted (T036); no trace either
         }
     }
 

@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Flowza.Common.Domain;
 using Flowza.Common.Results;
 using Flowza.Common.Security;
 using Flowza.Contracts;
@@ -13,9 +14,10 @@ namespace Flowza.Identity.Infrastructure.Persistence;
 
 /// <summary>
 /// Saves a use case's changes and its integration events in one transaction through Wolverine's EF Core outbox
-/// (constitution 3.3; IAM-L5), then sends the events. Database failures we expect become errors (constitution 8.5;
-/// task T035): a newer row version is a conflict, a duplicate username or email (a race the use case's own check
-/// could not see) is the same validation error as that check gives.
+/// (constitution 3.3; IAM-L5), then sends the events. The events come from the domain events of every changed aggregate
+/// (users, unit types, org units, business roles) plus any added with <see cref="AddEvent"/>. Database failures we
+/// expect become errors (constitution 8.5; task T035): a newer row version is a conflict, a duplicate in a unique index
+/// (a race the use case's own check could not see) is the same validation error as that check gives.
 /// </summary>
 internal sealed class UnitOfWork(
     IDbContextOutbox<IdentityServiceDbContext> outbox,
@@ -25,6 +27,16 @@ internal sealed class UnitOfWork(
     // SQL Server error numbers for a duplicate key in a unique index or constraint.
     private const int DuplicateKeyInUniqueIndex = 2601;
     private const int DuplicateKeyInUniqueConstraint = 2627;
+
+    /// <summary>
+    /// The unique indexes whose duplicates are expected, by a part of the index name that SQL Server quotes in its
+    /// message, and the error each one gives. A new unique value adds a row here, nothing else changes.
+    /// </summary>
+    private static readonly (string IndexNamePart, Error Error)[] s_duplicateErrors =
+    [
+        ("NormalizedEmail", UserErrors.EmailTaken),
+        ("NormalizedUserName", UserErrors.UsernameTaken),
+    ];
 
     private readonly List<IntegrationEvent> _events = [];
 
@@ -41,8 +53,8 @@ internal sealed class UnitOfWork(
     public async Task<Result> SaveChangesAsync(CancellationToken cancellationToken)
     {
         var context = outbox.DbContext;
-        var changedUsers = context.ChangeTracker.Entries<User>().Select(e => e.Entity).ToList();
-        var events = changedUsers.SelectMany(u => u.DomainEvents).Select(IdentityEventMapper.Map).Concat(_events).ToList();
+        var aggregates = context.ChangeTracker.Entries<AggregateRoot>().Select(e => e.Entity).ToList();
+        var events = aggregates.SelectMany(a => a.DomainEvents).Select(IdentityEventMapper.Map).Concat(_events).ToList();
 
         var now = timeProvider.GetUtcNow();
         var correlationId = Activity.Current?.TraceId.ToHexString();
@@ -71,15 +83,16 @@ internal sealed class UnitOfWork(
         } sql)
         {
             // Only the index name is read; the message also quotes the duplicate value, which must not travel further.
-            return sql.Message.Contains("NormalizedEmail", StringComparison.Ordinal) ? Failed(UserErrors.EmailTaken)
-                : sql.Message.Contains("NormalizedUserName", StringComparison.Ordinal) ? Failed(UserErrors.UsernameTaken)
-                : throw new InvalidOperationException("A unique index was violated.", exception);
+            return Failed(DuplicateError(sql.Message) ?? throw new InvalidOperationException("A unique index was violated.", exception));
         }
 
         _events.Clear();
-        changedUsers.ForEach(u => u.ClearDomainEvents());
+        aggregates.ForEach(a => a.ClearDomainEvents());
         return Result.Success();
     }
+
+    private static Error? DuplicateError(string sqlMessage) =>
+        Array.Find(s_duplicateErrors, d => sqlMessage.Contains(d.IndexNamePart, StringComparison.Ordinal)).Error;
 
     // Login events happen before anyone is logged in; the user themselves is the actor.
     private static Guid? ActorOf(IntegrationEvent integrationEvent) => integrationEvent switch
