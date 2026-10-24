@@ -29,7 +29,7 @@ Nothing else: no new database, secret, library or program.
 | T009 Phone frame | ✅ | 9dfbe33 |
 | T010 Existing screens in the new look | ✅ | 4c83aae |
 | T011 Visual and accessibility end-to-end tests | ✅ | 1e7e510 |
-| T012 CI look check and screenshot baselines | ⬜ | |
+| T012 CI look check and screenshot baselines | ✅ | e06c1be, b7b45ce, 85107ea |
 | T013 Setup guide and CLAUDE.md | ⬜ | |
 | T014 Verify 007 | ⬜ | |
 
@@ -223,6 +223,28 @@ Nothing else: no new database, secret, library or program.
   - **Run:** 72 passed, 7 skipped (tests for one width only: drawer on the phone, collapse and groups on the
     desktop, defaults not on the phone), 0 failed, 4.0 minutes. Screenshot comparisons were not run (no baselines
     yet; they come from CI in T012).
+- **T012 (2026-10-24):** the owner gave O1 (push) for this task. Steps and decisions inside plan §§10 and 12:
+  - **`update-screenshots.yml`** (manual): runs the **whole** end-to-end suite like CI (so the screens show the same
+    data as when CI compares them) with `FLOWZA_E2E_SCREENSHOTS=1` and `--update-snapshots=all`, and uploads
+    `screenshot-baselines`; it never commits or pushes. The owner started it on GitHub and downloaded the zip (this PC
+    has no GitHub CLI); Claude checked the zip (only the 38 expected `.png` files) before unpacking it.
+  - **Run #1 showed one unstable picture:** `navigation-collapsed` listed users that earlier tests create with
+    random names. Fixed in the test (`b7b45ce`: search `demo.example`, mouse away from the table), run #2 made a
+    stable set. **O2: the owner looked at all 38 pictures (a review page by screen and width) and accepted them.**
+  - **Baselines committed** (`85107ea`, `test(ui): first screenshot baselines`): 12 screens × desktop/tablet/phone,
+    the collapsed panel (desktop) and the drawer (phone). CI's end-to-end step now has `FLOWZA_E2E_SCREENSHOTS=1`.
+  - **CI #35 on `main` with the baselines: green** (its first attempt was cancelled by the CI concurrency rule when
+    another run for `main` started; the re-run passed all three jobs).
+  - **Proof (UI-10-AC1):** branch `ui10-proof-one-pixel` made the header 1 px taller (`layout.headerHeight` 65);
+    CI #41 on it: **End-to-end red** with diff images in the `playwright-report` artifact (9 screens: users list,
+    user details, my profile, create user at the widths where the page grew by one row). The branch was deleted from
+    GitHub and this PC; nothing of it reached `main`.
+  - **Observed, for later:** (1) sparse screens (home, 404, error) moved by the same 1 px stayed **under the 1 %
+    tolerance** and passed; the plan's tolerance is kept (PA5), a tighter one is a decision for the owner if needed.
+    (2) CI #41's first "Build, test and coverage" failed once (exit code 2, no test named in the annotations); all
+    463 .NET tests passed locally on the same commit and the re-run was green: watch for a flaky .NET test.
+    (3) Dependabot opened pull requests that move the GitHub actions to newer versions (the "Node.js 20 is
+    deprecated" warning); they pass CI and wait for the owner.
 
 ## Phase 1: Design values (M1)
 | ID | Task | Spec IDs | Done when |
@@ -278,9 +300,9 @@ Nothing else: no new database, secret, library or program.
 ### Traceability (acceptance criteria → tasks)
 | Criterion | Task(s) | Status |
 |---|---|---|
-| UI-01-AC1 | T004, T005b, T011, T012 | 🟡 brand panel (mark, name, product line), form card and "Powered by Flowza" (`UI_01_AC1_*`, T004/T005b); picture hidden from screen readers and the three highlights (T005b); at desktop and tablet the panel sits beside the form, at 375 px the brand band above it with the picture and highlights left out, no sideways scrolling, axe clean (`UI_01_AC1_UI_05_AC1_UI_06_AC1_*`, end-to-end at three widths, T011); the screenshot comparison waits for the CI baselines (T012) |
+| UI-01-AC1 | T004, T005b, T011, T012 | ✅ brand panel (mark, name, product line), form card and "Powered by Flowza" (`UI_01_AC1_*`, T004/T005b); picture hidden from screen readers and the three highlights (T005b); beside the form at desktop and tablet, the brand band above it at 375 px, no sideways scrolling, axe clean (`UI_01_AC1_UI_05_AC1_UI_06_AC1_*`, T011); the login page matches its approved screenshot at three widths in CI (T012) |
 | UI-01-AC2 | T005 | ✅ mouse and keyboard (Tab, Space, Enter) switch the field, `aria-pressed` follows, the login still works with the password shown, axe clean (`UI_01_AC2_*`, end-to-end); the script is a file with its translated name (`UI_01_AC2_*`, integration) |
-| UI-01-AC3 | T004, T011, T012 | 🟡 the general error inside the form card and the forced change for a freshly created user in the login look, at three widths, axe clean (`UI_01_AC3_*`, T004 and end-to-end T011); the screenshot comparison waits for the CI baselines (T012) |
+| UI-01-AC3 | T004, T011, T012 | ✅ the general error inside the form card and the forced change for a freshly created user in the login look, at three widths, axe clean (`UI_01_AC3_*`, T004 and T011); both match their approved screenshots in CI (T012) |
 | UI-02-AC1 | T002, T010 | ✅ no screen, frame file or login page holds a colour, font, spacing or corner value of its own; the scan runs with **no exceptions** and covers the screens, the frame and the login pages (`UI_02_AC1_*`, T010); spacing and the code font come from the design values through the adapter (`UI_02_spacing_and_the_code_font_*`) |
 | UI-02-AC2 | T001, T002, T004 | ✅ the theme and `design-values.css` come from the same values and agree on brand, on-brand text and font (`UI_02_AC2_*`, T002); the login pages load `design-values.css` before their layout (`UI_02_AC2_*`, T004) |
 | UI-03-AC1 | T007, T011 | ✅ admin sees "Administration", a User does not, the current item is selected with `aria-current` (`UI_03_AC1_*`, component and registry tests, T007; end-to-end with the demo admin and the demo designer, T011) |
@@ -294,5 +316,5 @@ Nothing else: no new database, secret, library or program.
 | UI-07-AC1 | T001 (A1) | ✅ 22 brand colours and all 256 greys reach ≥ 4.5 : 1; the theme picks the text colour (`UI_07_AC1_*`) |
 | UI-08-AC1 | T003, T004, T006 (A3) | 🟡 initials rule proven (`UI_08_AC1_*`: two, many, one word, one letter, spaces, Hindi, Tamil, accents; T003); on the login page a 100-character name is shortened by CSS and kept whole in `title` and the text (`UI_08_AC1_*`, T004); the same in the frame, full name in `title` and the link's accessible name (`UI_08_AC1_*`, T006). The visible "…" cannot appear in the end-to-end run, which uses the default name (A3): a hand check with a long configured name in T014 |
 | UI-08-AC2 | T003, T004, T006 | ✅ configured name and initials, default "Flowza"/"FL", anonymous → 401 (`UI_08_AC2_*`, T003); on the login page (`UI_08_AC2_*`, T004); in the frame, from the API (`UI_08_AC2_*`, T006) |
-| UI-09-AC1 | T010, T011, T012 | 🟡 every screen on cards in the new look; 403/404 with a brand-coloured icon (`UI_09_AC1_*`, T010); home, users list, user details, create user, my profile, 404, error (mocked 500 with its reference code), loading (unanswered call) and empty list run at three widths with the scroll and axe checks (`UI_09_AC1_*`, end-to-end T011); the screenshot comparison waits for the CI baselines (T012) |
-| UI-10-AC1 | T012 (A2) | ⬜ |
+| UI-09-AC1 | T010, T011, T012 | ✅ every screen on cards in the new look; 403/404 with a brand-coloured icon (`UI_09_AC1_*`, T010); home, users list, user details, create user, my profile, 404, error (mocked 500 with its reference code), loading and empty list at three widths with the scroll and axe checks (T011), each matching its approved screenshot in CI (T012) |
+| UI-10-AC1 | T012 (A2) | ✅ CI's end-to-end job compares the 14 main screens with the 38 approved screenshots on every push (`FLOWZA_E2E_SCREENSHOTS=1`); CI #35 on `main` green with them; a 1-pixel-taller header on a branch turned the job red with diff images (CI #41), then the branch was deleted (T012) |
