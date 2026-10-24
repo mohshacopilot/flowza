@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | **Building** (written and analyzed 2026-10-24); T001–T006 done; next: T007 |
+| **Status** | **Building** (written and analyzed 2026-10-24); T001–T007 done; next: T008 |
 | **Spec / Plan** | [spec.md](spec.md) (approved 2026-10-21, C1–C9) · [plan.md](plan.md) (approved 2026-10-24, PA1–PA10) · [spec 001 amendment 1](../001-platform-foundation/spec.md) (section 12, primary unit) |
 | **Rules** | One task at a time, in order. Each task ends with: builds without warnings, lint clean, its tests pass (and all earlier tests still pass), a local commit (`feat|test|docs(identity|web|cli): … (IDs)`). Nothing is pushed without the owner's OK. Every task is Milestone 1 |
 
@@ -25,7 +25,7 @@ puts every existing user into the root unit (plan §5.2).
 | T004 Contracts: org events and the approver rule contract | ✅ | fc9fcc8 |
 | T005 Database: tables, sequence, root seed, back-fill | ✅ | a4ee5a5 |
 | T006 Unit types API | ✅ | 9838ef6 |
-| T007 Org units API: create, rename, head, tree, details | ⬜ | |
+| T007 Org units API: create, rename, head, tree, details | ✅ | 78e274f |
 | T008 Org units API: move, deactivate, activate | ⬜ | |
 | T009 Business roles API and members | ⬜ | |
 | T010 Users' org details, org impact and the 001 changes | ⬜ | |
@@ -156,6 +156,26 @@ puts every existing user into the root unit (plan §5.2).
     Until T007 the tests add units through the repositories. Identity unit 246/246, Identity integration 120/120,
     Gateway 100/100, Platform 52/52 (1 skipped: Azure Service Bus), BuildingBlocks 107/107, architecture 29/29, build
     0 warnings.
+- **T007 (2026-10-24):** decisions inside plan §§5.3, 5.4:
+  - **Answers of the read endpoints** (plan §5.4 lists their content): the tree items carry id, parentId, code, name,
+    unitTypeId and unitTypeName, headUserId and headDisplayName, isActive and version; the details add the type code,
+    the head's username and the number of active users; the unit's users are `{ id, username, displayName, isActive }`,
+    paged by 25 and ordered by username. Platform Admins only, so names may be shown (the App Designers' lookups with
+    names and usernames only come in T011).
+  - **The tree is ordered by path,** which guarantees "every parent before its children" (one pass to build the tree).
+    Siblings come in path order (creation order), not by name; the screen (T016) sorts siblings itself.
+  - **Records named in a request body** that do not exist are validation errors on their field (`parentId`,
+    `unitTypeId`, `headUserId` → 400), so the form shows them next to the field; a unit in the URL that does not
+    exist is 404.
+  - **Creating a unit touches `OrgStructure`;** rename and set head do not (plan §5.1). So a parent or type deactivated
+    at the same moment (T008, T006) ends in a conflict for one of the two saves.
+  - **The code is checked before a unit number is taken,** so a refused code wastes no number (numbers of later refusals
+    are lost, which is harmless).
+  - Tests: 18 new (`OrgUnitsApiTests`) plus the outbox test of create, rename and head change (`IdentityEventsTests`).
+    Removing the unit-code index mapping, the org-structure touch on create and the unknown-head check, and ordering the
+    tree by code, made 4 of them fail. Until T008/T010 the tests deactivate units and place users through the
+    repositories. Identity unit 246/246, Identity integration 139/139, Gateway 100/100, Platform 52/52 (1 skipped:
+    Azure Service Bus), BuildingBlocks 107/107, architecture 29/29, build 0 warnings.
 
 ## Phase 1: Domain (M1)
 | ID | Task | Spec IDs | Done when |
@@ -231,22 +251,22 @@ puts every existing user into the root unit (plan §5.2).
 | ORG-01-AC1 | T001, T006, T014 | 🟡 domain (T001); API: create, listed active, name required, duplicate refused also from a race through the unique index (`ORG_01_AC1_*`, T006); screen in T014 |
 | ORG-01-AC2 | T001, T006 | ✅ domain (T001); API: rename keeps the code, a sent code is ignored (`ORG_01_AC2_*`, T006) |
 | ORG-01-AC3 | T001, T006, T014 | 🟡 domain (T001); API: 422 `org.unit_type_in_use` with the active-unit count in the list (`ORG_01_AC3_*`, T006); the screen message in T014 |
-| ORG-01-AC4 | T002, T006, T007 | 🟡 domain (T002); API: deactivated once its units are inactive, the units keep it (`ORG_01_AC4_*`, T006); "not choosable for a new unit" through the API in T007 |
+| ORG-01-AC4 | T002, T006, T007 | ✅ domain (T002); API: deactivated once its units are inactive, the units keep it (`ORG_01_AC4_*`, T006); refused for a new unit, old units keep it (`ORG_01_AC4_*`, T007) |
 | ORG-01-AC5 | T001, T006 | ✅ domain (T001); API: format, length, non-ASCII letter refused, lower case stored upper case and clashing (`ORG_01_AC5_*`, T006) |
-| ORG-01-AC6 | T001, T006, T007 | 🟡 domain (T001); API: re-activated (`ORG_01_AC6_*`, T006); chosen for a new unit again through the API in T007 |
-| ORG-02-AC1 | T002, T007 | 🟡 domain: any type under any type down to level 50 (`ORG_02_AC1_*`, T002); API in T007 |
+| ORG-01-AC6 | T001, T006, T007 | ✅ domain (T001); API: re-activated (`ORG_01_AC6_*`, T006) and chosen for a new unit again (`ORG_01_AC6_*`, T007) |
+| ORG-02-AC1 | T002, T007 | ✅ domain: any type under any type down to level 50 (`ORG_02_AC1_*`, T002); API: five levels with types in any order, tree with every parent first (`ORG_02_AC1_*`, T007) |
 | ORG-02-AC2 | T002, T008, T016, T018 | 🟡 domain: under itself, a child, a grandchild refused, nothing changed (`ORG_02_AC2_*`, T002); API T008, screen T016/T018 |
 | ORG-02-AC3 | T002, T008, T013 (A2) | 🟡 domain: the whole subtree's paths follow the move (`ORG_02_AC3_*`, T002); saved in T008, rule results in T013 |
 | ORG-02-AC4 | T002, T008, T016, T018 | 🟡 domain: refused with active units or users (`ORG_02_AC4_*`, T002); the names in the answer T008, screen T016/T018 |
 | ORG-02-AC5 | T005, T008 | 🟡 database: a second unit without a parent is refused by the filtered unique index (`ORG_02_AC5_*`, T005); the API half (root cannot move, deactivation blocked) in T008 |
 | ORG-02-AC6 | T016, T018 (A5) | ⬜ |
 | ORG-02-AC7 | T005 | ✅ the migration itself leaves exactly one root unit and one unit type with code `ROOT`, fixed IDs, number 1, path `/1/`; both renamed, codes kept (`ORG_02_AC7_*`, T005) |
-| ORG-02-AC8 | T002, T007, T008 | 🟡 domain: create and move under an inactive unit refused (`ORG_02_AC8_*`, T002); API T007/T008 |
+| ORG-02-AC8 | T002, T007, T008 | 🟡 domain: create and move under an inactive unit refused (`ORG_02_AC8_*`, T002); API: create refused with `org.parent_inactive` (`ORG_02_AC8_*`, T007); the move in T008 |
 | ORG-02-AC9 | T002, T008 | 🟡 domain: re-activation under an active parent, refused under an inactive one (`ORG_02_AC9_*`, T002); API T008 |
-| ORG-03-AC1 | T007 | ⬜ |
-| ORG-03-AC2 | T002, T007 | 🟡 domain: inactive head refused, one user heads two units (`ORG_03_AC2_*`, T002); API T007 |
-| ORG-03-AC3 | T002, T007 | 🟡 domain: format and case (`ORG_03_AC3_*`, T002); the database clash in T007 |
-| ORG-03-AC4 | T002, T007, T016 | 🟡 domain: rename keeps the code, head set, changed and cleared (`ORG_03_AC4_*`, T002); API T007, screen T016 |
+| ORG-03-AC1 | T007 | ✅ unique ignoring case (also the installed `ROOT`), a sent code is ignored on rename (`ORG_03_AC1_*`, T007) |
+| ORG-03-AC2 | T002, T007 | ✅ domain (T002); API: inactive head refused (422), unknown head refused (400), a head working in another unit heads two units (`ORG_03_AC2_*`, T007) |
+| ORG-03-AC3 | T002, T007 | ✅ domain (T002); API: format, length, non-ASCII refused; lower case stored upper case and clashing, also from a race through the unique index (`ORG_03_AC3_*`, T007) |
+| ORG-03-AC4 | T002, T007, T016 | 🟡 domain (T002); API: rename, head set, changed and cleared (`ORG_03_AC4_*`, T007); screen T016 |
 | ORG-04-AC1 | T003, T005 (A7), T010 | 🟡 domain: created in and moved only to an active unit (`ORG_04_AC1_*`, T003); back-fill: every user made before 002, active or not, gets the root unit (`ORG_04_AC1_*`, T005); API T010 |
 | ORG-04-AC2 | T003, T010, T015 | 🟡 domain: direct loop and loop through a chain refused (`ORG_04_AC2_*`, T003); API T010, screen T015 |
 | ORG-04-AC3 | T003, T010 | 🟡 domain: own manager refused (`ORG_04_AC3_*`, T003); API T010 |
