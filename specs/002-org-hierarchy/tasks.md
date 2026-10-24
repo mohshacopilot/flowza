@@ -19,7 +19,7 @@ puts every existing user into the root unit (plan §5.2).
 ## Progress
 | Task | Status | Commit |
 |---|---|---|
-| T001 Codes, unit types and business roles (domain) | ✅ | see the T001 commit (`feat(identity): … T001`) |
+| T001 Codes, unit types and business roles (domain) | ✅ | 01301f8 |
 | T002 Org units, paths and the org structure version (domain) | ⬜ | |
 | T003 User's place in the organization, manager chain, head walk (domain) | ⬜ | |
 | T004 Contracts: org events and the approver rule contract | ⬜ | |
