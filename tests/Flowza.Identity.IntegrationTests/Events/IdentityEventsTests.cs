@@ -170,6 +170,40 @@ public sealed class IdentityEventsTests(IdentityApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task T006_unit_type_changes_publish_their_events_through_the_outbox_with_the_admin_as_actor()
+    {
+        var (adminUser, admin) = await app.UserWithSessionAsync("types.events.admin", SystemRole.PlatformAdmin);
+        using var _ = admin;
+        Guid id = default;
+
+        var created = await PublishedWhileAsync(async () =>
+        {
+            var response = await admin.Client.PostAsJsonAsync(new Uri("/api/v1/unit-types", UriKind.Relative), new { code = "ZONE", name = "Secret Zone" }, Ct);
+            id = (await response.Content.ReadFromJsonAsync<JsonElement>(Ct)).GetProperty("id").GetGuid();
+        });
+        created.OfType<UnitTypeCreated>().ShouldHaveSingleItem().UnitTypeId.ShouldBe(id);
+
+        var renamed = await PublishedWhileAsync(async () => await admin.Client.PutAsJsonAsync(
+            new Uri($"/api/v1/unit-types/{id}", UriKind.Relative), new { name = "Secret Area", version = await UnitTypeVersionAsync(admin, id) }, Ct));
+        renamed.OfType<UnitTypeRenamed>().ShouldHaveSingleItem().UnitTypeId.ShouldBe(id);
+
+        var deactivated = await PublishedWhileAsync(async () => await admin.Client.PostAsJsonAsync(
+            new Uri($"/api/v1/unit-types/{id}/deactivate", UriKind.Relative), new { version = await UnitTypeVersionAsync(admin, id) }, Ct));
+        deactivated.OfType<UnitTypeDeactivated>().ShouldHaveSingleItem().UnitTypeId.ShouldBe(id);
+
+        var activated = await PublishedWhileAsync(async () => await admin.Client.PostAsJsonAsync(
+            new Uri($"/api/v1/unit-types/{id}/activate", UriKind.Relative), new { version = await UnitTypeVersionAsync(admin, id) }, Ct));
+        activated.OfType<UnitTypeActivated>().ShouldHaveSingleItem().UnitTypeId.ShouldBe(id);
+
+        foreach (var published in created.Concat(renamed).Concat(deactivated).Concat(activated))
+        {
+            AssertIdsOnly(published);
+            published.ActorId.ShouldBe(adminUser.Id);
+            published.CorrelationId.ShouldNotBeNullOrEmpty();
+        }
+    }
+
+    [Fact]
     public async Task A_refused_change_publishes_nothing()
     {
         var (adminUser, admin) = await app.UserWithSessionAsync("only.admin", SystemRole.PlatformAdmin);
@@ -197,6 +231,12 @@ public sealed class IdentityEventsTests(IdentityApp app) : IAsyncLifetime
             .Select(record => record.Envelope?.Message)
             .OfType<IntegrationEvent>()
             .DistinctBy(e => e.EventId)];
+    }
+
+    private static async Task<string?> UnitTypeVersionAsync(ApiSession admin, Guid id)
+    {
+        var list = await admin.Client.GetFromJsonAsync<JsonElement>(new Uri("/api/v1/unit-types", UriKind.Relative), Ct);
+        return list.EnumerateArray().Single(t => t.GetProperty("id").GetGuid() == id).GetProperty("version").GetString();
     }
 
     private static void AssertIdsOnly(IntegrationEvent published)

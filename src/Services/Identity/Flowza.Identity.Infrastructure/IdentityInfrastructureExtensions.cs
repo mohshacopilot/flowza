@@ -1,5 +1,6 @@
 using Flowza.Common.Ids;
 using Flowza.Identity.Application.Abstractions;
+using Flowza.Identity.Application.Organization.UnitTypes;
 using Flowza.Identity.Application.Users;
 using Flowza.Identity.Domain.Users;
 using Flowza.Identity.Domain.Users.Passwords;
@@ -147,6 +148,7 @@ public static class IdentityInfrastructureExtensions
     private static void AddOrganization(this IServiceCollection services)
     {
         services.AddScoped<IUnitTypeRepository, UnitTypeRepository>();
+        services.AddScoped<IUnitTypeReadStore, UnitTypeReadStore>();
         services.AddScoped<IOrgUnitRepository, OrgUnitRepository>();
         services.AddScoped<IBusinessRoleRepository, BusinessRoleRepository>();
         services.AddScoped<IOrgStructureRepository, OrgStructureRepository>();

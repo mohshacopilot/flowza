@@ -18,6 +18,14 @@ public static class OrgErrors
         "org.name_invalid",
         $"A name is required and has at most {OrgName.MaxLength} characters.");
 
+    /// <summary>ORG-01-AC1, ORG-01-AC5: unit type codes are unique, ignoring letter case.</summary>
+    public static Error UnitTypeCodeTaken { get; } = Field(
+        "code",
+        "org.unit_type_code_taken",
+        "Another unit type already has this code (codes ignore letter case).");
+
+    public static Error UnitTypeNotFound { get; } = Error.NotFound("org.unit_type_not_found", "The unit type was not found.");
+
     // Rule refusals are Failure (HTTP 422, plan 002 §5.4); Conflict (409) stays for "changed by someone else".
 
     /// <summary>P9: a unit type stays active while active units use it.</summary>

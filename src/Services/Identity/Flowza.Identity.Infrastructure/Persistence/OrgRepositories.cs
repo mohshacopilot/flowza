@@ -15,6 +15,9 @@ internal sealed class UnitTypeRepository(IdentityServiceDbContext context) : IUn
     public Task<bool> IsCodeTakenAsync(OrgCode code, CancellationToken cancellationToken) =>
         context.UnitTypes.AnyAsync(t => t.Code == code, cancellationToken);
 
+    public Task<int> CountActiveUnitsAsync(Guid unitTypeId, CancellationToken cancellationToken) =>
+        context.OrgUnits.CountAsync(u => u.UnitTypeId == unitTypeId && u.IsActive, cancellationToken);
+
     public void Add(UnitType unitType) => context.UnitTypes.Add(unitType);
 
     public void SetExpectedVersion(UnitType unitType, byte[] rowVersion) => context.SetExpectedRowVersion(unitType, rowVersion);

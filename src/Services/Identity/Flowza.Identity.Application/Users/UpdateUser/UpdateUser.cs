@@ -12,18 +12,13 @@ public sealed record UpdateUserCommand(Guid Id, string? DisplayName, string? Ema
 
 public sealed class UpdateUserHandler(IUserRepository users, IUnitOfWork unitOfWork)
 {
-    public static Error VersionRequired { get; } = Error.Validation(
-        "common.version_required",
-        "The version of the record you edited is missing.",
-        new Dictionary<string, string[]> { ["version"] = ["common.version_required"] });
-
     public async Task<Result> Handle(UpdateUserCommand command, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(command);
-        var version = UserVersion.Decode(command.Version);
+        var version = RecordVersion.Decode(command.Version);
         if (version is null)
         {
-            return VersionRequired;
+            return RecordVersion.Required;
         }
 
         var user = await users.GetAsync(command.Id, cancellationToken);

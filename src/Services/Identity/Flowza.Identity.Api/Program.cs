@@ -2,6 +2,7 @@ using Flowza.Identity.Api;
 using Flowza.Identity.Api.Connect;
 using Flowza.Identity.Api.Installation;
 using Flowza.Identity.Api.Me;
+using Flowza.Identity.Api.Organization;
 using Flowza.Identity.Api.Users;
 using Flowza.Identity.Infrastructure;
 using Flowza.Identity.Infrastructure.Installation;
@@ -48,6 +49,7 @@ app.MapFlowzaDefaultEndpoints();
 app.MapConnectEndpoints();
 app.MapRazorPages();
 app.MapUserEndpoints();
+app.MapUnitTypeEndpoints();
 app.MapMeEndpoints();
 app.MapInstallationEndpoints();
 

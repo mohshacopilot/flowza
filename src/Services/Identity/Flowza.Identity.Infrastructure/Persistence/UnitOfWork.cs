@@ -5,6 +5,7 @@ using Flowza.Common.Security;
 using Flowza.Contracts;
 using Flowza.Identity.Application.Abstractions;
 using Flowza.Identity.Application.Events;
+using Flowza.Identity.Domain.Organization;
 using Flowza.Identity.Domain.Users;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -29,13 +30,14 @@ internal sealed class UnitOfWork(
     private const int DuplicateKeyInUniqueConstraint = 2627;
 
     /// <summary>
-    /// The unique indexes whose duplicates are expected, by a part of the index name that SQL Server quotes in its
-    /// message, and the error each one gives. A new unique value adds a row here, nothing else changes.
+    /// The unique indexes whose duplicates are expected, by the index name that SQL Server quotes in its message, and
+    /// the error each one gives. A new unique value adds a row here, nothing else changes.
     /// </summary>
-    private static readonly (string IndexNamePart, Error Error)[] s_duplicateErrors =
+    private static readonly (string IndexName, Error Error)[] s_duplicateErrors =
     [
-        ("NormalizedEmail", UserErrors.EmailTaken),
-        ("NormalizedUserName", UserErrors.UsernameTaken),
+        ("IX_Users_NormalizedEmail", UserErrors.EmailTaken),
+        ("IX_Users_NormalizedUserName", UserErrors.UsernameTaken),
+        ("IX_UnitTypes_Code", OrgErrors.UnitTypeCodeTaken),
     ];
 
     private readonly List<IntegrationEvent> _events = [];
@@ -91,8 +93,9 @@ internal sealed class UnitOfWork(
         return Result.Success();
     }
 
+    // The name is matched with its quotes, so IX_OrgUnits_Code can never match IX_OrgUnits_CodeX or a quoted value.
     private static Error? DuplicateError(string sqlMessage) =>
-        Array.Find(s_duplicateErrors, d => sqlMessage.Contains(d.IndexNamePart, StringComparison.Ordinal)).Error;
+        Array.Find(s_duplicateErrors, d => sqlMessage.Contains($"'{d.IndexName}'", StringComparison.Ordinal)).Error;
 
     // Login events happen before anyone is logged in; the user themselves is the actor.
     private static Guid? ActorOf(IntegrationEvent integrationEvent) => integrationEvent switch

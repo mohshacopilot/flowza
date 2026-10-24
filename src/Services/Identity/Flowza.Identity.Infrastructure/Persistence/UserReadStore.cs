@@ -1,4 +1,5 @@
 using Flowza.Common.Paging;
+using Flowza.Identity.Application;
 using Flowza.Identity.Application.Users;
 using Flowza.Identity.Domain.Users;
 using Flowza.Persistence;
@@ -92,7 +93,7 @@ internal sealed class UserReadStore(IdentityServiceDbContext context, TimeProvid
                 RoleNamesOf(row.RoleIds),
                 StatusOf(row.IsActive, row.LockoutEnd, now),
                 row.MustChangePassword,
-                UserVersion.Encode(row.RowVersion));
+                RecordVersion.Encode(row.RowVersion));
     }
 
     private static List<string> RoleNamesOf(List<Guid> roleIds) =>

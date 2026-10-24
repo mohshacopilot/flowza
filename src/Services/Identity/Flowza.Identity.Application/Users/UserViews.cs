@@ -42,20 +42,3 @@ public interface IUserReadStore
 
     Task<UserDetails?> GetAsync(Guid id, CancellationToken cancellationToken);
 }
-
-/// <summary>The row version travels as base64 text.</summary>
-public static class UserVersion
-{
-    public static string Encode(byte[]? rowVersion) => rowVersion is null ? string.Empty : Convert.ToBase64String(rowVersion);
-
-    public static byte[]? Decode(string? version)
-    {
-        if (string.IsNullOrWhiteSpace(version))
-        {
-            return null;
-        }
-
-        var buffer = new byte[version.Length];
-        return Convert.TryFromBase64String(version, buffer, out var written) && written == 8 ? buffer[..written] : null;
-    }
-}

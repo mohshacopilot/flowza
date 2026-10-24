@@ -12,6 +12,9 @@ public interface IUnitTypeRepository
 
     Task<bool> IsCodeTakenAsync(OrgCode code, CancellationToken cancellationToken);
 
+    /// <summary>Active org units of this type (P9). Index seek on the units' type.</summary>
+    Task<int> CountActiveUnitsAsync(Guid unitTypeId, CancellationToken cancellationToken);
+
     void Add(UnitType unitType);
 
     /// <summary>The row version the client last saw (constitution 8.5).</summary>
