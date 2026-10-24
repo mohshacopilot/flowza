@@ -146,7 +146,12 @@ jobs:
           npx playwright install --with-deps chromium
 
       # Builds, empties the flowza_test_* databases, starts the AppHost on them, loads the demo data, runs Playwright.
+      # The look check (spec 007 UI-10): the main screens are compared with the approved screenshots in
+      # tests/EndToEnd/specs/07-visual-design.spec.ts-snapshots; a difference fails the job and the report below keeps
+      # the expected, actual and diff images. A new look is accepted with the "Update screenshots" workflow.
       - name: Run the end-to-end tests
+        env:
+          FLOWZA_E2E_SCREENSHOTS: '1'
         run: pwsh -NoProfile -File tests/EndToEnd/run-e2e.ps1
 
       - name: Upload the Playwright report
