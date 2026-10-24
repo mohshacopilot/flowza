@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | **Written and analyzed 2026-10-24**; next: build from T001 (skill `implement-task`) |
+| **Status** | **Building** (written and analyzed 2026-10-24); T001 done; next: T002 |
 | **Spec / Plan** | [spec.md](spec.md) (approved 2026-10-21, C1–C9) · [plan.md](plan.md) (approved 2026-10-24, PA1–PA10) · [spec 001 amendment 1](../001-platform-foundation/spec.md) (section 12, primary unit) |
 | **Rules** | One task at a time, in order. Each task ends with: builds without warnings, lint clean, its tests pass (and all earlier tests still pass), a local commit (`feat|test|docs(identity|web|cli): … (IDs)`). Nothing is pushed without the owner's OK. Every task is Milestone 1 |
 
@@ -19,7 +19,7 @@ puts every existing user into the root unit (plan §5.2).
 ## Progress
 | Task | Status | Commit |
 |---|---|---|
-| T001 Codes, unit types and business roles (domain) | ⬜ | |
+| T001 Codes, unit types and business roles (domain) | ✅ | see the T001 commit (`feat(identity): … T001`) |
 | T002 Org units, paths and the org structure version (domain) | ⬜ | |
 | T003 User's place in the organization, manager chain, head walk (domain) | ⬜ | |
 | T004 Contracts: org events and the approver rule contract | ⬜ | |
@@ -40,7 +40,17 @@ puts every existing user into the root unit (plan §5.2).
 | T019 Verify 002 | ⬜ | |
 
 **Progress notes**
-- (filled in as tasks are done)
+- **T001 (2026-10-24):** decisions inside plan §5.1:
+  - **Codes are ASCII only** (letters A–Z, digits, `-`, `_`), the same rule as usernames (001 C4): P7 says "letters",
+    and letters from other scripts could imitate another code (a Greek `Ζ` looks like `Z`; test
+    `ORG_01_AC5_codes_outside_the_format_are_rejected`). Upper case is stored, so equal codes are equal records.
+  - **`OrgName`** (1–100 characters, trimmed) is one small shared check for unit types, units and roles, so the three
+    aggregates do not each repeat it; no shared base class (composition over inheritance).
+  - Deactivating or activating twice is a no-op without an event (as for users in 001). The P9 message does not
+    quote the number of units; the API (T006) can add the list if the owner wants it.
+  - Tests: 21 new unit tests (`OrgCodeTests`, `UnitTypeTests`, `BusinessRoleTests`); breaking the upper-casing and
+    the P9 check for a moment made 8 of them fail. Identity unit tests 122/122, architecture tests 29/29, build 0
+    warnings.
 
 ## Phase 1: Domain (M1)
 | ID | Task | Spec IDs | Done when |
@@ -113,12 +123,12 @@ puts every existing user into the root unit (plan §5.2).
 ### Traceability (acceptance criteria → tasks)
 | Criterion | Task(s) | Status |
 |---|---|---|
-| ORG-01-AC1 | T001, T006, T014 | ⬜ |
-| ORG-01-AC2 | T001, T006 | ⬜ |
-| ORG-01-AC3 | T001, T006, T014 | ⬜ |
+| ORG-01-AC1 | T001, T006, T014 | 🟡 domain: created active with code and name, name required (`ORG_01_AC1_*`, T001); duplicate rejection in T006, screen in T014 |
+| ORG-01-AC2 | T001, T006 | 🟡 domain: rename keeps the code, no public way to change it (`ORG_01_AC2_*`, T001); API in T006 |
+| ORG-01-AC3 | T001, T006, T014 | 🟡 domain: refused while active units use it (`ORG_01_AC3_*`, T001); the count from the database in T006 |
 | ORG-01-AC4 | T002, T007 | ⬜ |
-| ORG-01-AC5 | T001, T006 | ⬜ |
-| ORG-01-AC6 | T001, T006 | ⬜ |
+| ORG-01-AC5 | T001, T006 | 🟡 domain: format, length, lower case stored upper case and equal (`ORG_01_AC5_*`, T001); the clash in the database in T006 |
+| ORG-01-AC6 | T001, T006 | 🟡 domain: re-activation (`ORG_01_AC6_*`, T001); "choosable again" in T006/T007 |
 | ORG-02-AC1 | T002, T007 | ⬜ |
 | ORG-02-AC2 | T002, T008, T016, T018 | ⬜ |
 | ORG-02-AC3 | T008, T013 (A2) | ⬜ |
@@ -141,9 +151,9 @@ puts every existing user into the root unit (plan §5.2).
 | ORG-04-AC7 | T003, T010, T015 | ⬜ |
 | ORG-05-AC1 | T009, T014 | ⬜ |
 | ORG-05-AC2 | T003, T009, T013 | ⬜ |
-| ORG-05-AC3 | T001, T009 | ⬜ |
+| ORG-05-AC3 | T001, T009 | 🟡 domain: format and case (`ORG_05_AC3_*`, T001); API in T009 |
 | ORG-05-AC4 | T009, T014 | ⬜ |
-| ORG-05-AC5 | T001, T003, T009, T013 | ⬜ |
+| ORG-05-AC5 | T001, T003, T009, T013 | 🟡 domain: role re-activation (`ORG_05_AC5_*`, T001); inactive member T003, API T009, rule f T013 |
 | ORG-06-AC-a1, a2 | T012 | ⬜ |
 | ORG-06-AC-b1, b2 | T012 | ⬜ |
 | ORG-06-AC-c1 … c4 | T003, T012 | ⬜ |
