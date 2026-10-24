@@ -60,6 +60,40 @@ public static class OrgErrors
         "org.head_inactive",
         "The head of a unit must be an active user.");
 
+    /// <summary>ORG-04-AC1, C2: a user's primary unit is active (also needed to re-activate the user).</summary>
+    public static Error PrimaryUnitInactive { get; } = Field(
+        "primaryUnitId",
+        "org.primary_unit_inactive",
+        "The primary unit must be an active unit.");
+
+    /// <summary>ORG-04-AC3.</summary>
+    public static Error ManagerIsSelf { get; } = Field(
+        "managerId",
+        "org.manager_is_self",
+        "A user cannot be their own reporting manager.");
+
+    /// <summary>C7, ORG-04-AC7.</summary>
+    public static Error ManagerInactive { get; } = Field(
+        "managerId",
+        "org.manager_inactive",
+        "The reporting manager must be an active user.");
+
+    /// <summary>ORG-04-AC2: the user already appears above the chosen manager.</summary>
+    public static Error ReportingLoop { get; } = Field(
+        "managerId",
+        "org.reporting_loop",
+        "This manager reports to the user, directly or through others. Choose another manager.");
+
+    /// <summary>P10, ORG-05-AC2: a deactivated role cannot be given to users.</summary>
+    public static Error BusinessRoleInactive { get; } = Error.Failure(
+        "org.business_role_inactive",
+        "This business role is deactivated and cannot be given to users.");
+
+    /// <summary>C7, ORG-05-AC5: only active users receive business roles.</summary>
+    public static Error MemberInactive { get; } = Error.Failure(
+        "org.member_inactive",
+        "Only active users can be given a business role.");
+
     private static Error Field(string field, string code, string message) =>
         Error.Validation(code, message, new Dictionary<string, string[]> { [field] = [code] });
 }

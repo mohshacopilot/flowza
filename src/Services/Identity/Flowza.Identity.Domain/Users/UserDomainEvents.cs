@@ -18,3 +18,9 @@ public sealed record UserActivatedDomainEvent(Guid UserId) : IDomainEvent;
 public sealed record UserPasswordChangedDomainEvent(Guid UserId) : IDomainEvent;
 
 public sealed record UserPasswordResetDomainEvent(Guid UserId) : IDomainEvent;
+
+/// <summary>The user's primary unit or reporting manager changed (plan 002 §6).</summary>
+public sealed record UserOrgPlacementChangedDomainEvent(Guid UserId, Guid PrimaryUnitId, Guid? ManagerId) : IDomainEvent;
+
+/// <summary>The user's business roles now are <paramref name="BusinessRoleIds"/> (plan 002 §6).</summary>
+public sealed record UserBusinessRolesChangedDomainEvent(Guid UserId, IReadOnlyList<Guid> BusinessRoleIds) : IDomainEvent;

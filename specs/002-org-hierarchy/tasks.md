@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | **Building** (written and analyzed 2026-10-24); T001–T002 done; next: T003 |
+| **Status** | **Building** (written and analyzed 2026-10-24); T001–T003 done; next: T004 |
 | **Spec / Plan** | [spec.md](spec.md) (approved 2026-10-21, C1–C9) · [plan.md](plan.md) (approved 2026-10-24, PA1–PA10) · [spec 001 amendment 1](../001-platform-foundation/spec.md) (section 12, primary unit) |
 | **Rules** | One task at a time, in order. Each task ends with: builds without warnings, lint clean, its tests pass (and all earlier tests still pass), a local commit (`feat|test|docs(identity|web|cli): … (IDs)`). Nothing is pushed without the owner's OK. Every task is Milestone 1 |
 
@@ -21,7 +21,7 @@ puts every existing user into the root unit (plan §5.2).
 |---|---|---|
 | T001 Codes, unit types and business roles (domain) | ✅ | 01301f8 |
 | T002 Org units, paths and the org structure version (domain) | ✅ | a0b1686 |
-| T003 User's place in the organization, manager chain, head walk (domain) | ⬜ | |
+| T003 User's place in the organization, manager chain, head walk (domain) | ✅ | (this commit) |
 | T004 Contracts: org events and the approver rule contract | ⬜ | |
 | T005 Database: tables, sequence, root seed, back-fill | ⬜ | |
 | T006 Unit types API | ⬜ | |
@@ -69,6 +69,28 @@ puts every existing user into the root unit (plan §5.2).
   - Tests: 40 new (`UnitPathTests`, `OrgUnitTests`) on part of the spec's example tree; removing the own-subtree check
     and the inactive-parent check for a moment made 2 of them fail. Identity unit tests 162/162, architecture 29/29,
     build 0 warnings.
+- **T003 (2026-10-24):** decisions inside plan §5.1:
+  - **Two steps for the 001 signatures, so every task stays green:** the new `User.Create(…, OrgUnit primaryUnit)` and
+    `User.Activate(OrgUnit primaryUnit)` are added **beside** the 001 forms. The 001 handlers can pass a unit only once
+    the database (T005) and their own change (T010) exist. Until then the old `Create` puts the user into the installed
+    root unit (`OrgRoot.UnitId`, the same as the T005 back-fill) and the old `Activate()` has no unit check.
+    **T010 removes both old forms** (added to its row below).
+  - **EF ignores the new user members until T005:** `PrimaryUnitId`, `ManagerId`, the business-role list and the
+    `UserBusinessRoleAssignment` type itself (EF picks types up by convention, as for `SystemRole`). **T005 removes these
+    ignores** with the migration. The PLT-03 tests show the model is unchanged in between.
+  - **`OrgRoot`** (fixed IDs, code `ROOT`, name "Organization", number 1; PA5) lives in the domain now, because the old
+    `Create` needs the root's ID; T005 seeds the same values.
+  - **`ManagerChain`** is built step by step (`Builder.TryAdd`), so T010 and rule c can read one manager at a time from
+    the database (an index seek each) and still get the visited set and the limit (100 steps). A broken chain counts as a
+    loop for `SetManager`. **`HeadWalk`** works on IDs and active flags only; names for the explanation come in T012.
+  - **Errors on fields:** primary unit and manager errors are validation errors on `primaryUnitId` / `managerId`, so the
+    user screen (T015) shows them next to the field; role refusals are `Failure` (422).
+  - **`SetBusinessRoles` keeps a role the user already holds even when it was deactivated later** (members keep it,
+    ORG-05 P10: the role is only ignored by rule f); only newly given roles must be active. All or nothing.
+  - Tests: 34 new (`UserOrganizationTests`, `ManagerChainTests`, `HeadWalkTests`); dropping the loop check and the
+    "head is the requester" skip for a moment made 5 of them fail. Identity unit 196/196, Identity integration 95/95,
+    Gateway integration 100/100, Platform integration 52/52 (1 skipped: Azure Service Bus), architecture 29/29,
+    build 0 warnings. The 001 `UserTests` pass unchanged (they use the old `Create` until T010).
 
 ## Phase 1: Domain (M1)
 | ID | Task | Spec IDs | Done when |
@@ -81,7 +103,7 @@ puts every existing user into the root unit (plan §5.2).
 | ID | Task | Spec IDs | Done when |
 |---|---|---|---|
 | T004 | **Contracts:** `Flowza.Contracts.Identity.Events.V1/OrgEvents.cs` (the 16 events of plan §6, IDs only); `Flowza.Contracts.Identity.ApproverRules.V1` (`ApproverRule` with `[JsonPolymorphic]` on `type` and the seven rule records, `RoleScope`, `ResolveRequest`, `ResolveResult`, `ExplanationStep`, `OrgRef`, PA2); `IdentityEventMapper` maps the new domain events; `UnitOfWork` takes events from **every** changed aggregate root and maps unique indexes to errors through a table (index name → error) | ORG-01–ORG-06 (PA2, PA3) | Unit tests: every rule shape of plan §7 round-trips through JSON; unknown `type` fails; every event has IDs only (reflection test: no `string` property on any org event); integration: a unit-type change publishes its event through the outbox; the existing `IdentityEventsTests` still pass |
-| T005 | **Database:** `OrgConfigurations` (plan §5.2: `UnitTypes`, `OrgUnits`, `BusinessRoles`, `UserBusinessRoles`, `OrgStructure`, two `Users` columns, indexes, filtered unique index for the one root, sequence `UnitNumbers` from 2); seed of the root unit type and root unit (`ROOT`/"Organization", fixed IDs, number 1, path `/1/`, PA5) and the `OrgStructure` row; migration `OrgHierarchy` that back-fills existing users to the root unit; repositories, `UnitNumberSource`; production database script still generated and idempotent | ORG-02-AC5, ORG-02-AC7, C1, C2 (PA4, PA5) | Integration on `flowza_test_identity`: `ORG_02_AC7_*` (fresh database: one root unit and one unit type with the fixed codes); `ORG_02_AC5_*` (a second root is refused by the database); migration on a database with 001 users gives each the root unit; the PLT-03 migration and script tests pass |
+| T005 | **Database:** `OrgConfigurations` (plan §5.2: `UnitTypes`, `OrgUnits`, `BusinessRoles`, `UserBusinessRoles`, `OrgStructure`, two `Users` columns, indexes, filtered unique index for the one root, sequence `UnitNumbers` from 2); seed of the root unit type and root unit (`ROOT`/"Organization", fixed IDs, number 1, path `/1/`, PA5) and the `OrgStructure` row; migration `OrgHierarchy` that back-fills existing users to the root unit; **remove the T003 EF ignores** of the user's org members and `UserBusinessRoleAssignment`; repositories, `UnitNumberSource`; production database script still generated and idempotent | ORG-02-AC5, ORG-02-AC7, C1, C2 (PA4, PA5) | Integration on `flowza_test_identity`: `ORG_02_AC7_*` (fresh database: one root unit and one unit type with the fixed codes); `ORG_02_AC5_*` (a second root is refused by the database); migration on a database with 001 users gives each the root unit; the PLT-03 migration and script tests pass |
 
 ## Phase 3: Admin APIs (M1)
 | ID | Task | Spec IDs | Done when |
@@ -90,7 +112,7 @@ puts every existing user into the root unit (plan §5.2).
 | T007 | **Org units API, part 1:** slices `Units/{Create,Rename,SetHead,GetTree,GetUnit,ListUnitUsers}`; create takes the next unit number and touches `OrgStructure`; tree as a flat list ordered by path | ORG-02, ORG-03 | Integration `ORG_02_AC1_*` (five levels, types in any order), `ORG_02_AC8_*` (create under an inactive unit refused), `ORG_03_AC1_*` (unique, no way to change), `ORG_03_AC2_*` (inactive head refused; head of another unit's staff; head of two units), `ORG_03_AC3_*`, `ORG_03_AC4_*`, `ORG_01_AC4_*` (inactive type refused, old units keep it); two admins renaming the same unit → second 409 |
 | T008 | **Org units API, part 2:** slices `Units/{Move,ChangeStatus}`; move loads the subtree and rewrites paths in one save; deactivate answers **422 with the active child units and active users** (first 20 of each and totals); activate under an active parent only; every structural change touches `OrgStructure` | ORG-02, O2, C3, C4 | Integration `ORG_02_AC2_*` (under itself, under a grandchild), `ORG_02_AC3_*` (the subtree's paths follow the move; the rule half is in T013), `ORG_02_AC4_*` (both lists named), `ORG_02_AC8_*` (move under an inactive unit), `ORG_02_AC9_*`; root: no move, deactivation blocked while it has active children or users; **two structural changes at the same moment → the second gets 409** (e.g. A under B and B under A started together) |
 | T009 | **Business roles API:** slices `BusinessRoles/{Create,Rename,ChangeStatus,List,GetMembers,AddMember,RemoveMember}`; members change through the `User` aggregate (`UserBusinessRolesChanged`) | ORG-05, C3, C7, P10 | Integration `ORG_05_AC1_*` (unique unchangeable code, add and remove members), `ORG_05_AC2_*` (deactivated role cannot be given), `ORG_05_AC3_*`, `ORG_05_AC4_*` (list and paged members), `ORG_05_AC5_*` (inactive user refused; re-activation) |
-| T010 | **Users' org details and the 001 changes (spec 001 amendment 1):** `CreateUser` requires `primaryUnitId` (active); `InitializeAdmin` uses the root unit; `ActivateUser` refuses an inactive primary unit; `LoadDemoUsers` takes a unit per user (root for today's demo users until T017); `GetUser` returns primary unit, manager and business roles; slices `Users/SetOrgDetails` (`PUT /users/{id}/org`, touches `OrgStructure` when unit or manager changes) and `Users/GetOrgImpact`; all 001 integration and CLI tests updated to give users a primary unit | ORG-04, C2, C7, O13 (PA1, PA8) | Integration `ORG_04_AC1_*`, `ORG_04_AC2_*`, `ORG_04_AC3_*`, `ORG_04_AC4_*` (impact lists direct reports and headed units; deactivation then succeeds), `ORG_04_AC5_*`, `ORG_04_AC6_*` (create without unit refused; `init-admin` gives the root unit; activation refused until an active unit is set), `ORG_04_AC7_*`; **every 001 test still passes** |
+| T010 | **Users' org details and the 001 changes (spec 001 amendment 1):** `CreateUser` requires `primaryUnitId` (active); `InitializeAdmin` uses the root unit; `ActivateUser` refuses an inactive primary unit; `LoadDemoUsers` takes a unit per user (root for today's demo users until T017); `GetUser` returns primary unit, manager and business roles; slices `Users/SetOrgDetails` (`PUT /users/{id}/org`, touches `OrgStructure` when unit or manager changes) and `Users/GetOrgImpact`; all 001 integration and CLI tests updated to give users a primary unit; **the 001 forms `User.Create(…)` without a unit and `User.Activate()` are removed** (T003 note) | ORG-04, C2, C7, O13 (PA1, PA8) | Integration `ORG_04_AC1_*`, `ORG_04_AC2_*`, `ORG_04_AC3_*`, `ORG_04_AC4_*` (impact lists direct reports and headed units; deactivation then succeeds), `ORG_04_AC5_*`, `ORG_04_AC6_*` (create without unit refused; `init-admin` gives the root unit; activation refused until an active unit is set), `ORG_04_AC7_*`; **every 001 test still passes** |
 | T011 | **Lookups and policies:** `ApiSecurityExtensions` gains `OrgReader` (App Designer or Platform Admin) and `RuntimeService` (token of the `flowza-runtime` client only, PA6); slices `Lookups/{UnitTypes,Units,BusinessRoles,Users}` (users: id, name, username, active only); endpoints under `/api/v1/org-lookups` | ORG-06 (C9; PA6) | Integration `ORG_06_AC_x4_*`: an App Designer reads every lookup and sees only name and username of users; every change endpoint of T006–T010 answers 403 to them; a User without either role gets 403 on lookups; policy tests for `RuntimeService` (Runtime client allowed; Design client, admin user and designer refused) |
 
 ## Phase 4: Finding approvers (M1)
@@ -160,23 +182,23 @@ puts every existing user into the root unit (plan §5.2).
 | ORG-03-AC2 | T002, T007 | 🟡 domain: inactive head refused, one user heads two units (`ORG_03_AC2_*`, T002); API T007 |
 | ORG-03-AC3 | T002, T007 | 🟡 domain: format and case (`ORG_03_AC3_*`, T002); the database clash in T007 |
 | ORG-03-AC4 | T002, T007, T016 | 🟡 domain: rename keeps the code, head set, changed and cleared (`ORG_03_AC4_*`, T002); API T007, screen T016 |
-| ORG-04-AC1 | T003, T005 (A7), T010 | ⬜ |
-| ORG-04-AC2 | T003, T010, T015 | ⬜ |
-| ORG-04-AC3 | T003, T010 | ⬜ |
+| ORG-04-AC1 | T003, T005 (A7), T010 | 🟡 domain: created in and moved only to an active unit (`ORG_04_AC1_*`, T003); back-fill T005, API T010 |
+| ORG-04-AC2 | T003, T010, T015 | 🟡 domain: direct loop and loop through a chain refused (`ORG_04_AC2_*`, T003); API T010, screen T015 |
+| ORG-04-AC3 | T003, T010 | 🟡 domain: own manager refused (`ORG_04_AC3_*`, T003); API T010 |
 | ORG-04-AC4 | T010, T015, T018 (A3) | ⬜ |
-| ORG-04-AC5 | T003, T010, T015 | ⬜ |
-| ORG-04-AC6 | T003, T010, T015 (A8) | ⬜ |
-| ORG-04-AC7 | T003, T010, T015 | ⬜ |
-| ORG-05-AC1 | T009, T014 | ⬜ |
-| ORG-05-AC2 | T003, T009, T013 | ⬜ |
+| ORG-04-AC5 | T003, T010, T015 | 🟡 domain: manager optional, set, changed, removed; roles set all at once (`ORG_04_AC5_*`, T003); API T010, screen T015 |
+| ORG-04-AC6 | T003, T010, T015 (A8) | 🟡 domain: creation in an inactive unit and re-activation with an inactive unit refused (`ORG_04_AC6_*`, T003); "without a unit", first admin and API in T010 |
+| ORG-04-AC7 | T003, T010, T015 | 🟡 domain: inactive manager refused (`ORG_04_AC7_*`, T003); API T010 |
+| ORG-05-AC1 | T001, T003, T009, T014 | 🟡 domain: unchangeable code (T001), members added and removed (`ORG_05_AC1_*`, T003); API T009, screen T014 |
+| ORG-05-AC2 | T003, T009, T013 | 🟡 domain: a deactivated role cannot be given (`ORG_05_AC2_*`, T003); API T009, rule f T013 |
 | ORG-05-AC3 | T001, T009 | 🟡 domain: format and case (`ORG_05_AC3_*`, T001); API in T009 |
 | ORG-05-AC4 | T009, T014 | ⬜ |
-| ORG-05-AC5 | T001, T003, T009, T013 | 🟡 domain: role re-activation (`ORG_05_AC5_*`, T001); inactive member T003, API T009, rule f T013 |
+| ORG-05-AC5 | T001, T003, T009, T013 | 🟡 domain: role re-activation (`ORG_05_AC5_*`, T001); inactive user refused (`ORG_05_AC5_*`, T003); API T009, rule f T013 |
 | ORG-06-AC-a1, a2 | T012 | ⬜ |
 | ORG-06-AC-b1, b2 | T012 | ⬜ |
-| ORG-06-AC-c1 … c4 | T003, T012 | ⬜ |
-| ORG-06-AC-d1 … d5 | T003, T013 | ⬜ |
-| ORG-06-AC-e1 … e5 | T003, T013 | ⬜ |
+| ORG-06-AC-c1 … c4 | T003, T012 | ⬜ `ManagerChain` ready and tested (levels, short chain, broken chain; T003); the rule in T012 |
+| ORG-06-AC-d1 … d5 | T003, T013 | ⬜ `HeadWalk` ready and tested (vacant, inactive head, requester, past the root; T003); the rule in T013 |
+| ORG-06-AC-e1 … e5 | T003, T013 | ⬜ `HeadWalk` as for d (T003); the rule in T013 |
 | ORG-06-AC-f1 … f6 | T013 | ⬜ |
 | ORG-06-AC-g1, g2 | T012 | ⬜ |
 | ORG-06-AC-x1 | T012, T013, T014 (A9) | ⬜ |

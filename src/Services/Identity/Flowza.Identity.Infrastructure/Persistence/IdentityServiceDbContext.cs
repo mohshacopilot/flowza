@@ -34,6 +34,9 @@ public sealed class IdentityServiceDbContext(DbContextOptions<IdentityServiceDbC
     {
         // Roles are stored as role IDs (user-roles table); the SystemRole values themselves are code, not rows.
         modelBuilder.Ignore<SystemRole>();
+
+        // Feature 002: business-role rows get their table with the OrgHierarchy migration (task T005).
+        modelBuilder.Ignore<UserBusinessRoleAssignment>();
         modelBuilder.ApplyConfiguration(new UserConfiguration());
         modelBuilder.ApplyConfiguration(new RoleConfiguration());
         modelBuilder.ApplyConfiguration(new PasswordHistoryConfiguration());
