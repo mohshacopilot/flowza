@@ -18,10 +18,47 @@ public static class OrgErrors
         "org.name_invalid",
         $"A name is required and has at most {OrgName.MaxLength} characters.");
 
+    // Rule refusals are Failure (HTTP 422, plan 002 §5.4); Conflict (409) stays for "changed by someone else".
+
     /// <summary>P9: a unit type stays active while active units use it.</summary>
-    public static Error UnitTypeInUse { get; } = Error.Conflict(
+    public static Error UnitTypeInUse { get; } = Error.Failure(
         "org.unit_type_in_use",
         "This unit type is used by active units. Change or deactivate those units first.");
+
+    /// <summary>ORG-01-AC4, P9: a deactivated unit type cannot be chosen for a new unit.</summary>
+    public static Error UnitTypeInactive { get; } = Error.Failure(
+        "org.unit_type_inactive",
+        "This unit type is deactivated and cannot be chosen for a new unit.");
+
+    /// <summary>C4, C3: an active unit never sits under an inactive one.</summary>
+    public static Error ParentInactive { get; } = Error.Failure(
+        "org.parent_inactive",
+        "The unit above is deactivated. Choose an active unit, or activate that unit first.");
+
+    /// <summary>ORG-02-AC2: a unit cannot move under itself or under a unit below it.</summary>
+    public static Error MoveIntoOwnSubtree { get; } = Error.Failure(
+        "org.move_into_own_subtree",
+        "A unit cannot be moved under itself or under one of the units below it.");
+
+    /// <summary>The root is the top of the tree (C1, ORG-02-AC5).</summary>
+    public static Error RootCannotMove { get; } = Error.Failure(
+        "org.root_cannot_move",
+        "The top unit of the organization cannot be moved.");
+
+    /// <summary>PA4: the tree has at most <see cref="UnitPath.MaxDepth"/> levels.</summary>
+    public static Error TreeTooDeep { get; } = Error.Failure(
+        "org.tree_too_deep",
+        $"The organization can have at most {UnitPath.MaxDepth} levels.");
+
+    /// <summary>O2, ORG-02-AC4: move or deactivate the active child units and users first.</summary>
+    public static Error UnitHasActiveMembers { get; } = Error.Failure(
+        "org.unit_has_active_members",
+        "This unit still has active units or active users. Move or deactivate them first.");
+
+    /// <summary>ORG-03-AC2: a unit's head must be an active user.</summary>
+    public static Error HeadInactive { get; } = Error.Failure(
+        "org.head_inactive",
+        "The head of a unit must be an active user.");
 
     private static Error Field(string field, string code, string message) =>
         Error.Validation(code, message, new Dictionary<string, string[]> { [field] = [code] });

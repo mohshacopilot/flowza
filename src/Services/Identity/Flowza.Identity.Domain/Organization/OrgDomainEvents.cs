@@ -13,6 +13,18 @@ public sealed record UnitTypeDeactivatedDomainEvent(Guid UnitTypeId) : IDomainEv
 
 public sealed record UnitTypeActivatedDomainEvent(Guid UnitTypeId) : IDomainEvent;
 
+public sealed record OrgUnitCreatedDomainEvent(Guid UnitId, Guid ParentId, Guid UnitTypeId) : IDomainEvent;
+
+public sealed record OrgUnitRenamedDomainEvent(Guid UnitId) : IDomainEvent;
+
+public sealed record OrgUnitHeadChangedDomainEvent(Guid UnitId, Guid? HeadUserId) : IDomainEvent;
+
+public sealed record OrgUnitMovedDomainEvent(Guid UnitId, Guid OldParentId, Guid NewParentId) : IDomainEvent;
+
+public sealed record OrgUnitDeactivatedDomainEvent(Guid UnitId) : IDomainEvent;
+
+public sealed record OrgUnitActivatedDomainEvent(Guid UnitId) : IDomainEvent;
+
 public sealed record BusinessRoleCreatedDomainEvent(Guid BusinessRoleId) : IDomainEvent;
 
 public sealed record BusinessRoleRenamedDomainEvent(Guid BusinessRoleId) : IDomainEvent;

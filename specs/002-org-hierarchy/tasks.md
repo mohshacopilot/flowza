@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | **Building** (written and analyzed 2026-10-24); T001 done; next: T002 |
+| **Status** | **Building** (written and analyzed 2026-10-24); T001–T002 done; next: T003 |
 | **Spec / Plan** | [spec.md](spec.md) (approved 2026-10-21, C1–C9) · [plan.md](plan.md) (approved 2026-10-24, PA1–PA10) · [spec 001 amendment 1](../001-platform-foundation/spec.md) (section 12, primary unit) |
 | **Rules** | One task at a time, in order. Each task ends with: builds without warnings, lint clean, its tests pass (and all earlier tests still pass), a local commit (`feat|test|docs(identity|web|cli): … (IDs)`). Nothing is pushed without the owner's OK. Every task is Milestone 1 |
 
@@ -20,7 +20,7 @@ puts every existing user into the root unit (plan §5.2).
 | Task | Status | Commit |
 |---|---|---|
 | T001 Codes, unit types and business roles (domain) | ✅ | 01301f8 |
-| T002 Org units, paths and the org structure version (domain) | ⬜ | |
+| T002 Org units, paths and the org structure version (domain) | ✅ | (this commit) |
 | T003 User's place in the organization, manager chain, head walk (domain) | ⬜ | |
 | T004 Contracts: org events and the approver rule contract | ⬜ | |
 | T005 Database: tables, sequence, root seed, back-fill | ⬜ | |
@@ -51,6 +51,24 @@ puts every existing user into the root unit (plan §5.2).
   - Tests: 21 new unit tests (`OrgCodeTests`, `UnitTypeTests`, `BusinessRoleTests`); breaking the upper-casing and
     the P9 check for a moment made 8 of them fail. Identity unit tests 122/122, architecture tests 29/29, build 0
     warnings.
+- **T002 (2026-10-24):** decisions inside plan §§5.1, 5.4, 8:
+  - **Rule refusals are `Error.Failure` (HTTP 422)**, as plan §5.4 asks for refused deactivations; 409 stays only for
+    "changed by someone else", so the web app can treat 409 as "reload". T001's `UnitTypeInUse` moved from `Conflict`
+    to `Failure` for the same reason (no API used it yet).
+  - **`Deactivate` takes counts, not lists:** `Error` carries a code, a message and field errors, no payload. The
+    handler (T008) has already queried the blocking units and users, so it names them in the 422 answer; the domain
+    rule stays "both must be 0".
+  - **Depth 50 counts the root as level 1.** The path keeps a trailing `/`, so `/1/4/` is never a prefix of `/1/42/`.
+    A move works out every new path first, so a subtree that would end too deep changes nothing. Children keep their
+    `ParentId`; only their paths change, and only the moved unit raises `OrgUnitMoved`.
+  - **Order of the move checks:** root, own subtree, inactive target (only for an active unit: an inactive unit may
+    move under an inactive one, C4 speaks of active units), same parent (no-op), depth.
+  - **`OrgStructure.Touch`** increments a counter as well as the time, so two touches in the same instant still write
+    the row and its row version always changes.
+  - **`SetHead(User?)`** takes the user aggregate (same domain), so "active" is checked on the real user.
+  - Tests: 40 new (`UnitPathTests`, `OrgUnitTests`) on part of the spec's example tree; removing the own-subtree check
+    and the inactive-parent check for a moment made 2 of them fail. Identity unit tests 162/162, architecture 29/29,
+    build 0 warnings.
 
 ## Phase 1: Domain (M1)
 | ID | Task | Spec IDs | Done when |
@@ -126,22 +144,22 @@ puts every existing user into the root unit (plan §5.2).
 | ORG-01-AC1 | T001, T006, T014 | 🟡 domain: created active with code and name, name required (`ORG_01_AC1_*`, T001); duplicate rejection in T006, screen in T014 |
 | ORG-01-AC2 | T001, T006 | 🟡 domain: rename keeps the code, no public way to change it (`ORG_01_AC2_*`, T001); API in T006 |
 | ORG-01-AC3 | T001, T006, T014 | 🟡 domain: refused while active units use it (`ORG_01_AC3_*`, T001); the count from the database in T006 |
-| ORG-01-AC4 | T002, T007 | ⬜ |
+| ORG-01-AC4 | T002, T007 | 🟡 domain: inactive type refused for a new unit, existing units keep it (`ORG_01_AC4_*`, T002); API in T007 |
 | ORG-01-AC5 | T001, T006 | 🟡 domain: format, length, lower case stored upper case and equal (`ORG_01_AC5_*`, T001); the clash in the database in T006 |
 | ORG-01-AC6 | T001, T006 | 🟡 domain: re-activation (`ORG_01_AC6_*`, T001); "choosable again" in T006/T007 |
-| ORG-02-AC1 | T002, T007 | ⬜ |
-| ORG-02-AC2 | T002, T008, T016, T018 | ⬜ |
-| ORG-02-AC3 | T008, T013 (A2) | ⬜ |
-| ORG-02-AC4 | T002, T008, T016, T018 | ⬜ |
+| ORG-02-AC1 | T002, T007 | 🟡 domain: any type under any type down to level 50 (`ORG_02_AC1_*`, T002); API in T007 |
+| ORG-02-AC2 | T002, T008, T016, T018 | 🟡 domain: under itself, a child, a grandchild refused, nothing changed (`ORG_02_AC2_*`, T002); API T008, screen T016/T018 |
+| ORG-02-AC3 | T002, T008, T013 (A2) | 🟡 domain: the whole subtree's paths follow the move (`ORG_02_AC3_*`, T002); saved in T008, rule results in T013 |
+| ORG-02-AC4 | T002, T008, T016, T018 | 🟡 domain: refused with active units or users (`ORG_02_AC4_*`, T002); the names in the answer T008, screen T016/T018 |
 | ORG-02-AC5 | T005, T008 | ⬜ |
 | ORG-02-AC6 | T016, T018 (A5) | ⬜ |
 | ORG-02-AC7 | T005 | ⬜ |
-| ORG-02-AC8 | T002, T007, T008 | ⬜ |
-| ORG-02-AC9 | T002, T008 | ⬜ |
+| ORG-02-AC8 | T002, T007, T008 | 🟡 domain: create and move under an inactive unit refused (`ORG_02_AC8_*`, T002); API T007/T008 |
+| ORG-02-AC9 | T002, T008 | 🟡 domain: re-activation under an active parent, refused under an inactive one (`ORG_02_AC9_*`, T002); API T008 |
 | ORG-03-AC1 | T007 | ⬜ |
-| ORG-03-AC2 | T002, T007 | ⬜ |
-| ORG-03-AC3 | T002, T007 | ⬜ |
-| ORG-03-AC4 | T007, T016 | ⬜ |
+| ORG-03-AC2 | T002, T007 | 🟡 domain: inactive head refused, one user heads two units (`ORG_03_AC2_*`, T002); API T007 |
+| ORG-03-AC3 | T002, T007 | 🟡 domain: format and case (`ORG_03_AC3_*`, T002); the database clash in T007 |
+| ORG-03-AC4 | T002, T007, T016 | 🟡 domain: rename keeps the code, head set, changed and cleared (`ORG_03_AC4_*`, T002); API T007, screen T016 |
 | ORG-04-AC1 | T003, T005 (A7), T010 | ⬜ |
 | ORG-04-AC2 | T003, T010, T015 | ⬜ |
 | ORG-04-AC3 | T003, T010 | ⬜ |
