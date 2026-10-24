@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | **Written and analyzed 2026-10-23**; build starts with T001 (feature 007 is built **before 002**, U11) |
+| **Status** | **Done 2026-10-24** (T001–T014; verified in T014). Written and analyzed 2026-10-23; built before 002 (U11) |
 | **Spec / Plan** | [spec.md](spec.md) (approved 2026-10-23; amendment 1 approved the same day) · [plan.md](plan.md) (approved 2026-10-23, PA1–PA6; updated for amendment 1, section 17) |
 | **Rules** | One task at a time, in order. Each task ends with: builds without warnings, lint clean, its tests pass (and all earlier tests still pass), a local commit (`feat|test|docs(ui): … (IDs)`). Nothing is pushed without the owner's OK. Every task is Milestone 1 |
 
@@ -30,8 +30,8 @@ Nothing else: no new database, secret, library or program.
 | T010 Existing screens in the new look | ✅ | 4c83aae |
 | T011 Visual and accessibility end-to-end tests | ✅ | 1e7e510 |
 | T012 CI look check and screenshot baselines | ✅ | e06c1be, b7b45ce, 85107ea |
-| T013 Setup guide and CLAUDE.md | ✅ | 20b7680 (owner to read §5 of the guide) |
-| T014 Verify 007 | ⬜ | |
+| T013 Setup guide and CLAUDE.md | ✅ | 20b7680 (owner read §5 of the guide, 2026-10-24) |
+| T014 Verify 007 | ✅ | b8214eb (review and hand-check fixes) |
 
 **Progress notes**
 - **T001 (2026-10-23):** the dark candidate for text on coloured surfaces is **black** (`onColour.dark` `#000000`),
@@ -252,6 +252,57 @@ Nothing else: no new database, secret, library or program.
   `designValues.json` → `npm run design:css`, commit both, the drift test; 5.3 what a red look check means and the
   five steps to accept a new look (PA5, O2). CLAUDE.md: a "Visual design" row in the decisions table. All relative
   links in both files were checked to point to existing files.
+- **T014 (2026-10-24), verification of feature 007:**
+  - **Before the fixes:** platform start (`check-platform.ps1`): Identity, Design, Runtime, Worker ready
+    (SqlServer transport), Gateway ready. Build 0 warnings; .NET 463 tests (1 skipped: Azure Service Bus); web 237
+    tests, lint, types and format clean; end-to-end 75 passed (7 width-specific skips).
+  - **Code review** (`code-reviewer` agent, range `82e9d16..HEAD`): no blockers. Handled:
+    1. The Tab walk counted any shadow as focus, so the selected menu item (its accent bar) passed even without its
+       ring. It now compares each control's outline and shadow with its look before the walk. **Proved:** with the
+       menu ring removed for a moment the walk failed at "Home"; with the ring back it passed.
+    2. The three "Show password" buttons of the change-password page are now described by their field's label
+       (`aria-describedby`); the name stays "Show password" (T005 decision). End-to-end:
+       `UI_01_AC2_each_show_password_button_on_the_change_page_says_which_field_it_shows`.
+    3. *Different marks:* the login panel's mark is accent-filled with deep teal text, the frame's is brand-filled
+       with white text. Both were in the owner-approved look (T005b mockup B, the O2 pictures): **kept, recorded here**.
+    4. *Scan scope:* the stray-value scan now also covers the `.ts` files under `src` (the generated API client
+       excluded); a font family is counted only when written, not when read from the values. Kept as decided in
+       T002: layout sizes (widths, heights, the 32/40 px marks, `min-height` of controls) and unitless `line-height`
+       ratios on the login pages are not design values.
+    5. The users list failing with an error kept the sideways-scroll area at 375 px (axe
+       `scrollable-region-focusable`): fixed, `UI_06_AC1_a_failed_list_fits_the_width_too`.
+    6. Tapping the mark in the phone drawer on the home page left the drawer open: fixed (`onNavigate`),
+       `UI_05_AC2_the_mark_on_the_home_page_closes_the_navigation_too`.
+    7. UI-08-AC2 tests: one now runs without any `Installation` setting (the default "Flowza"/"FL"), one asks the
+       endpoint over HTTP on a host with a configured name.
+    8. The login pages' tab title pattern "{0} – {1}" moved to the resources (`Layout.DocumentTitle`, NFR-10).
+    9. Setup guide §5.3: a new look is accepted **on a branch**, so `main` never has a red run (DV4).
+    10. The brand as a foreground colour on white (links, icons, focus) needs a check when M3 lets an admin change
+        it: added to "Carried to later features".
+    11–12. Notes only (print colours: see the hand check; the product line is a `<p>`, the page's `<h1>` is the form
+        title): no change.
+  - **Hand checks** (a temporary Playwright file with pictures and measurements, run against the test platform,
+    then deleted):
+    - **Long installation name** (100 characters, set as `Installation__Name` for the AppHost; Aspire passes it to
+      Identity): the login panel at 1280 px and the phone band at 375 px end in "…", the full name is in `title`;
+      the frame's mark link ends in "…", its `title` and accessible name carry the whole name; the browser tab shows
+      "Home – <full name>"; no sideways scrolling. Initials "DO". → **UI-08-AC1 ✅**.
+    - **200 % zoom** (a 1280×800 window = 640×400 CSS pixels at density 2): login, home, users list, user details,
+      create user, my profile and the drawer: the frame switches to the phone layout, forms use the width, the
+      table scrolls inside its box, **no page scrolls sideways**. OK.
+    - **Printing** (print media, PDF): side navigation and header left out, dark text. **Found:** with "background
+      graphics" on, the light page colour and the card shadows printed too. **Fixed:** in print the page is white
+      and cards have no shadow (`AppShell.module.css`).
+    - **Long translated label** (for a moment: a Hindi menu label, a long group heading and a long button text in
+      the translation file): the group heading wrapped and the button grew, but **the menu item was cut with "…"**
+      (Ant Design's default), against the spec's edge case "text is never cut off". **Fixed:** expanded menu items
+      wrap onto more lines (`SideNavigation.module.css`); collapsed, the tooltip shows the whole label. A picture of
+      the menu with the normal labels is **byte-identical** before and after the change, so the approved screenshots
+      are not affected (CI will confirm on the next push).
+    - Reduced motion has its component test (T009).
+  - **After the fixes:** build 0 warnings; .NET 464 tests (463 passed, 1 skipped); web 239 tests, lint, types and
+    format clean; end-to-end 75 passed (7 width-specific skips). The screenshot comparison runs only in CI: these
+    changes are **not yet pushed**, so CI has not compared them yet.
 
 ## Phase 1: Design values (M1)
 | ID | Task | Spec IDs | Done when |
@@ -288,6 +339,7 @@ Nothing else: no new database, secret, library or program.
 | Item | Where |
 |---|---|
 | `readableTextOn` in C# for the login page, when the admin can change the brand colour at run time (plan §5.2) | Spec 001 PLT-08, task T042 (M3) |
+| The brand colour is also a **foreground** colour on light surfaces (links, icons, focus rings, the login page's accents); UI-07 only protects text *on* the brand. A light brand colour chosen in M3 must also reach 3 : 1 (icons, focus) and 4.5 : 1 (links) on white, or those uses need a darker variant (T014 review finding 10) | Spec 001 PLT-08, task T042 (M3) |
 | Logo instead of the initials mark (login page and frame) | Spec 001 PLT-08, task T042 (M3); `GET /api/v1/installation` keeps its contract and may add a logo address then (a contract addition for the owner to approve) |
 | New screens of 002–006 | Each feature builds them in this frame and adds them to the screenshot and axe tests of T011 |
 
@@ -308,7 +360,7 @@ Nothing else: no new database, secret, library or program.
 | Criterion | Task(s) | Status |
 |---|---|---|
 | UI-01-AC1 | T004, T005b, T011, T012 | ✅ brand panel (mark, name, product line), form card and "Powered by Flowza" (`UI_01_AC1_*`, T004/T005b); picture hidden from screen readers and the three highlights (T005b); beside the form at desktop and tablet, the brand band above it at 375 px, no sideways scrolling, axe clean (`UI_01_AC1_UI_05_AC1_UI_06_AC1_*`, T011); the login page matches its approved screenshot at three widths in CI (T012) |
-| UI-01-AC2 | T005 | ✅ mouse and keyboard (Tab, Space, Enter) switch the field, `aria-pressed` follows, the login still works with the password shown, axe clean (`UI_01_AC2_*`, end-to-end); the script is a file with its translated name (`UI_01_AC2_*`, integration) |
+| UI-01-AC2 | T005 | ✅ mouse and keyboard (Tab, Space, Enter) switch the field, `aria-pressed` follows, the login still works with the password shown, axe clean (`UI_01_AC2_*`, end-to-end); the script is a file with its translated name (`UI_01_AC2_*`, integration); on the change-password page each of the three buttons is described by its field's label (`UI_01_AC2_each_show_password_button_*`, T014) |
 | UI-01-AC3 | T004, T011, T012 | ✅ the general error inside the form card and the forced change for a freshly created user in the login look, at three widths, axe clean (`UI_01_AC3_*`, T004 and T011); both match their approved screenshots in CI (T012) |
 | UI-02-AC1 | T002, T010 | ✅ no screen, frame file or login page holds a colour, font, spacing or corner value of its own; the scan runs with **no exceptions** and covers the screens, the frame and the login pages (`UI_02_AC1_*`, T010); spacing and the code font come from the design values through the adapter (`UI_02_spacing_and_the_code_font_*`) |
 | UI-02-AC2 | T001, T002, T004 | ✅ the theme and `design-values.css` come from the same values and agree on brand, on-brand text and font (`UI_02_AC2_*`, T002); the login pages load `design-values.css` before their layout (`UI_02_AC2_*`, T004) |
@@ -319,9 +371,9 @@ Nothing else: no new database, secret, library or program.
 | UI-05-AC1 | T009, T011 | ✅ no sideways scrolling on every screen (login, failed login, forced change, home, users list, user details, create user, my profile, 404, error, loading, empty list) at 375, 900 and 1280 px (`UI_*_UI_05_AC1_*`, end-to-end T011); wide tables scroll inside their box (`UI_05_AC1_a_list_with_rows_*`) |
 | UI-05-AC2 | T009, T011 | ✅ at 375 px the menu button opens the navigation (`aria-expanded`), choosing "Users" opens the list, closes the drawer and returns the focus to the button (`UI_05_AC2_*`, component tests T009, end-to-end T011) |
 | UI-06-AC1 | T004, T009, T011 | ✅ axe finds nothing on every screen, the collapsed panel and the open drawer, at desktop, tablet and phone width (`UI_*_UI_06_AC1_*`, end-to-end T011); the one finding (the empty table's scroll area at 375 px) was fixed (`UI_06_AC1_an_empty_list_fits_the_width_*`) |
-| UI-06-AC2 | T004, T011 | ✅ Tab through the login page and the frame at three widths: every control shows an outline or focus shadow (`UI_06_AC2_*`, end-to-end T011) |
+| UI-06-AC2 | T004, T011 | ✅ Tab through the login page and the frame at three widths: every control shows an outline or focus shadow (`UI_06_AC2_*`, end-to-end T011); since T014 the focus look must differ from the control's look without focus (a removed menu ring turns the test red) |
 | UI-07-AC1 | T001 (A1) | ✅ 22 brand colours and all 256 greys reach ≥ 4.5 : 1; the theme picks the text colour (`UI_07_AC1_*`) |
-| UI-08-AC1 | T003, T004, T006 (A3) | 🟡 initials rule proven (`UI_08_AC1_*`: two, many, one word, one letter, spaces, Hindi, Tamil, accents; T003); on the login page a 100-character name is shortened by CSS and kept whole in `title` and the text (`UI_08_AC1_*`, T004); the same in the frame, full name in `title` and the link's accessible name (`UI_08_AC1_*`, T006). The visible "…" cannot appear in the end-to-end run, which uses the default name (A3): a hand check with a long configured name in T014 |
+| UI-08-AC1 | T003, T004, T006, T014 (A3) | ✅ initials rule proven (`UI_08_AC1_*`: two, many, one word, one letter, spaces, Hindi, Tamil, accents; T003); on the login page a 100-character name is shortened by CSS and kept whole in `title` and the text (`UI_08_AC1_*`, T004); the same in the frame, full name in `title` and the link's accessible name (`UI_08_AC1_*`, T006). The visible "…" cannot appear in the end-to-end run, which uses the default name (A3): **hand check in T014** with a 100-character configured name: "…" on the login panel (desktop and phone) and in the frame, the full name in `title`, the accessible name and the browser tab |
 | UI-08-AC2 | T003, T004, T006 | ✅ configured name and initials, default "Flowza"/"FL", anonymous → 401 (`UI_08_AC2_*`, T003); on the login page (`UI_08_AC2_*`, T004); in the frame, from the API (`UI_08_AC2_*`, T006) |
 | UI-09-AC1 | T010, T011, T012 | ✅ every screen on cards in the new look; 403/404 with a brand-coloured icon (`UI_09_AC1_*`, T010); home, users list, user details, create user, my profile, 404, error (mocked 500 with its reference code), loading and empty list at three widths with the scroll and axe checks (T011), each matching its approved screenshot in CI (T012) |
 | UI-10-AC1 | T012 (A2) | ✅ CI's end-to-end job compares the 14 main screens with the 38 approved screenshots on every push (`FLOWZA_E2E_SCREENSHOTS=1`); CI #35 on `main` green with them; a 1-pixel-taller header on a branch turned the job red with diff images (CI #41), then the branch was deleted (T012) |

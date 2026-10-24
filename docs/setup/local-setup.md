@@ -145,15 +145,18 @@ a picture of the difference.
 
 - **A red run you did not expect** means something changed the look by mistake: fix the code, do not accept the new
   pictures.
-- **A change of the look on purpose** (a new colour, a new screen, a moved button) is accepted like this:
-  1. Push the change (with the owner's OK, as always). CI's end-to-end job will be red: expected.
-  2. On GitHub: **Actions → Update screenshots → Run workflow** (branch `main`, or the branch with the change). It
-     runs the same tests on the same kind of Linux machine as CI and makes every picture anew; it never commits anything.
+- **A change of the look on purpose** (a new colour, a new screen, a moved button) is accepted on a **branch**, so
+  `main` never has a red run (DV4: a change is done only when CI is green):
+  1. Commit the change on a branch and push the branch (with the owner's OK, as always). CI runs on pushes to `main`
+     and on pull requests, so the branch itself starts no CI run yet.
+  2. On GitHub: **Actions → Update screenshots → Run workflow**, and choose that branch. It runs the same tests on the
+     same kind of Linux machine as CI and makes every picture anew; it never commits anything.
   3. When it is green, download its artifact **screenshot-baselines** (a zip file) from the run's page.
   4. The owner **looks at every new picture** and decides whether this is the approved look. Nothing is accepted
      without that look (O2).
-  5. After the owner's OK, the pictures replace the ones in `07-visual-design.spec.ts-snapshots/` and are committed as
-     `test(ui): accept new screenshots (<what changed>)` and pushed. The next CI run is green.
+  5. After the owner's OK, the pictures replace the ones in `07-visual-design.spec.ts-snapshots/` on the branch and
+     are committed as `test(ui): accept new screenshots (<what changed>)`. Then the branch is merged into `main` and
+     pushed; CI on `main` is green.
 
 The pictures are always made on GitHub's Linux machine, never on this PC: Windows draws fonts slightly differently,
 so pictures from here would never match CI. For the same reason a local end-to-end run (`run-e2e.ps1`) skips the
