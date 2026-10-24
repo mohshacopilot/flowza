@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | **Building** (written and analyzed 2026-10-24); T001–T004 done; next: T005 |
+| **Status** | **Building** (written and analyzed 2026-10-24); T001–T005 done; next: T006 |
 | **Spec / Plan** | [spec.md](spec.md) (approved 2026-10-21, C1–C9) · [plan.md](plan.md) (approved 2026-10-24, PA1–PA10) · [spec 001 amendment 1](../001-platform-foundation/spec.md) (section 12, primary unit) |
 | **Rules** | One task at a time, in order. Each task ends with: builds without warnings, lint clean, its tests pass (and all earlier tests still pass), a local commit (`feat|test|docs(identity|web|cli): … (IDs)`). Nothing is pushed without the owner's OK. Every task is Milestone 1 |
 
@@ -23,7 +23,7 @@ puts every existing user into the root unit (plan §5.2).
 | T002 Org units, paths and the org structure version (domain) | ✅ | a0b1686 |
 | T003 User's place in the organization, manager chain, head walk (domain) | ✅ | ed76bc9 |
 | T004 Contracts: org events and the approver rule contract | ✅ | fc9fcc8 |
-| T005 Database: tables, sequence, root seed, back-fill | ⬜ | |
+| T005 Database: tables, sequence, root seed, back-fill | ✅ | a4ee5a5 |
 | T006 Unit types API | ⬜ | |
 | T007 Org units API: create, rename, head, tree, details | ⬜ | |
 | T008 Org units API: move, deactivate, activate | ⬜ | |
@@ -113,6 +113,30 @@ puts every existing user into the root unit (plan §5.2).
     test. Removing one mapping and renaming the `type` property for a moment made 17 fail. Identity unit 246/246,
     Identity integration 96/96, Gateway 100/100, Platform 52/52 (1 skipped), BuildingBlocks 107/107, architecture
     29/29, build 0 warnings.
+  - **Owner, 2026-10-24:** the optional `Number` of `ExplanationStep` is kept (T005 was started without asking to
+    remove it).
+- **T005 (2026-10-24):** decisions inside plan §5.2 (PA4, PA5):
+  - **Back-fill without a default value:** the migration adds `Users.PrimaryUnitId` as nullable, seeds the root, sets
+    every existing user to the root unit and only then makes the column required. A default value would have left a
+    hidden "everyone lands in the root" constraint in the database (and EF's generated default, an empty ID, breaks the
+    foreign key). The `UPDATE` runs through `EXEC`, so the production script stays valid when run again later (PLT-03).
+  - **Seed through `HasData`**, as the system roles of 001, with a fixed creation time so the model never drifts. The
+    `OrgStructure` row has a `ChangeCount` column besides `ChangedAt` and the row version (T002 decision).
+  - **Descendants by path:** a varchar `LIKE '/1/4/%'` parameter (same type as the column, so SQL Server seeks the
+    path index); the trailing `/` keeps `/1/4/` apart from `/1/42/`. **Unit numbers** come from `NEXT VALUE FOR`,
+    read without composing the query (SQL Server refuses the function in a derived table).
+  - **Repositories hold the basics** (get, code taken, add, expected version, descendants, the org-structure row);
+    the counts and lists that T006–T010 need are added there with their use cases.
+  - **Test set-up:** Respawn empties the seeded rows between tests, so the test host puts the installed root back
+    after each reset. The ORG-02-AC7 and back-fill tests migrate the test database back to the 001 tables and apply
+    `OrgHierarchy` again, so they check the migration itself, not the reset. The shared test helpers now also drop
+    **sequences** (otherwise a second test start fails on `UnitNumbers`). The T004 outbox test now saves its unit and
+    role first (the new foreign keys).
+  - Tests: 8 new integration tests (`OrgDatabaseTests`). Dropping the back-fill (the migration then stops on the
+    first user), making the one-root index non-unique and dropping the trailing `/` from the descendant search each
+    made their test fail. Identity unit 246/246, Identity integration 104/104, Gateway 100/100, Platform 52/52
+    (1 skipped: Azure Service Bus; the PLT-03 script tests pass with the new migration), BuildingBlocks 107/107,
+    architecture 29/29, build 0 warnings.
 
 ## Phase 1: Domain (M1)
 | ID | Task | Spec IDs | Done when |
@@ -195,16 +219,16 @@ puts every existing user into the root unit (plan §5.2).
 | ORG-02-AC2 | T002, T008, T016, T018 | 🟡 domain: under itself, a child, a grandchild refused, nothing changed (`ORG_02_AC2_*`, T002); API T008, screen T016/T018 |
 | ORG-02-AC3 | T002, T008, T013 (A2) | 🟡 domain: the whole subtree's paths follow the move (`ORG_02_AC3_*`, T002); saved in T008, rule results in T013 |
 | ORG-02-AC4 | T002, T008, T016, T018 | 🟡 domain: refused with active units or users (`ORG_02_AC4_*`, T002); the names in the answer T008, screen T016/T018 |
-| ORG-02-AC5 | T005, T008 | ⬜ |
+| ORG-02-AC5 | T005, T008 | 🟡 database: a second unit without a parent is refused by the filtered unique index (`ORG_02_AC5_*`, T005); the API half (root cannot move, deactivation blocked) in T008 |
 | ORG-02-AC6 | T016, T018 (A5) | ⬜ |
-| ORG-02-AC7 | T005 | ⬜ |
+| ORG-02-AC7 | T005 | ✅ the migration itself leaves exactly one root unit and one unit type with code `ROOT`, fixed IDs, number 1, path `/1/`; both renamed, codes kept (`ORG_02_AC7_*`, T005) |
 | ORG-02-AC8 | T002, T007, T008 | 🟡 domain: create and move under an inactive unit refused (`ORG_02_AC8_*`, T002); API T007/T008 |
 | ORG-02-AC9 | T002, T008 | 🟡 domain: re-activation under an active parent, refused under an inactive one (`ORG_02_AC9_*`, T002); API T008 |
 | ORG-03-AC1 | T007 | ⬜ |
 | ORG-03-AC2 | T002, T007 | 🟡 domain: inactive head refused, one user heads two units (`ORG_03_AC2_*`, T002); API T007 |
 | ORG-03-AC3 | T002, T007 | 🟡 domain: format and case (`ORG_03_AC3_*`, T002); the database clash in T007 |
 | ORG-03-AC4 | T002, T007, T016 | 🟡 domain: rename keeps the code, head set, changed and cleared (`ORG_03_AC4_*`, T002); API T007, screen T016 |
-| ORG-04-AC1 | T003, T005 (A7), T010 | 🟡 domain: created in and moved only to an active unit (`ORG_04_AC1_*`, T003); back-fill T005, API T010 |
+| ORG-04-AC1 | T003, T005 (A7), T010 | 🟡 domain: created in and moved only to an active unit (`ORG_04_AC1_*`, T003); back-fill: every user made before 002, active or not, gets the root unit (`ORG_04_AC1_*`, T005); API T010 |
 | ORG-04-AC2 | T003, T010, T015 | 🟡 domain: direct loop and loop through a chain refused (`ORG_04_AC2_*`, T003); API T010, screen T015 |
 | ORG-04-AC3 | T003, T010 | 🟡 domain: own manager refused (`ORG_04_AC3_*`, T003); API T010 |
 | ORG-04-AC4 | T010, T015, T018 (A3) | ⬜ |
