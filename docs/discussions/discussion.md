@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Last session** | 2026-10-24, office PC: **feature 007 done** (T001–T014), pushed, CI #43 green with the 38 approved screenshots; **plan 002 approved** (PA1–PA10), spec 001 amendment 1 (primary unit), **tasks 002 written** (T001–T019); next: build 002 from T001 |
+| **Last session** | 2026-10-24, office PC: **feature 007 done** (T001–T014), pushed, CI #43 green with the 38 approved screenshots; **plan 002 approved** (PA1–PA10), spec 001 amendment 1 (primary unit), **tasks 002 written** (T001–T019); **002 built T001–T007** (domain, contracts, database, unit types API, org units API part 1), pushed with the owner's OK (`e81b8e1`); next: **T008 on Monday 2026-10-26** |
 | **Build** | From 2026-10-21 on the **office PC** (`D:\Projects\Workflow`); the owner reviews on weekdays, full days |
 | **Git** | Local commits per task on `main`; public repository https://github.com/mohshacopilot/flowza, pushed only when the owner says so |
 
@@ -36,8 +36,9 @@ Spec Kit is postponed; we follow the same method by hand (see [CLAUDE.md](../../
 3. Per feature: plan → tasks → analyze → implement, building **Milestone 1** first. **Plan 002 approved 2026-10-24**
    ([plan.md](../../specs/002-org-hierarchy/plan.md), PA1–PA10 as proposed). Spec 001 **amendment 1** done (section 12:
    a new user needs a primary unit, the first admin gets the root unit, re-activation needs an active unit).
-   [Tasks 002](../../specs/002-org-hierarchy/tasks.md) written and analyzed (T001–T019, A1–A11): **next: build 002 from
-   T001** (skill `implement-task`). T018 needs the owner's push OK and a look at the new screenshots (O1, O2).
+   [Tasks 002](../../specs/002-org-hierarchy/tasks.md) written and analyzed (T001–T019, A1–A11). **T001–T007 done and
+   pushed (2026-10-24); next: T008 (move, deactivate, activate units) on Monday 2026-10-26** (skill `implement-task`).
+   T018 needs the owner's push OK and a look at the new screenshots (O1, O2).
 
 In a new session, say:
 > Read `docs/discussions/discussion.md` and continue from "What to do next".
