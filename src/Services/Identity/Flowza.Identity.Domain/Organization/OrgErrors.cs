@@ -26,6 +26,21 @@ public static class OrgErrors
 
     public static Error UnitTypeNotFound { get; } = Error.NotFound("org.unit_type_not_found", "The unit type was not found.");
 
+    /// <summary>ORG-03-AC1, ORG-03-AC3: unit codes are unique, ignoring letter case.</summary>
+    public static Error UnitCodeTaken { get; } = Field(
+        "code",
+        "org.unit_code_taken",
+        "Another unit already has this code (codes ignore letter case).");
+
+    public static Error UnitNotFound { get; } = Error.NotFound("org.unit_not_found", "The unit was not found.");
+
+    // Records named in a request body: the field shows what is wrong.
+    public static Error ParentUnknown { get; } = Field("parentId", "org.parent_unknown", "The unit above was not found.");
+
+    public static Error UnitTypeUnknown { get; } = Field("unitTypeId", "org.unit_type_unknown", "The unit type was not found.");
+
+    public static Error HeadUnknown { get; } = Field("headUserId", "org.head_unknown", "The user chosen as head was not found.");
+
     // Rule refusals are Failure (HTTP 422, plan 002 §5.4); Conflict (409) stays for "changed by someone else".
 
     /// <summary>P9: a unit type stays active while active units use it.</summary>

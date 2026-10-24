@@ -38,6 +38,7 @@ internal sealed class UnitOfWork(
         ("IX_Users_NormalizedEmail", UserErrors.EmailTaken),
         ("IX_Users_NormalizedUserName", UserErrors.UsernameTaken),
         ("IX_UnitTypes_Code", OrgErrors.UnitTypeCodeTaken),
+        ("IX_OrgUnits_Code", OrgErrors.UnitCodeTaken),
     ];
 
     private readonly List<IntegrationEvent> _events = [];

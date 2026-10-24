@@ -204,6 +204,43 @@ public sealed class IdentityEventsTests(IdentityApp app) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task T007_unit_changes_publish_their_events_through_the_outbox_with_ids_only()
+    {
+        var (adminUser, admin) = await app.UserWithSessionAsync("units.events.admin", SystemRole.PlatformAdmin);
+        using var _ = admin;
+        var head = await app.CreateUserAsync("head.secret.h");
+        var type = await admin.Client.PostAsJsonAsync(new Uri("/api/v1/unit-types", UriKind.Relative), new { code = "ZONE", name = "Zone" }, Ct);
+        var typeId = (await type.Content.ReadFromJsonAsync<JsonElement>(Ct)).GetProperty("id").GetGuid();
+        Guid id = default;
+
+        var created = await PublishedWhileAsync(async () =>
+        {
+            var response = await admin.Client.PostAsJsonAsync(
+                new Uri("/api/v1/org-units", UriKind.Relative),
+                new { parentId = OrgRoot.UnitId, code = "SOUTH", name = "Secret South", unitTypeId = typeId },
+                Ct);
+            id = (await response.Content.ReadFromJsonAsync<JsonElement>(Ct)).GetProperty("id").GetGuid();
+        });
+        var createdEvent = created.OfType<OrgUnitCreated>().ShouldHaveSingleItem();
+        (createdEvent.UnitId, createdEvent.ParentId, createdEvent.UnitTypeId).ShouldBe((id, OrgRoot.UnitId, typeId));
+
+        var renamed = await PublishedWhileAsync(async () => await admin.Client.PutAsJsonAsync(
+            new Uri($"/api/v1/org-units/{id}", UriKind.Relative), new { name = "Secret Southern", version = await UnitVersionAsync(admin, id) }, Ct));
+        renamed.OfType<OrgUnitRenamed>().ShouldHaveSingleItem().UnitId.ShouldBe(id);
+
+        var headChanged = await PublishedWhileAsync(async () => await admin.Client.PutAsJsonAsync(
+            new Uri($"/api/v1/org-units/{id}/head", UriKind.Relative), new { headUserId = head.Id, version = await UnitVersionAsync(admin, id) }, Ct));
+        var headEvent = headChanged.OfType<OrgUnitHeadChanged>().ShouldHaveSingleItem();
+        (headEvent.UnitId, headEvent.HeadUserId).ShouldBe((id, (Guid?)head.Id));
+
+        foreach (var published in created.Concat(renamed).Concat(headChanged))
+        {
+            AssertIdsOnly(published);
+            published.ActorId.ShouldBe(adminUser.Id);
+        }
+    }
+
+    [Fact]
     public async Task A_refused_change_publishes_nothing()
     {
         var (adminUser, admin) = await app.UserWithSessionAsync("only.admin", SystemRole.PlatformAdmin);
@@ -238,6 +275,9 @@ public sealed class IdentityEventsTests(IdentityApp app) : IAsyncLifetime
         var list = await admin.Client.GetFromJsonAsync<JsonElement>(new Uri("/api/v1/unit-types", UriKind.Relative), Ct);
         return list.EnumerateArray().Single(t => t.GetProperty("id").GetGuid() == id).GetProperty("version").GetString();
     }
+
+    private static async Task<string?> UnitVersionAsync(ApiSession admin, Guid id) =>
+        (await admin.Client.GetFromJsonAsync<JsonElement>(new Uri($"/api/v1/org-units/{id}", UriKind.Relative), Ct)).GetProperty("version").GetString();
 
     private static void AssertIdsOnly(IntegrationEvent published)
     {

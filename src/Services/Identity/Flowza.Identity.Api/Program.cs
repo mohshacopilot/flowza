@@ -50,6 +50,7 @@ app.MapConnectEndpoints();
 app.MapRazorPages();
 app.MapUserEndpoints();
 app.MapUnitTypeEndpoints();
+app.MapOrgUnitEndpoints();
 app.MapMeEndpoints();
 app.MapInstallationEndpoints();
 
