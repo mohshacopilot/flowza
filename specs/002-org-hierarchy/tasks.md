@@ -21,7 +21,7 @@ puts every existing user into the root unit (plan §5.2).
 |---|---|---|
 | T001 Codes, unit types and business roles (domain) | ✅ | 01301f8 |
 | T002 Org units, paths and the org structure version (domain) | ✅ | a0b1686 |
-| T003 User's place in the organization, manager chain, head walk (domain) | ✅ | (this commit) |
+| T003 User's place in the organization, manager chain, head walk (domain) | ✅ | ed76bc9 |
 | T004 Contracts: org events and the approver rule contract | ⬜ | |
 | T005 Database: tables, sequence, root seed, back-fill | ⬜ | |
 | T006 Unit types API | ⬜ | |
