@@ -56,7 +56,7 @@ jobs:
 
       - name: Upload the new baselines
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: screenshot-baselines
           path: tests/EndToEnd/specs/*-snapshots/
@@ -65,7 +65,7 @@ jobs:
 
       - name: Upload the Playwright report
         if: ${{ failure() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-report
           path: |
